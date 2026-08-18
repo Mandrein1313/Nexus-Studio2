@@ -1488,10 +1488,7 @@ private void updateAiOutput(String markdownText) {
             startActivity(new Intent(this, AiSettingsActivity.class));
             return true;
         }
-        if (id == R.id.action_find_file) {
-    showFileSearchDialog();
-    return true;
-}
+
         
         if (id == R.id.action_search) {
             searchBar.setVisibility(searchBar.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
