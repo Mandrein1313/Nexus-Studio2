@@ -1,0 +1,471 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1B26"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:fitsSystemWindows="true">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#1A1B26"
+            app:titleTextColor="#C0CAF5"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Dark" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:background="#1F2335"
+            android:padding="6dp">
+
+            <TextView
+                android:id="@+id/tvFilePath"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="No file open"
+                android:textColor="#565F89"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/tvSaveStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Saved"
+                android:textColor="#9ECE6A"
+                android:textSize="12sp"
+                android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/tabRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:background="#1F2335"
+            android:scrollbars="none" />
+
+        <LinearLayout
+            android:id="@+id/searchBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#24283B"
+            android:padding="8dp"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/etFind"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="ค้นหาคำ..."
+                    android:textColor="#C0CAF5"
+                    android:textColorHint="#565F89"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnNext"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="ถัดไป"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <EditText
+                    android:id="@+id/etReplace"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="แทนที่ด้วย..."
+                    android:textColor="#C0CAF5"
+                    android:textColorHint="#565F89"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/btnReplace"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="แทนที่"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="#1A1B26">
+
+            <LinearLayout
+                android:id="@+id/emptyStateView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:visibility="visible">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Don't open files"
+                    android:textColor="#565F89"
+                    android:textSize="18sp" />
+            </LinearLayout>
+
+            <io.github.rosemoe.sora.widget.CodeEditor
+                android:id="@+id/codeEditor"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+
+            <FrameLayout
+                android:id="@+id/previewContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#1A1B26"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:id="@+id/aiSuggestionBar"
+            android:layout_width="match_parent"
+            android:layout_height="38dp"
+            android:background="#2A2040"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✨ AI แนะนำ: "
+                android:textColor="#BB9AF7"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvAiSuggestionText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="..."
+                android:textColor="#A9B1D6"
+                android:textSize="12sp"
+                android:fontFamily="monospace" />
+
+            <Button
+                android:id="@+id/btnAcceptAiSuggestion"
+                android:layout_width="wrap_content"
+                android:layout_height="28dp"
+                android:backgroundTint="#BB9AF7"
+                android:text="แทรกโค้ด"
+                android:textColor="#1A1B26"
+                android:textSize="10sp"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton" />
+        </LinearLayout>
+
+        <!-- แถบล่างทั้งชุด (รวมปุ่มทางลัดและแถบปุ่มหลัก) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#1F2335">
+
+            <!-- แถวเครื่องมือเพิ่ม (ย่อ/ขยายได้) -->
+<LinearLayout
+    android:id="@+id/shortcutRow"
+    android:layout_width="match_parent"
+    android:layout_height="40dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:visibility="gone">   <!-- เปลี่ยนจาก visible เป็น gone -->
+
+                <HorizontalScrollView
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:scrollbars="none">
+
+                    <LinearLayout
+                        android:id="@+id/shortcutBar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:paddingStart="4dp"
+                        android:paddingEnd="4dp"
+                        android:gravity="center_vertical" />
+                </HorizontalScrollView>
+
+                <LinearLayout
+                    android:id="@+id/aiShortcutBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="6dp" />
+            </LinearLayout>
+
+            <!-- แถวปุ่มหลัก (แสดงตลอด) -->
+            <LinearLayout
+                android:id="@+id/mainShortcutRow"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingStart="6dp"
+                android:paddingEnd="8dp"
+                android:background="#1A1B26">
+
+                <!-- Toggle -->
+                <TextView
+                    android:id="@+id/btnToggleShortcut"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:gravity="center"
+                    android:text="⌃"
+                    android:textSize="18sp"
+                    android:textColor="#A9B1D6"
+                    android:background="?attr/selectableItemBackgroundBorderless" />
+
+                <!-- Undo -->
+                <TextView
+                    android:id="@+id/btnUndo"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:text="↶"
+                    android:textSize="16sp"
+                    android:textColor="#C0CAF5"
+                    android:background="@drawable/bg_dialog_input"
+                    android:layout_marginStart="4dp" />
+
+                <!-- Redo -->
+                <TextView
+                    android:id="@+id/btnRedo"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:text="↷"
+                    android:textSize="16sp"
+                    android:textColor="#C0CAF5"
+                    android:background="@drawable/bg_dialog_input"
+                    android:layout_marginStart="4dp" />
+
+<!-- แทนที่ปุ่ม TAB ด้วยปุ่ม Color -->
+<TextView
+    android:id="@+id/btnColorPicker"
+    android:layout_width="wrap_content"
+    android:layout_height="36dp"
+    android:minWidth="52dp"
+    android:gravity="center"
+    android:text="🎨"
+    android:textSize="16sp"
+    android:textColor="#C0CAF5"
+    android:background="@drawable/bg_dialog_input"
+    android:layout_marginStart="4dp"
+    android:paddingStart="12dp"
+    android:paddingEnd="12dp" />
+
+                <!-- { -->
+                <TextView
+                    android:id="@+id/btnOpenBrace"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:text="{"
+                    android:textSize="16sp"
+                    android:textColor="#C0CAF5"
+                    android:background="@drawable/bg_dialog_input"
+                    android:layout_marginStart="6dp" />
+
+                <!-- } -->
+                <TextView
+                    android:id="@+id/btnCloseBrace"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:text="}"
+                    android:textSize="16sp"
+                    android:textColor="#C0CAF5"
+                    android:background="@drawable/bg_dialog_input"
+                    android:layout_marginStart="4dp" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="1dp"
+                    android:layout_weight="1" />
+
+                <!-- AI -->
+                <TextView
+                    android:id="@+id/btnMainAi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:text="🤖 AI"
+                    android:textSize="13sp"
+                    android:textColor="#BB9AF7"
+                    android:background="@drawable/bg_dialog_input"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/consolePanel"
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:orientation="vertical"
+            android:background="#1A1B26"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="35dp"
+                android:orientation="horizontal"
+                android:background="#24283B"
+                android:gravity="center_vertical"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp">
+
+                <com.google.android.material.tabs.TabLayout
+                    android:id="@+id/consoleFilterTabs"
+                    android:layout_width="160dp"
+                    android:layout_height="match_parent"
+                    android:background="#24283B"
+                    app:tabTextColor="#565F89"
+                    app:tabSelectedTextColor="#C0CAF5"
+                    app:tabIndicatorColor="#BB9AF7"
+                    app:tabIndicatorHeight="2dp"
+                    app:tabMode="fixed" />
+
+                <View
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1" />
+
+                <ImageButton
+                    android:id="@+id/btnConsoleScrollDown"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/arrow_down_float"
+                    app:tint="#C0CAF5" />
+
+                <ImageButton
+                    android:id="@+id/btnConsoleClear"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    app:tint="#C0CAF5" />
+
+                <ImageButton
+                    android:id="@+id/btnToggleExpand"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_compass"
+                    app:tint="#E0AF68" />
+
+                <ImageButton
+                    android:id="@+id/btnCloseConsole"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_delete"
+                    app:tint="#F7768E" />
+            </LinearLayout>
+
+            <androidx.viewpager2.widget.ViewPager2
+                android:id="@+id/viewPager"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
+            <ScrollView
+                android:id="@+id/consoleScrollView"
+                android:layout_width="0dp"
+                android:layout_height="0dp"
+                android:visibility="gone">
+                <View
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </ScrollView>
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvErrorPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2A1F24"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#1F2335"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:id="@+id/drawer_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clipToPadding="false">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="โครงสร้างโปรเจกต์"
+                android:textColor="#C0CAF5"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:padding="8dp" />
+
+            <ListView
+                android:id="@+id/treeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="@null"
+                android:clipToPadding="false" />
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
+
+</androidx.drawerlayout.widget.DrawerLayout>
