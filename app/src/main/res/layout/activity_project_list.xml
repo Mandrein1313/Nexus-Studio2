@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#121212"
+    android:fitsSystemWindows="true">
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:fitsSystemWindows="true">
+
+            <androidx.appcompat.widget.Toolbar
+                android:id="@+id/toolbar"
+                android:layout_width="match_parent"
+                android:layout_height="?attr/actionBarSize"
+                android:background="#1E1E1E"
+                app:title="Projects"
+                app:titleTextColor="#BB86FC"
+                app:contentInsetStartWithNavigation="0dp" />
+
+            <ListView
+                android:id="@+id/projectListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="@android:color/transparent"
+                android:dividerHeight="12dp"
+                android:padding="8dp"
+                android:clipToPadding="false" />
+
+        </LinearLayout>
+
+        <com.getbase.floatingactionbutton.FloatingActionsMenu
+            android:id="@+id/multiple_actions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            fab:fab_addButtonColorNormal="#BB86FC"
+            fab:fab_addButtonColorPressed="#9965f4"
+            fab:fab_expandDirection="up">
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/action_create"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_title="สร้างโปรเจกต์ใหม่"
+                fab:fab_colorNormal="#FFFFFF"
+                fab:fab_size="mini" />
+
+            <com.getbase.floatingactionbutton.FloatingActionButton
+                android:id="@+id/action_github"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                fab:fab_title="นำเข้าจาก GitHub"
+                fab:fab_colorNormal="#FFFFFF"
+                fab:fab_size="mini" />
+
+        </com.getbase.floatingactionbutton.FloatingActionsMenu>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#1E1E1E"
+        android:fitsSystemWindows="true"
+        app:itemTextColor="#FFFFFF"
+        app:itemIconTint="#BB86FC"
+        app:menu="@menu/menu_drawer_project" />
+
+</androidx.drawerlayout.widget.DrawerLayout>
