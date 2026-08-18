@@ -27,11 +27,7 @@
     android:title="Push to GitHub"
     app:showAsAction="ifRoom" />
     
-    <item
-    android:id="@+id/action_find_file"
-    android:title="ค้นหาไฟล์"
-    android:icon="@android:drawable/ic_menu_search"
-    app:showAsAction="never" />
+
     
 
 </menu>

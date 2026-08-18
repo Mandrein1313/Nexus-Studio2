@@ -189,7 +189,7 @@ private void initViews() {
     TextView btnToggleShortcut = findViewById(R.id.btnToggleShortcut);
     View shortcutRow = findViewById(R.id.shortcutRow);
     ImageView btnColorPicker = findViewById(R.id.btnColorPicker);
-    TextView btnOpenBrace = findViewById(R.id.btnOpenBrace);
+    ImageView btnFileSearch = findViewById(R.id.btnFileSearch);  // แทนปุ่ม {
     TextView btnCloseBrace = findViewById(R.id.btnCloseBrace);
     TextView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
@@ -216,22 +216,17 @@ private void initViews() {
         });
     }
 
-    // ปุ่ม Color Picker (ไอคอนจริง)
+    // ปุ่ม Color Picker
     if (btnColorPicker != null) {
         btnColorPicker.setOnClickListener(v -> showFullColorPickerDialog());
     }
 
-    if (btnOpenBrace != null) {
-        btnOpenBrace.setOnClickListener(v -> {
-            if (codeEditor != null && codeEditor.getCursor() != null) {
-                codeEditor.getText().insert(
-                        codeEditor.getCursor().getLeftLine(),
-                        codeEditor.getCursor().getLeftColumn(),
-                        "{"
-                );
-            }
-        });
+    // ปุ่มค้นหาไฟล์ (แทน {)
+    if (btnFileSearch != null) {
+        btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
+
+    // ปุ่ม }
     if (btnCloseBrace != null) {
         btnCloseBrace.setOnClickListener(v -> {
             if (codeEditor != null && codeEditor.getCursor() != null) {
@@ -243,6 +238,7 @@ private void initViews() {
             }
         });
     }
+
     if (btnMainAi != null) {
         btnMainAi.setOnClickListener(v -> handleAiAction(false));
     }
