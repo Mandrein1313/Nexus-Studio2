@@ -249,15 +249,15 @@
                 android:background="#1A1B26">
 
                 <!-- Toggle -->
-                <TextView
-                    android:id="@+id/btnToggleShortcut"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:gravity="center"
-                    android:text="⌃"
-                    android:textSize="18sp"
-                    android:textColor="#A9B1D6"
-                    android:background="?attr/selectableItemBackgroundBorderless" />
+                <ImageView
+    android:id="@+id/btnToggleShortcut"
+    android:layout_width="40dp"
+    android:layout_height="40dp"
+    android:padding="8dp"
+    android:src="@drawable/ic_expand_more_24"
+    android:background="?attr/selectableItemBackgroundBorderless"
+    android:contentDescription="Toggle shortcuts"
+    android:scaleType="centerInside" />
 
                 <!-- Undo -->
                 

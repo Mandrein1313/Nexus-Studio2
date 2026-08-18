@@ -186,10 +186,10 @@ private void initViews() {
     setupShortcutBar();
 
     // ===== ปุ่มด้านล่าง =====
-    TextView btnToggleShortcut = findViewById(R.id.btnToggleShortcut);
+    ImageView btnToggleShortcut = findViewById(R.id.btnToggleShortcut);
     View shortcutRow = findViewById(R.id.shortcutRow);
     ImageView btnColorPicker = findViewById(R.id.btnColorPicker);
-    ImageView btnFileSearch = findViewById(R.id.btnFileSearch);  // แทนปุ่ม {
+    ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
     TextView btnCloseBrace = findViewById(R.id.btnCloseBrace);
     TextView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
@@ -201,8 +201,7 @@ private void initViews() {
         shortcutRow.setVisibility(View.GONE);
     }
     if (btnToggleShortcut != null) {
-        btnToggleShortcut.setText("⌄");
-        btnToggleShortcut.setRotation(180f);
+        btnToggleShortcut.setImageResource(R.drawable.ic_expand_more_24);
     }
 
     if (btnUndo != null) {
@@ -216,17 +215,14 @@ private void initViews() {
         });
     }
 
-    // ปุ่ม Color Picker
     if (btnColorPicker != null) {
         btnColorPicker.setOnClickListener(v -> showFullColorPickerDialog());
     }
 
-    // ปุ่มค้นหาไฟล์ (แทน {)
     if (btnFileSearch != null) {
         btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
 
-    // ปุ่ม }
     if (btnCloseBrace != null) {
         btnCloseBrace.setOnClickListener(v -> {
             if (codeEditor != null && codeEditor.getCursor() != null) {
@@ -247,6 +243,7 @@ private void initViews() {
     if (btnToggleShortcut != null && shortcutRow != null) {
         btnToggleShortcut.setOnClickListener(v -> {
             if (isShortcutExpanded) {
+                // ย่อ
                 isShortcutExpanded = false;
                 shortcutRow.animate()
                         .alpha(0f)
@@ -259,9 +256,9 @@ private void initViews() {
                             shortcutRow.setTranslationY(0f);
                         })
                         .start();
-                btnToggleShortcut.animate().rotation(180f).setDuration(200).start();
-                btnToggleShortcut.setText("⌄");
+                btnToggleShortcut.setImageResource(R.drawable.ic_expand_more_24);
             } else {
+                // ขยาย
                 isShortcutExpanded = true;
                 shortcutRow.setVisibility(View.VISIBLE);
                 shortcutRow.setAlpha(0f);
@@ -272,8 +269,7 @@ private void initViews() {
                         .setDuration(220)
                         .setInterpolator(new android.view.animation.DecelerateInterpolator())
                         .start();
-                btnToggleShortcut.animate().rotation(0f).setDuration(200).start();
-                btnToggleShortcut.setText("⌃");
+                btnToggleShortcut.setImageResource(R.drawable.ic_expand_less_24);
             }
         });
     }
