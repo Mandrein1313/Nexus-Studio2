@@ -284,19 +284,19 @@
                     android:layout_marginStart="4dp" />
 
 <!-- แทนที่ปุ่ม TAB ด้วยปุ่ม Color -->
-<TextView
+<ImageView
     android:id="@+id/btnColorPicker"
-    android:layout_width="wrap_content"
+    android:layout_width="48dp"
     android:layout_height="36dp"
-    android:minWidth="52dp"
-    android:gravity="center"
-    android:text="🎨"
-    android:textSize="16sp"
-    android:textColor="#C0CAF5"
-    android:background="@drawable/bg_dialog_input"
     android:layout_marginStart="4dp"
-    android:paddingStart="12dp"
-    android:paddingEnd="12dp" />
+    android:background="@drawable/bg_dialog_input"
+    android:padding="8dp"
+    android:scaleType="fitCenter"
+    android:src="@drawable/ic_palette" 
+    android:contentDescription="Color Picker"
+    android:clickable="true"
+    android:focusable="true" />
+
 
                 <!-- { -->
                 <TextView
