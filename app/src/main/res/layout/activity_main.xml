@@ -255,33 +255,35 @@
                     android:layout_height="40dp"
                     android:gravity="center"
                     android:text="⌃"
+                    android:background="@drawable/bg_dialog_input"
                     android:textSize="18sp"
                     android:textColor="#A9B1D6"
                     android:background="?attr/selectableItemBackgroundBorderless" />
 
                 <!-- Undo -->
-                <TextView
-                    android:id="@+id/btnUndo"
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="↶"
-                    android:textSize="16sp"
-                    android:textColor="#C0CAF5"
-                    android:background="@drawable/bg_dialog_input"
-                    android:layout_marginStart="4dp" />
+                
+<ImageView
+    android:id="@+id/btnUndo"
+    android:layout_width="40dp"
+    android:layout_height="36dp"
+    android:padding="6dp"
+    android:src="@drawable/ic_undo_24"
+    android:background="@drawable/bg_dialog_input"
+    android:layout_marginStart="4dp"
+    android:contentDescription="Undo"
+    android:scaleType="centerInside" />
 
-                <!-- Redo -->
-                <TextView
-                    android:id="@+id/btnRedo"
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="↷"
-                    android:textSize="16sp"
-                    android:textColor="#C0CAF5"
-                    android:background="@drawable/bg_dialog_input"
-                    android:layout_marginStart="4dp" />
+<!-- Redo -->
+<ImageView
+    android:id="@+id/btnRedo"
+    android:layout_width="40dp"
+    android:layout_height="36dp"
+    android:padding="6dp"
+    android:src="@drawable/ic_redo_24"
+    android:background="@drawable/bg_dialog_input"
+    android:layout_marginStart="4dp"
+    android:contentDescription="Redo"
+    android:scaleType="centerInside" />
 
 <!-- แทนที่ปุ่ม TAB ด้วยปุ่ม Color -->
 <ImageView

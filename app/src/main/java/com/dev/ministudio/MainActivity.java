@@ -192,8 +192,8 @@ private void initViews() {
     TextView btnOpenBrace = findViewById(R.id.btnOpenBrace);
     TextView btnCloseBrace = findViewById(R.id.btnCloseBrace);
     TextView btnMainAi = findViewById(R.id.btnMainAi);
-    TextView btnUndo = findViewById(R.id.btnUndo);
-    TextView btnRedo = findViewById(R.id.btnRedo);
+    ImageView btnUndo = findViewById(R.id.btnUndo);
+    ImageView btnRedo = findViewById(R.id.btnRedo);
 
     // ===== ตั้งค่าเริ่มต้น: ซ่อนแถบสัญลักษณ์ =====
     isShortcutExpanded = false;
