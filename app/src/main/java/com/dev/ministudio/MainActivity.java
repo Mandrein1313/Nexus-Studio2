@@ -1460,15 +1460,13 @@ private void updateAiOutput(String markdownText) {
 public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_toolbar, menu);
 
-    // ปรับขนาดไอคอน Build ให้พอดี
     MenuItem buildItem = menu.findItem(R.id.action_build);
     if (buildItem != null && buildItem.getIcon() != null) {
         int size = (int) (24 * getResources().getDisplayMetrics().density);
         buildItem.getIcon().setBounds(0, 0, size, size);
-        // หรือใช้
-        androidx.core.graphics.drawable.DrawableCompat.setAutoMirrored(buildItem.getIcon(), true);
     }
-
+    return true;
+}
     
 
     @Override
