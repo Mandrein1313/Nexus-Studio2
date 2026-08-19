@@ -203,13 +203,13 @@
             android:background="#1F2335">
 
             <!-- แถวเครื่องมือเพิ่ม (ย่อ/ขยายได้) -->
-<LinearLayout
-    android:id="@+id/shortcutRow"
-    android:layout_width="match_parent"
-    android:layout_height="40dp"
-    android:orientation="horizontal"
-    android:gravity="center_vertical"
-    android:visibility="gone">   <!-- เปลี่ยนจาก visible เป็น gone -->
+            <LinearLayout
+                android:id="@+id/shortcutRow"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:visibility="gone">
 
                 <HorizontalScrollView
                     android:layout_width="0dp"
@@ -237,109 +237,115 @@
                     android:paddingEnd="6dp" />
             </LinearLayout>
 
-            <!-- แถวปุ่มหลัก (แสดงตลอด) -->
+            <!-- แถวปุ่มหลัก (แสดงตลอด: ซ้ายเลื่อนได้ / ขวาล็อค AI) -->
             <LinearLayout
                 android:id="@+id/mainShortcutRow"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingStart="6dp"
+                android:paddingStart="4dp"
                 android:paddingEnd="8dp"
                 android:background="#1A1B26">
 
-                <!-- Toggle -->
-                <ImageView
-    android:id="@+id/btnToggleShortcut"
-    android:layout_width="40dp"
-    android:layout_height="40dp"
-    android:padding="8dp"
-    android:src="@drawable/ic_expand_more_24"
-    android:background="?attr/selectableItemBackgroundBorderless"
-    android:contentDescription="Toggle shortcuts"
-    android:scaleType="centerInside" />
-
-                <!-- Undo -->
-                
-<ImageView
-    android:id="@+id/btnUndo"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_undo_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="4dp"
-    android:contentDescription="Undo"
-    android:scaleType="centerInside" />
-
-<!-- Redo -->
-<ImageView
-    android:id="@+id/btnRedo"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_redo_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="4dp"
-    android:contentDescription="Redo"
-    android:scaleType="centerInside" />
-
-<!-- แทนที่ปุ่ม TAB ด้วยปุ่ม Color -->
-<ImageView
-    android:id="@+id/btnColorPicker"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_palette_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="4dp"
-    android:contentDescription="Color Picker"
-    android:scaleType="centerInside" />
-    <!-- Preview อยู่ข้าง Color ← เพิ่มอันนี้ -->
-    <ImageView
-    android:id="@+id/btnPreview"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_preview_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="4dp"
-    android:contentDescription="Preview"
-    android:scaleType="centerInside" />
-
-<!-- ค้นหาไฟล์ (แทนปุ่ม {) -->
-<ImageView
-    android:id="@+id/btnFileSearch"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_search_file_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="6dp"
-    android:contentDescription="ค้นหาไฟล์"
-    android:scaleType="centerInside" />
-<!-- Push to GitHub (แทนปุ่ม }) -->
-<ImageView
-    android:id="@+id/btnGitPush"
-    android:layout_width="40dp"
-    android:layout_height="36dp"
-    android:padding="6dp"
-    android:src="@drawable/ic_git_push_24"
-    android:background="@drawable/bg_dialog_input"
-    android:layout_marginStart="4dp"
-    android:contentDescription="Push to GitHub"
-    android:scaleType="centerInside" />
-
-                <View
+                <!-- ฝั่งซ้าย: เลื่อนได้ -->
+                <HorizontalScrollView
                     android:layout_width="0dp"
-                    android:layout_height="1dp"
-                    android:layout_weight="1" />
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:scrollbars="none"
+                    android:fillViewport="false">
 
-                <!-- AI -->
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:id="@+id/btnToggleShortcut"
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:padding="8dp"
+                            android:src="@drawable/ic_expand_more_24"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="Toggle shortcuts"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnUndo"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_undo_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="Undo"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnRedo"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_redo_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="Redo"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnColorPicker"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_palette_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="Color Picker"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnPreview"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_preview_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="Preview"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnFileSearch"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_search_file_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="ค้นหาไฟล์"
+                            android:scaleType="centerInside" />
+
+                        <ImageView
+                            android:id="@+id/btnGitPush"
+                            android:layout_width="40dp"
+                            android:layout_height="36dp"
+                            android:padding="6dp"
+                            android:src="@drawable/ic_git_push_24"
+                            android:background="@drawable/bg_dialog_input"
+                            android:layout_marginStart="4dp"
+                            android:contentDescription="Push to GitHub"
+                            android:scaleType="centerInside" />
+                    </LinearLayout>
+                </HorizontalScrollView>
+
+                <!-- ขวาสุด: AI ค้างไว้ ไม่ถูกตัด -->
                 <TextView
                     android:id="@+id/btnMainAi"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
                     android:gravity="center"
                     android:text="🤖 AI"
                     android:textSize="13sp"
