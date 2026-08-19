@@ -1451,15 +1451,25 @@ private void updateAiOutput(String markdownText) {
         showToast("Replaced");
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_toolbar, menu);
-        MenuItem previewItem = menu.findItem(R.id.action_preview);
-        if (previewItem != null) {
-            previewItem.setTitle(isPreviewMode ? "ดูโค้ด (Code)" : "ดูตัวอย่าง (Preview)");
-        }
-        return true;
+@Override
+public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_toolbar, menu);
+
+    // ปรับขนาดไอคอน Build ให้พอดี
+    MenuItem buildItem = menu.findItem(R.id.action_build);
+    if (buildItem != null && buildItem.getIcon() != null) {
+        int size = (int) (24 * getResources().getDisplayMetrics().density);
+        buildItem.getIcon().setBounds(0, 0, size, size);
+        // หรือใช้
+        androidx.core.graphics.drawable.DrawableCompat.setAutoMirrored(buildItem.getIcon(), true);
     }
+
+    MenuItem previewItem = menu.findItem(R.id.action_preview);
+    if (previewItem != null) {
+        previewItem.setTitle(isPreviewMode ? "ดูโค้ด (Code)" : "ดูตัวอย่าง (Preview)");
+    }
+    return true;
+}
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
