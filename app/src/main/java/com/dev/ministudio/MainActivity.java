@@ -189,8 +189,9 @@ private void initViews() {
     ImageView btnToggleShortcut = findViewById(R.id.btnToggleShortcut);
     View shortcutRow = findViewById(R.id.shortcutRow);
     ImageView btnColorPicker = findViewById(R.id.btnColorPicker);
+    ImageView btnPreview = findViewById(R.id.btnPreview);      // ข้าง Color
     ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
-    ImageView btnGitPush = findViewById(R.id.btnGitPush);  // แทนปุ่ม }
+    ImageView btnGitPush = findViewById(R.id.btnGitPush);
     TextView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
     ImageView btnRedo = findViewById(R.id.btnRedo);
@@ -219,11 +220,15 @@ private void initViews() {
         btnColorPicker.setOnClickListener(v -> showFullColorPickerDialog());
     }
 
+    // Preview อยู่ข้าง Color
+    if (btnPreview != null) {
+        btnPreview.setOnClickListener(v -> toggleXmlPreview());
+    }
+
     if (btnFileSearch != null) {
         btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
 
-    // ปุ่ม Push to GitHub (แทน })
     if (btnGitPush != null) {
         btnGitPush.setOnClickListener(v -> {
             if (currentProject != null) {

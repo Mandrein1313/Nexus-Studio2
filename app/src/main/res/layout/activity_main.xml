@@ -295,6 +295,17 @@
     android:layout_marginStart="4dp"
     android:contentDescription="Color Picker"
     android:scaleType="centerInside" />
+    <!-- Preview อยู่ข้าง Color ← เพิ่มอันนี้ -->
+    <ImageView
+    android:id="@+id/btnPreview"
+    android:layout_width="40dp"
+    android:layout_height="36dp"
+    android:padding="6dp"
+    android:src="@drawable/ic_preview_24"
+    android:background="@drawable/bg_dialog_input"
+    android:layout_marginStart="4dp"
+    android:contentDescription="Preview"
+    android:scaleType="centerInside" />
 
 <!-- ค้นหาไฟล์ (แทนปุ่ม {) -->
 <ImageView
