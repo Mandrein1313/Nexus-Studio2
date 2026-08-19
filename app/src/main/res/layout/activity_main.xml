@@ -307,17 +307,17 @@
     android:layout_marginStart="6dp"
     android:contentDescription="ค้นหาไฟล์"
     android:scaleType="centerInside" />
-                <!-- } -->
-                <TextView
-                    android:id="@+id/btnCloseBrace"
-                    android:layout_width="40dp"
-                    android:layout_height="36dp"
-                    android:gravity="center"
-                    android:text="}"
-                    android:textSize="16sp"
-                    android:textColor="#C0CAF5"
-                    android:background="@drawable/bg_dialog_input"
-                    android:layout_marginStart="4dp" />
+<!-- Push to GitHub (แทนปุ่ม }) -->
+<ImageView
+    android:id="@+id/btnGitPush"
+    android:layout_width="40dp"
+    android:layout_height="36dp"
+    android:padding="6dp"
+    android:src="@drawable/ic_git_push_24"
+    android:background="@drawable/bg_dialog_input"
+    android:layout_marginStart="4dp"
+    android:contentDescription="Push to GitHub"
+    android:scaleType="centerInside" />
 
                 <View
                     android:layout_width="0dp"

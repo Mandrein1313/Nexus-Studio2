@@ -190,7 +190,7 @@ private void initViews() {
     View shortcutRow = findViewById(R.id.shortcutRow);
     ImageView btnColorPicker = findViewById(R.id.btnColorPicker);
     ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
-    TextView btnCloseBrace = findViewById(R.id.btnCloseBrace);
+    ImageView btnGitPush = findViewById(R.id.btnGitPush);  // แทนปุ่ม }
     TextView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
     ImageView btnRedo = findViewById(R.id.btnRedo);
@@ -223,14 +223,13 @@ private void initViews() {
         btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
 
-    if (btnCloseBrace != null) {
-        btnCloseBrace.setOnClickListener(v -> {
-            if (codeEditor != null && codeEditor.getCursor() != null) {
-                codeEditor.getText().insert(
-                        codeEditor.getCursor().getLeftLine(),
-                        codeEditor.getCursor().getLeftColumn(),
-                        "}"
-                );
+    // ปุ่ม Push to GitHub (แทน })
+    if (btnGitPush != null) {
+        btnGitPush.setOnClickListener(v -> {
+            if (currentProject != null) {
+                pushChangesToGithub(currentProject.getProjectName());
+            } else {
+                showToast("⚠️ กรุณาเปิดโปรเจกต์ก่อนทำการ Push โค้ด");
             }
         });
     }
@@ -243,7 +242,6 @@ private void initViews() {
     if (btnToggleShortcut != null && shortcutRow != null) {
         btnToggleShortcut.setOnClickListener(v -> {
             if (isShortcutExpanded) {
-                // ย่อ
                 isShortcutExpanded = false;
                 shortcutRow.animate()
                         .alpha(0f)
@@ -258,7 +256,6 @@ private void initViews() {
                         .start();
                 btnToggleShortcut.setImageResource(R.drawable.ic_expand_more_24);
             } else {
-                // ขยาย
                 isShortcutExpanded = true;
                 shortcutRow.setVisibility(View.VISIBLE);
                 shortcutRow.setAlpha(0f);
@@ -1470,15 +1467,6 @@ private void updateAiOutput(String markdownText) {
         if (id == R.id.action_build) { startCloudBuildPipeline(); return true; }
         if (id == R.id.action_preview) { toggleXmlPreview(); return true; }
         
-        // 🌟 จุดที่เพิ่มใหม่: ดักจับการกดปุ่ม Git Push
-        if (id == R.id.action_git_push) { 
-            if (currentProject != null) {
-                pushChangesToGithub(currentProject.getProjectName());
-            } else {
-                showToast("⚠️ กรุณาเปิดโปรเจกต์ก่อนทำการ Push โค้ด");
-            }
-            return true;
-        }
 
         if (id == R.id.action_ai_settings) {
             startActivity(new Intent(this, AiSettingsActivity.class));

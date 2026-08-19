@@ -21,13 +21,4 @@
     android:id="@+id/action_ai_settings"
     android:title="AI Settings"/>
     
-    <item
-    android:id="@+id/action_git_push"
-    android:icon="@drawable/ic_git_push" 
-    android:title="Push to GitHub"
-    app:showAsAction="ifRoom" />
-    
-
-    
-
 </menu>
