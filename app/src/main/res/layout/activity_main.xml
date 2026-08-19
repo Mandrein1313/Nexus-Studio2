@@ -237,7 +237,7 @@
                     android:paddingEnd="6dp" />
             </LinearLayout>
 
-            <!-- แถวปุ่มหลัก (แสดงตลอด: ซ้ายเลื่อนได้ / ขวาล็อค AI) -->
+            <!-- แถวปุ่มหลัก (ล็อคซ้าย: ปุ่มย่อ/ขยาย | กลาง: เลื่อนได้ | ล็อคขวา: AI) -->
             <LinearLayout
                 android:id="@+id/mainShortcutRow"
                 android:layout_width="match_parent"
@@ -248,7 +248,18 @@
                 android:paddingEnd="8dp"
                 android:background="#1A1B26">
 
-                <!-- ฝั่งซ้าย: เลื่อนได้ -->
+                <!-- ซ้ายสุด: ปุ่มย่อ/ขยาย (ล็อคอยู่กับที่ ไม่โดนเลื่อน) -->
+                <ImageView
+                    android:id="@+id/btnToggleShortcut"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:padding="8dp"
+                    android:src="@drawable/ic_expand_more_24"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="Toggle shortcuts"
+                    android:scaleType="centerInside" />
+
+                <!-- ตรงกลาง: ปุ่มทางลัดอื่นๆ (เลื่อนซ้าย-ขวาได้) -->
                 <HorizontalScrollView
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -261,16 +272,6 @@
                         android:layout_height="match_parent"
                         android:orientation="horizontal"
                         android:gravity="center_vertical">
-
-                        <ImageView
-                            android:id="@+id/btnToggleShortcut"
-                            android:layout_width="40dp"
-                            android:layout_height="40dp"
-                            android:padding="8dp"
-                            android:src="@drawable/ic_expand_more_24"
-                            android:background="?attr/selectableItemBackgroundBorderless"
-                            android:contentDescription="Toggle shortcuts"
-                            android:scaleType="centerInside" />
 
                         <ImageView
                             android:id="@+id/btnUndo"
@@ -340,7 +341,7 @@
                     </LinearLayout>
                 </HorizontalScrollView>
 
-                <!-- ขวาสุด: AI ค้างไว้ ไม่ถูกตัด -->
+                <!-- ขวาสุด: AI (ล็อคอยู่กับที่) -->
                 <TextView
                     android:id="@+id/btnMainAi"
                     android:layout_width="wrap_content"
