@@ -1469,18 +1469,13 @@ public boolean onCreateOptionsMenu(Menu menu) {
         androidx.core.graphics.drawable.DrawableCompat.setAutoMirrored(buildItem.getIcon(), true);
     }
 
-    MenuItem previewItem = menu.findItem(R.id.action_preview);
-    if (previewItem != null) {
-        previewItem.setTitle(isPreviewMode ? "ดูโค้ด (Code)" : "ดูตัวอย่าง (Preview)");
-    }
-    return true;
-}
+    
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if (id == R.id.action_build) { startCloudBuildPipeline(); return true; }
-        if (id == R.id.action_preview) { toggleXmlPreview(); return true; }
+        
         
         if (id == R.id.action_search) {
             searchBar.setVisibility(searchBar.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
