@@ -7,7 +7,7 @@
         android:icon="@drawable/ic_play_run"
         app:showAsAction="ifRoom"
         app:iconTint="@null" />
-         <item
+    <item
         android:id="@+id/action_search"
         android:title="Search"
         android:icon="@android:drawable/ic_menu_search" 
@@ -17,8 +17,6 @@
         android:title="ดูตัวอย่าง (Preview)"
         android:icon="@android:drawable/ic_menu_view" 
         app:showAsAction="always" />
-        <item
-    android:id="@+id/action_ai_settings"
-    android:title="AI Settings"/>
+   
     
 </menu>

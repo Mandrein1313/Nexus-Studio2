@@ -1467,13 +1467,6 @@ private void updateAiOutput(String markdownText) {
         if (id == R.id.action_build) { startCloudBuildPipeline(); return true; }
         if (id == R.id.action_preview) { toggleXmlPreview(); return true; }
         
-
-        if (id == R.id.action_ai_settings) {
-            startActivity(new Intent(this, AiSettingsActivity.class));
-            return true;
-        }
-
-        
         if (id == R.id.action_search) {
             searchBar.setVisibility(searchBar.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
             return true;
