@@ -332,7 +332,7 @@ private void setupLogic() {
         });
     }
 
-    // Auto-Save + AI Auto-Complete
+    // Auto-Save + AI Auto-Complete + รีเฟรช Preview
     codeEditor.subscribeEvent(ContentChangeEvent.class, (event, unsubscribe) -> {
         if (tvSaveStatus != null) {
             tvSaveStatus.setText("Editing...");
@@ -366,6 +366,22 @@ private void setupLogic() {
                 });
             });
         }
+
+        // รีเฟรช Preview อัตโนมัติตอนแก้ XML (หน่วง 600ms กันกระตุก)
+        if (isPreviewMode && previewContainer != null && codeEditor != null) {
+            previewContainer.postDelayed(() -> {
+                if (!isPreviewMode || previewContainer == null || codeEditor == null) return;
+                try {
+                    View v = new XmlPreviewManager(MainActivity.this)
+                            .inflateXml(codeEditor.getText().toString());
+                    previewContainer.removeAllViews();
+                    previewContainer.addView(v, new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+                } catch (Exception ignored) {
+                }
+            }, 600);
+        }
     });
 
     // แสดงสีที่แถบสถานะเมื่อ cursor อยู่บนรหัสสี
@@ -374,11 +390,10 @@ private void setupLogic() {
             (event, unsubscribe) -> showColorPreviewIfNeeded()
     );
 
-    // แตะรหัสสี → เปิด Edit Color (จับตำแหน่งแม่นกว่า)
+    // แตะรหัสสี → เปิด Edit Color
     codeEditor.subscribeEvent(io.github.rosemoe.sora.event.ClickEvent.class, (event, unsubscribe) -> {
         if (codeEditor == null) return;
 
-        // รอให้ cursor ขยับตามนิ้วก่อน แล้วค่อยอ่านตำแหน่ง
         codeEditor.post(() -> {
             if (codeEditor.getCursor() == null) return;
 
@@ -393,7 +408,6 @@ private void setupLogic() {
             }
             if (lineText == null || lineText.isEmpty()) return;
 
-            // ลำดับ 8 → 6 → 3 กันจับ #RGB สั้นเกินจาก #RRGGBB
             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(
                     "#(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{6}|[0-9a-fA-F]{3})"
             );
@@ -407,7 +421,6 @@ private void setupLogic() {
             while (matcher.find()) {
                 int start = matcher.start();
                 int end = matcher.end();
-                // อยู่ในช่วง หรือชิดขอบ ±1
                 if (col >= start - 1 && col <= end) {
                     int mid = (start + end) / 2;
                     int dist = Math.abs(col - mid);
@@ -783,39 +796,59 @@ private void showFullPanelDialog(int initialTabPosition) {
         });
     }
 
-    private void toggleXmlPreview() {
-        if (codeEditor == null || previewContainer == null) {
-            showToast("⚠️ ไม่พบแผงควบคุมระบบพรีวิวในหน้าจอนี้");
-            return;
-        }
-
-        if (!isPreviewMode) {
-            try {
-                String currentXmlCode = codeEditor.getText().toString();
-                XmlPreviewManager previewManager = new XmlPreviewManager(MainActivity.this);
-                View generatedView = previewManager.inflateXml(currentXmlCode);
-
-                if (generatedView != null) {
-                    previewContainer.removeAllViews();
-                    previewContainer.addView(generatedView);
-
-                    codeEditor.setVisibility(View.GONE);
-                    previewContainer.setVisibility(View.VISIBLE);
-                    
-                    isPreviewMode = true;
-                    showToast("✨ แสดงผลพรีวิวเลย์เอาต์สำเร็จ!");
-                    invalidateOptionsMenu(); 
-                }
-            } catch (Exception e) {
-                showToast("❌ ไวยากรณ์ XML ขัดข้อง: " + e.getMessage());
-            }
-        } else {
-            previewContainer.setVisibility(View.GONE);
-            codeEditor.setVisibility(View.VISIBLE);
-            isPreviewMode = false;
-            invalidateOptionsMenu();
-        }
+private void toggleXmlPreview() {
+    if (codeEditor == null || previewContainer == null) {
+        showToast("⚠️ ไม่พบแผง Preview");
+        return;
     }
+
+    // เข้าโหมด Preview
+    if (!isPreviewMode) {
+        File current = currentProject != null ? currentProject.getCurrentOpenFile() : null;
+        String name = current != null ? current.getName().toLowerCase() : "";
+
+        // แนะนำเฉพาะ layout XML
+        if (!name.endsWith(".xml")) {
+            showToast("⚠️ Preview รองรับไฟล์ .xml (layout)");
+            // ยังอนุญาตต่อได้ถ้าอยาก — หรือ return;
+        }
+        if (name.equals("colors.xml") || name.equals("strings.xml")
+                || name.equals("styles.xml") || name.equals("themes.xml")
+                || name.contains("AndroidManifest")) {
+            showToast("⚠️ ไฟล์นี้ไม่ใช่ layout — ผลพรีวิวอาจว่าง");
+        }
+
+        try {
+            String xml = codeEditor.getText().toString();
+            XmlPreviewManager previewManager = new XmlPreviewManager(this);
+            View generated = previewManager.inflateXml(xml);
+
+            previewContainer.removeAllViews();
+            previewContainer.addView(generated,
+                    new FrameLayout.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT));
+
+            codeEditor.setVisibility(View.GONE);
+            if (emptyStateView != null) emptyStateView.setVisibility(View.GONE);
+            previewContainer.setVisibility(View.VISIBLE);
+
+            isPreviewMode = true;
+            showToast("✨ Preview layout");
+            invalidateOptionsMenu();
+        } catch (Exception e) {
+            showToast("❌ " + e.getMessage());
+        }
+    } else {
+        // กลับไปแก้โค้ด
+        previewContainer.setVisibility(View.GONE);
+        previewContainer.removeAllViews();
+        codeEditor.setVisibility(View.VISIBLE);
+        isPreviewMode = false;
+        invalidateOptionsMenu();
+        showToast("✏️ กลับสู่โหมดแก้ไข");
+    }
+}
 
     private void startCloudBuildPipeline() {
         if (currentProject == null) {
