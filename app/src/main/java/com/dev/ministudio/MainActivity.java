@@ -1181,10 +1181,10 @@ private void showFullColorPickerDialog(String initialHex,
     colorWheel.setLayoutParams(wheelParams);
     root.addView(colorWheel);
 
-    // แสดงสี + Hex
+    // ===== สีตัวอย่าง + ช่อง Hex (แก้ไขได้) + คัดลอก =====
     LinearLayout infoRow = new LinearLayout(this);
     infoRow.setOrientation(LinearLayout.HORIZONTAL);
-    infoRow.setGravity(Gravity.CENTER);
+    infoRow.setGravity(Gravity.CENTER_VERTICAL);
     LinearLayout.LayoutParams infoParams = new LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT);
@@ -1198,20 +1198,49 @@ private void showFullColorPickerDialog(String initialHex,
     colorDot.setBackground(createCircleBg("#00FF00"));
     infoRow.addView(colorDot);
 
-    final TextView tvHex = new TextView(this);
-    tvHex.setText("#FF00FF00");
-    tvHex.setTextColor(Color.parseColor("#A9B1D6"));
-    tvHex.setTextSize(15);
-    tvHex.setPadding((int) (12 * density), 0, 0, 0);
-    infoRow.addView(tvHex);
+    final android.widget.EditText etHex = new android.widget.EditText(this);
+    etHex.setText(initialHex != null ? initialHex : "#FF00FF00");
+    etHex.setTextColor(Color.parseColor("#A9B1D6"));
+    etHex.setTextSize(14);
+    etHex.setSingleLine(true);
+    etHex.setHint("#AARRGGBB");
+    etHex.setHintTextColor(Color.parseColor("#565F89"));
+    etHex.setBackgroundColor(Color.parseColor("#24283B"));
+    etHex.setPadding((int) (10 * density), (int) (8 * density),
+            (int) (10 * density), (int) (8 * density));
+    LinearLayout.LayoutParams etParams = new LinearLayout.LayoutParams(
+            0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+    etParams.setMarginStart((int) (10 * density));
+    etHex.setLayoutParams(etParams);
+    etHex.setInputType(android.text.InputType.TYPE_CLASS_TEXT
+            | android.text.InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS
+            | android.text.InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+    infoRow.addView(etHex);
+
+    TextView btnCopy = new TextView(this);
+    btnCopy.setText("คัดลอก");
+    btnCopy.setTextColor(Color.parseColor("#7AA2F7"));
+    btnCopy.setTextSize(13);
+    btnCopy.setPadding((int) (10 * density), (int) (8 * density),
+            (int) (4 * density), (int) (8 * density));
+    btnCopy.setOnClickListener(v -> {
+        String hex = etHex.getText().toString().trim();
+        android.content.ClipboardManager cm =
+                (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (cm != null) {
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("color", hex));
+            showToast("คัดลอก " + hex + " แล้ว");
+        }
+    });
+    infoRow.addView(btnCopy);
     root.addView(infoRow);
 
     // ===== ตัวแปรสี =====
     final float[] currentHue = {120f};
     final float[] currentValue = {1f};
     final int[] currentAlpha = {255};
+    final boolean[] updatingFromUi = {false};
 
-    // ถ้าเป็นโหมด Edit → โหลดสีเดิม
     if (initialHex != null) {
         int c = parseHexColor(initialHex);
         if (c != 0) {
@@ -1219,7 +1248,7 @@ private void showFullColorPickerDialog(String initialHex,
             Color.colorToHSV(c, hsv);
             currentHue[0] = hsv[0];
             currentValue[0] = hsv[2];
-            currentAlpha[0] = Color.alpha(c);
+            currentAlpha[0] = (initialHex.length() >= 9) ? Color.alpha(c) : 255;
             try {
                 colorWheel.getClass().getMethod("setHue", float.class)
                         .invoke(colorWheel, currentHue[0]);
@@ -1229,19 +1258,51 @@ private void showFullColorPickerDialog(String initialHex,
     }
 
     final Runnable updateColor = () -> {
+        updatingFromUi[0] = true;
         int rgb = Color.HSVToColor(new float[]{currentHue[0], 1f, currentValue[0]});
         int colorWithAlpha = (currentAlpha[0] << 24) | (rgb & 0x00FFFFFF);
         String hex = String.format("#%08X", colorWithAlpha);
-        tvHex.setText(hex);
+        etHex.setText(hex);
         colorDot.setBackground(createCircleBgWithAlpha(colorWithAlpha));
+        updatingFromUi[0] = false;
     };
 
-    // เลือกสีจากวงล้อ (Hue)
     colorWheel.setOnColorChangeListener(color -> {
         float[] hsv = new float[3];
         Color.colorToHSV(color, hsv);
         currentHue[0] = hsv[0];
         updateColor.run();
+    });
+
+    // พิมพ์ / วางในช่อง Hex
+    etHex.addTextChangedListener(new android.text.TextWatcher() {
+        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+        @Override
+        public void afterTextChanged(android.text.Editable s) {
+            if (updatingFromUi[0]) return;
+            String raw = s.toString().trim();
+            if (raw.isEmpty()) return;
+            if (!raw.startsWith("#")) raw = "#" + raw;
+
+            int color = parseHexColor(raw);
+            if (color == 0) return;
+
+            if (raw.length() >= 9) {
+                currentAlpha[0] = (color >> 24) & 0xFF;
+            } else {
+                currentAlpha[0] = 255;
+            }
+
+            float[] hsv = new float[3];
+            Color.colorToHSV(color | 0xFF000000, hsv);
+            currentHue[0] = hsv[0];
+            currentValue[0] = hsv[2];
+
+            int withAlpha = (currentAlpha[0] << 24) | (color & 0x00FFFFFF);
+            colorDot.setBackground(createCircleBgWithAlpha(withAlpha));
+        }
     });
 
     // ===== ความสว่าง =====
@@ -1271,7 +1332,6 @@ private void showFullColorPickerDialog(String initialHex,
             tvBrightPercent.setText(progress + "%");
             updateColor.run();
         }
-
         @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
         @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
     });
@@ -1303,14 +1363,13 @@ private void showFullColorPickerDialog(String initialHex,
             tvAlphaPercent.setText(progress + "%");
             updateColor.run();
         }
-
         @Override public void onStartTrackingTouch(android.widget.SeekBar seekBar) {}
         @Override public void onStopTrackingTouch(android.widget.SeekBar seekBar) {}
     });
 
     updateColor.run();
 
-    // ===== ปุ่ม Cancel / Apply =====
+    // ===== Cancel / Apply =====
     LinearLayout btnRow = new LinearLayout(this);
     btnRow.setOrientation(LinearLayout.HORIZONTAL);
     btnRow.setGravity(Gravity.END);
@@ -1337,17 +1396,23 @@ private void showFullColorPickerDialog(String initialHex,
     btnApply.setPadding((int) (20 * density), (int) (12 * density),
             (int) (20 * density), (int) (12 * density));
     btnApply.setOnClickListener(v -> {
-        String hex = tvHex.getText().toString();
+        String hex = etHex.getText().toString().trim();
+        if (!hex.startsWith("#")) hex = "#" + hex;
+        hex = hex.toUpperCase();
+
+        if (parseHexColor(hex) == 0) {
+            showToast("รหัสสีไม่ถูกต้อง");
+            return;
+        }
+
         if (codeEditor != null && codeEditor.getCursor() != null) {
             if (replaceStartLine >= 0) {
-                // โหมด Edit → แทนที่รหัสเดิม
                 codeEditor.getText().delete(
                         replaceStartLine, replaceStartCol,
                         replaceEndLine, replaceEndCol
                 );
                 codeEditor.getText().insert(replaceStartLine, replaceStartCol, hex);
             } else {
-                // โหมด Insert → แทรกที่ cursor
                 codeEditor.getText().insert(
                         codeEditor.getCursor().getLeftLine(),
                         codeEditor.getCursor().getLeftColumn(),
