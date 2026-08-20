@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     // Utils
     private final Handler autoSaveHandler = new Handler(); 
     private Runnable saveRunnable;
-    private int lastSearchIndex = 0;
+    
     
     private float currentCodeFontSize = 14.0f; 
 
@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity {
    private String pendingProjectName = "";
    private boolean isLightEditorTheme = false;
    private boolean isShortcutExpanded = false;
-   
+   private EditorSearchManager editorSearchManager;
    
 @Override
 protected void onCreate(Bundle savedInstanceState) {
@@ -160,43 +160,48 @@ protected void onCreate(Bundle savedInstanceState) {
     setupLogic();
 }
 private void initViews() {
-    etFind = findViewById(R.id.etFind);
-    etReplace = findViewById(R.id.etReplace);
-    searchBar = findViewById(R.id.searchBar);
-    codeEditor = findViewById(R.id.codeEditor); 
-    tvFilePath = findViewById(R.id.tvFilePath); 
+    codeEditor = findViewById(R.id.codeEditor);
+    tvFilePath = findViewById(R.id.tvFilePath);
     tvSaveStatus = findViewById(R.id.tvSaveStatus);
     emptyStateView = findViewById(R.id.emptyStateView);
-    
-    treeView = findViewById(R.id.treeView); 
+    searchBar = findViewById(R.id.searchBar);
+    etFind = findViewById(R.id.etFind);
+    etReplace = findViewById(R.id.etReplace);
+
+    treeView = findViewById(R.id.treeView);
     tabRecyclerView = findViewById(R.id.tabRecyclerView);
-    tabRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+    tabRecyclerView.setLayoutManager(
+            new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
 
     Toolbar toolbar = findViewById(R.id.toolbar);
     setSupportActionBar(toolbar);
 
     drawerLayout = findViewById(R.id.drawer_layout);
-    ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawerLayout, toolbar, android.R.string.ok, android.R.string.cancel);
+    ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+            this, drawerLayout, toolbar, android.R.string.ok, android.R.string.cancel);
     drawerLayout.addDrawerListener(toggle);
     toggle.syncState();
 
-    findViewById(R.id.btnNext).setOnClickListener(v -> findAndHighlight());
-    findViewById(R.id.btnReplace).setOnClickListener(v -> replaceText());
-    
+    // ===== ระบบค้นหา / แทนที่ (แยกคลาส) =====
+    if (codeEditor != null) {
+        editorSearchManager = new EditorSearchManager(this, codeEditor);
+        editorSearchManager.bindViews(drawerLayout != null ? drawerLayout : findViewById(android.R.id.content));
+    }
+
     setupShortcutBar();
 
     // ===== ปุ่มด้านล่าง =====
     ImageView btnToggleShortcut = findViewById(R.id.btnToggleShortcut);
     View shortcutRow = findViewById(R.id.shortcutRow);
     ImageView btnColorPicker = findViewById(R.id.btnColorPicker);
-    ImageView btnPreview = findViewById(R.id.btnPreview);      // ข้าง Color
+    ImageView btnPreview = findViewById(R.id.btnPreview);
     ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
     ImageView btnGitPush = findViewById(R.id.btnGitPush);
     TextView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
     ImageView btnRedo = findViewById(R.id.btnRedo);
 
-    // ===== ตั้งค่าเริ่มต้น: ซ่อนแถบสัญลักษณ์ =====
+    // ซ่อนแถบสัญลักษณ์ตอนเริ่ม
     isShortcutExpanded = false;
     if (shortcutRow != null) {
         shortcutRow.setVisibility(View.GONE);
@@ -220,7 +225,6 @@ private void initViews() {
         btnColorPicker.setOnClickListener(v -> showFullColorPickerDialog());
     }
 
-    // Preview อยู่ข้าง Color
     if (btnPreview != null) {
         btnPreview.setOnClickListener(v -> toggleXmlPreview());
     }
@@ -1440,54 +1444,7 @@ private void updateAiOutput(String markdownText) {
     });
 }
 
-    private void findAndHighlight() {
-        String query = etFind.getText().toString();
-        String content = codeEditor.getText().toString();
-        if (query.isEmpty()) return;
-
-        int index = content.indexOf(query, lastSearchIndex);
-        if (index == -1) { index = content.indexOf(query, 0); lastSearchIndex = 0; }
-
-        if (index != -1) {
-            soraSelectLinear(index, index + query.length());
-            lastSearchIndex = index + query.length();
-        } else {
-            showToast("Not found");
-        }
-    }
-
-    private void soraSelectLinear(int startIdx, int endIdx) {
-        try {
-            String text = codeEditor.getText().toString();
-            int startLine = 0, startCol = 0, endLine = 0, endCol = 0, currentIdx = 0;
-            String[] lines = text.split("\n", -1);
-            for (int i = 0; i < lines.length; i++) {
-                int lineLen = lines[i].length() + 1; 
-                if (currentIdx + lineLen > startIdx && startLine == 0 && startCol == 0) {
-                    startLine = i; startCol = startIdx - currentIdx;
-                }
-                if (currentIdx + lineLen > endIdx) {
-                    endLine = i; endCol = endIdx - currentIdx; break;
-                }
-                currentIdx += lineLen;
-            }
-            final int sL = startLine; final int sC = startCol;
-            final int eL = endLine; final int eC = endCol;
-            runOnUiThread(() -> {
-                codeEditor.setSelectionRegion(sL, sC, eL, eC);
-                codeEditor.jumpToLine(sL); 
-            });
-        } catch (Exception e) { e.printStackTrace(); }
-    }
-
-    private void replaceText() {
-        String target = etFind.getText().toString();
-        String replacement = etReplace.getText().toString();
-        if (target.isEmpty()) return;
-        String content = codeEditor.getText().toString();
-        codeEditor.setText(content.replaceFirst(java.util.regex.Pattern.quote(target), replacement));
-        showToast("Replaced");
-    }
+    
 
 @Override
 public boolean onCreateOptionsMenu(Menu menu) {
@@ -1502,19 +1459,30 @@ public boolean onCreateOptionsMenu(Menu menu) {
 }
     
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.action_build) { startCloudBuildPipeline(); return true; }
-        
-        
-        if (id == R.id.action_search) {
-            searchBar.setVisibility(searchBar.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
-            return true;
-        }
-        return super.onOptionsItemSelected(item);
+  @Override
+public boolean onOptionsItemSelected(MenuItem item) {
+    int id = item.getItemId();
+
+    if (id == R.id.action_build) {
+        startCloudBuildPipeline();
+        return true;
     }
-    private void toggleEditorTheme() {
+
+    if (id == R.id.action_search) {
+        if (editorSearchManager != null) {
+            editorSearchManager.toggle();
+        } else if (searchBar != null) {
+            // fallback กรณี manager ยังไม่พร้อม
+            searchBar.setVisibility(
+                    searchBar.getVisibility() == View.GONE ? View.VISIBLE : View.GONE);
+        }
+        return true;
+    }
+
+    return super.onOptionsItemSelected(item);
+}
+
+private void toggleEditorTheme() {
     if (codeEditor == null) return;
 
     isLightEditorTheme = !isLightEditorTheme;
