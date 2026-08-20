@@ -3,13 +3,18 @@ package com.dev.ministudio;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,12 +27,16 @@ import io.github.rosemoe.sora.widget.CodeEditor;
 import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
 
 /**
- * จัดการค้นหา / แทนที่ใน CodeEditor (Sora)
+ * ค้นหา / แทนที่ + ประวัติการค้นหา สำหรับ Sora CodeEditor
  */
 public class EditorSearchManager {
 
     private static final int SEARCH_HIGHLIGHT = 0xFFE0AF68; // ทอง — คำที่ค้นเจอ
     private static final int NORMAL_SELECTION = 0xFF364A82; // ฟ้า — เลือกข้อความปกติ
+
+    private static final String PREFS_SEARCH = "EditorSearchHistory";
+    private static final String KEY_HISTORY = "history";
+    private static final int MAX_HISTORY = 12;
 
     private final Activity activity;
     private final CodeEditor codeEditor;
@@ -37,6 +46,10 @@ public class EditorSearchManager {
     private EditText etReplace;
     private TextView tvSearchCount;
     private CheckBox cbCaseSensitive;
+
+    private ListView lvSearchHistory;
+    private ArrayAdapter<String> historyAdapter;
+    private final ArrayList<String> searchHistory = new ArrayList<>();
 
     private int searchMatchIndex = -1;
     private final ArrayList<int[]> searchMatches = new ArrayList<>(); // [start, end]
@@ -75,6 +88,13 @@ public class EditorSearchManager {
                 @Override public void onTextChanged(CharSequence s, int st, int b, int c) {}
                 @Override
                 public void afterTextChanged(Editable s) {
+                    // ประวัติ: ช่องว่าง + มีประวัติ → โชว์
+                    if (s.length() == 0 && !searchHistory.isEmpty() && etFind.hasFocus()) {
+                        showHistoryPopup();
+                    } else {
+                        hideHistoryPopup();
+                    }
+
                     rebuildSearchMatches();
                     if (!searchMatches.isEmpty()) {
                         searchMatchIndex = 0;
@@ -97,7 +117,132 @@ public class EditorSearchManager {
                 }
             });
         }
+
+        setupSearchHistory();
     }
+
+    // ===================== ประวัติการค้นหา =====================
+
+    private void setupSearchHistory() {
+        loadHistory();
+        if (searchBar == null || !(searchBar.getParent() instanceof ViewGroup)) return;
+
+        float density = activity.getResources().getDisplayMetrics().density;
+
+        lvSearchHistory = new ListView(activity);
+        lvSearchHistory.setBackgroundColor(Color.parseColor("#1F2335"));
+        lvSearchHistory.setDivider(new ColorDrawable(Color.parseColor("#292E42")));
+        lvSearchHistory.setDividerHeight(1);
+        lvSearchHistory.setVisibility(View.GONE);
+
+        ViewGroup parent = (ViewGroup) searchBar.getParent();
+        int idx = parent.indexOfChild(searchBar);
+        parent.addView(lvSearchHistory, idx + 1, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                (int) (180 * density)
+        ));
+
+        historyAdapter = new ArrayAdapter<String>(
+                activity, android.R.layout.simple_list_item_1, searchHistory) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                TextView tv = (TextView) super.getView(position, convertView, parent);
+                tv.setTextColor(Color.parseColor("#C0CAF5"));
+                tv.setTextSize(14);
+                tv.setPadding(32, 28, 32, 28);
+                return tv;
+            }
+        };
+        lvSearchHistory.setAdapter(historyAdapter);
+
+        lvSearchHistory.setOnItemClickListener((p, v, position, id) -> {
+            if (position < 0 || position >= searchHistory.size()) return;
+            String q = searchHistory.get(position);
+            if (etFind != null) {
+                etFind.setText(q);
+                etFind.setSelection(q.length());
+            }
+            hideHistoryPopup();
+            rebuildSearchMatches();
+            if (!searchMatches.isEmpty()) {
+                searchMatchIndex = 0;
+                selectCurrentMatch();
+            } else {
+                findNext();
+            }
+        });
+
+        lvSearchHistory.setOnItemLongClickListener((p, v, position, id) -> {
+            if (position >= 0 && position < searchHistory.size()) {
+                searchHistory.remove(position);
+                saveHistory();
+                historyAdapter.notifyDataSetChanged();
+                if (searchHistory.isEmpty()) hideHistoryPopup();
+                toast("ลบประวัติแล้ว");
+            }
+            return true;
+        });
+
+        if (etFind != null) {
+            etFind.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus && etFind.getText().toString().isEmpty() && !searchHistory.isEmpty()) {
+                    showHistoryPopup();
+                } else if (!hasFocus) {
+                    etFind.postDelayed(this::hideHistoryPopup, 200);
+                }
+            });
+        }
+    }
+
+    private void showHistoryPopup() {
+        if (lvSearchHistory == null || searchHistory.isEmpty()) return;
+        if (historyAdapter != null) historyAdapter.notifyDataSetChanged();
+        lvSearchHistory.setVisibility(View.VISIBLE);
+    }
+
+    private void hideHistoryPopup() {
+        if (lvSearchHistory != null) {
+            lvSearchHistory.setVisibility(View.GONE);
+        }
+    }
+
+    private void addToHistory(String query) {
+        if (query == null) return;
+        query = query.trim();
+        if (query.isEmpty()) return;
+
+        searchHistory.remove(query);
+        searchHistory.add(0, query);
+        while (searchHistory.size() > MAX_HISTORY) {
+            searchHistory.remove(searchHistory.size() - 1);
+        }
+        saveHistory();
+        if (historyAdapter != null) historyAdapter.notifyDataSetChanged();
+    }
+
+    private void loadHistory() {
+        searchHistory.clear();
+        String raw = activity.getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
+                .getString(KEY_HISTORY, "");
+        if (raw == null || raw.isEmpty()) return;
+        for (String s : raw.split("\u0001")) {
+            if (!s.isEmpty()) searchHistory.add(s);
+        }
+    }
+
+    private void saveHistory() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < searchHistory.size(); i++) {
+            if (i > 0) sb.append('\u0001');
+            sb.append(searchHistory.get(i));
+        }
+        activity.getSharedPreferences(PREFS_SEARCH, Context.MODE_PRIVATE)
+                .edit()
+                .putString(KEY_HISTORY, sb.toString())
+                .apply();
+    }
+
+    // ===================== เปิด / ปิดแถบ =====================
 
     public void toggle() {
         if (searchBar == null) return;
@@ -119,16 +264,19 @@ public class EditorSearchManager {
                 imm.showSoftInput(etFind, InputMethodManager.SHOW_IMPLICIT);
             }
             rebuildSearchMatches();
+            if (etFind.getText().toString().isEmpty() && !searchHistory.isEmpty()) {
+                showHistoryPopup();
+            }
         }
     }
 
     public void hide() {
         if (searchBar != null) searchBar.setVisibility(View.GONE);
+        hideHistoryPopup();
         searchMatches.clear();
         searchMatchIndex = -1;
         updateSearchCountLabel();
 
-        // คืนสี selection ปกติ
         if (codeEditor != null) {
             codeEditor.getColorScheme().setColor(
                     EditorColorScheme.SELECTED_TEXT_BACKGROUND,
@@ -146,6 +294,8 @@ public class EditorSearchManager {
     public boolean isVisible() {
         return searchBar != null && searchBar.getVisibility() == View.VISIBLE;
     }
+
+    // ===================== ค้นหา / แทนที่ =====================
 
     private boolean isCaseSensitive() {
         return cbCaseSensitive != null && cbCaseSensitive.isChecked();
@@ -205,6 +355,10 @@ public class EditorSearchManager {
             updateSearchCountLabel();
             return;
         }
+
+        if (etFind != null) addToHistory(etFind.getText().toString());
+        hideHistoryPopup();
+
         searchMatchIndex = (searchMatchIndex + 1) % searchMatches.size();
         selectCurrentMatch();
     }
@@ -318,7 +472,6 @@ public class EditorSearchManager {
             int[] s = indexToLineCol(startIdx);
             int[] e = indexToLineCol(endIdx);
             activity.runOnUiThread(() -> {
-                // ไฮไลต์คำค้นหาเป็นสีทอง เด่นบนธีมมืด
                 codeEditor.getColorScheme().setColor(
                         EditorColorScheme.SELECTED_TEXT_BACKGROUND,
                         SEARCH_HIGHLIGHT
