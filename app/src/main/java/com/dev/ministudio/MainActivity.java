@@ -1519,7 +1519,6 @@ private void showFileSearchDialog() {
         window.setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
     }
 
-    // ดันแถบค้นหาลงมาใต้ status bar
     View searchBarRoot = dialog.findViewById(R.id.searchBarRoot);
     if (searchBarRoot != null) {
         int statusBarHeight = 0;
@@ -1548,7 +1547,10 @@ private void showFileSearchDialog() {
     java.io.File root = new java.io.File(currentProject.getRootPath());
     final String rootPath = root.getAbsolutePath();
 
-    android.widget.BaseAdapter adapter = new android.widget.BaseAdapter() {
+    // ใช้ array กัน error "might not have been initialized"
+    final android.widget.BaseAdapter[] adapterRef = new android.widget.BaseAdapter[1];
+
+    adapterRef[0] = new android.widget.BaseAdapter() {
         @Override
         public int getCount() {
             return resultFiles.size();
@@ -1631,16 +1633,16 @@ private void showFileSearchDialog() {
                 imgIcon.setColorFilter(android.graphics.Color.parseColor("#7AA2F7"));
             }
 
-            // ปุ่มลบ (ถ้ามีใน layout)
             android.widget.ImageButton btnDelete = convertView.findViewById(R.id.btnDeleteFile);
-if (btnDelete != null) {
-    btnDelete.setOnClickListener(v -> confirmAndDeleteFile(file, resultFiles, adapter, tvHint));
-}
+            if (btnDelete != null) {
+                btnDelete.setOnClickListener(v ->
+                        confirmAndDeleteFile(file, resultFiles, adapterRef[0], tvHint));
+            }
 
             return convertView;
         }
     };
-    lvResults.setAdapter(adapter);
+    lvResults.setAdapter(adapterRef[0]);
 
     android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     final Runnable[] searchTask = new Runnable[1];
@@ -1661,7 +1663,7 @@ if (btnDelete != null) {
             searchTask[0] = () -> {
                 if (q.isEmpty()) {
                     resultFiles.clear();
-                    adapter.notifyDataSetChanged();
+                    adapterRef[0].notifyDataSetChanged();
                     tvHint.setText("ผลการค้นหา");
                     return;
                 }
@@ -1672,7 +1674,7 @@ if (btnDelete != null) {
                     runOnUiThread(() -> {
                         resultFiles.clear();
                         resultFiles.addAll(found);
-                        adapter.notifyDataSetChanged();
+                        adapterRef[0].notifyDataSetChanged();
                         tvHint.setText(found.isEmpty()
                                 ? "ไม่พบไฟล์ที่ตรงกับ \"" + q + "\""
                                 : "ผลการค้นหา · " + found.size() + " ไฟล์");
@@ -1699,7 +1701,7 @@ if (btnDelete != null) {
     if (imm != null) {
         imm.showSoftInput(etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
     }
-}
+}}
 private void confirmAndDeleteFile(java.io.File file,
                                   java.util.List<java.io.File> resultFiles,
                                   android.widget.BaseAdapter adapter,
