@@ -16,7 +16,7 @@
         android:layout_height="40dp"
         android:src="@android:drawable/ic_menu_agenda"
         android:scaleType="centerInside"
-        android:tint="#B0BEC5" />
+        android:tint="#7AA2F7" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -29,7 +29,7 @@
             android:id="@+id/tvFileName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="#C0CAF5"
             android:textSize="15sp"
             android:textStyle="bold"
             android:maxLines="1"
@@ -39,7 +39,7 @@
             android:id="@+id/tvFileMeta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#9E9E9E"
+            android:textColor="#565F89"
             android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"
@@ -49,7 +49,7 @@
             android:id="@+id/tvFilePath"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#757575"
+            android:textColor="#3B4261"
             android:textSize="11sp"
             android:maxLines="2"
             android:ellipsize="middle"

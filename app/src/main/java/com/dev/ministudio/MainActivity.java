@@ -230,7 +230,7 @@ private void initViews() {
     }
 
     if (btnFileSearch != null) {
-        btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
+        btnFileSearch.setOnClickListener(v -> );
     }
 
     if (btnGitPush != null) {
@@ -1508,32 +1508,32 @@ private void showFileSearchDialog() {
     android.app.Dialog dialog = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar);
     dialog.setContentView(R.layout.dialog_file_search);
 
-if (dialog.getWindow() != null) {
-    android.view.Window window = dialog.getWindow();
-    window.setLayout(
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT
-    );
-    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
-    window.setStatusBarColor(android.graphics.Color.parseColor("#1E1E1E"));
-    window.setNavigationBarColor(android.graphics.Color.parseColor("#121212"));
-}
-
-// ดันแถบค้นหาลงมาใต้ status bar
-View searchBarRoot = dialog.findViewById(R.id.searchBarRoot);
-if (searchBarRoot != null) {
-    int statusBarHeight = 0;
-    int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-    if (resId > 0) {
-        statusBarHeight = getResources().getDimensionPixelSize(resId);
+    if (dialog.getWindow() != null) {
+        android.view.Window window = dialog.getWindow();
+        window.setLayout(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
+        );
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
+        window.setStatusBarColor(android.graphics.Color.parseColor("#1F2335"));
+        window.setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
     }
-    searchBarRoot.setPadding(
-            searchBarRoot.getPaddingLeft(),
-            statusBarHeight,
-            searchBarRoot.getPaddingRight(),
-            searchBarRoot.getPaddingBottom()
-    );
-}
+
+    // ดันแถบค้นหาลงมาใต้ status bar
+    View searchBarRoot = dialog.findViewById(R.id.searchBarRoot);
+    if (searchBarRoot != null) {
+        int statusBarHeight = 0;
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resId > 0) {
+            statusBarHeight = getResources().getDimensionPixelSize(resId);
+        }
+        searchBarRoot.setPadding(
+                searchBarRoot.getPaddingLeft(),
+                statusBarHeight,
+                searchBarRoot.getPaddingRight(),
+                searchBarRoot.getPaddingBottom()
+        );
+    }
 
     android.widget.EditText etSearch = dialog.findViewById(R.id.etFileSearch);
     android.widget.TextView tvHint = dialog.findViewById(R.id.tvSearchHint);
@@ -1549,9 +1549,20 @@ if (searchBarRoot != null) {
     final String rootPath = root.getAbsolutePath();
 
     android.widget.BaseAdapter adapter = new android.widget.BaseAdapter() {
-        @Override public int getCount() { return resultFiles.size(); }
-        @Override public Object getItem(int position) { return resultFiles.get(position); }
-        @Override public long getItemId(int position) { return position; }
+        @Override
+        public int getCount() {
+            return resultFiles.size();
+        }
+
+        @Override
+        public Object getItem(int position) {
+            return resultFiles.get(position);
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return position;
+        }
 
         @Override
         public android.view.View getView(int position, android.view.View convertView, android.view.ViewGroup parent) {
@@ -1567,17 +1578,19 @@ if (searchBarRoot != null) {
 
             String name = file.getName();
             String q = etSearch.getText().toString().trim();
-            // ไฮไลต์ส่วนที่ตรงกับคำค้น (ถ้ามี)
+
             if (!q.isEmpty() && name.toLowerCase().contains(q.toLowerCase())) {
                 android.text.SpannableString span = new android.text.SpannableString(name);
                 int start = name.toLowerCase().indexOf(q.toLowerCase());
                 span.setSpan(
-                        new android.text.style.BackgroundColorSpan(android.graphics.Color.parseColor("#FDD835")),
+                        new android.text.style.BackgroundColorSpan(
+                                android.graphics.Color.parseColor("#E0AF68")),
                         start, start + q.length(),
                         android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 );
                 span.setSpan(
-                        new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#212121")),
+                        new android.text.style.ForegroundColorSpan(
+                                android.graphics.Color.parseColor("#1A1B26")),
                         start, start + q.length(),
                         android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                 );
@@ -1592,7 +1605,8 @@ if (searchBarRoot != null) {
             else if (size < 1024 * 1024) sizeStr = String.format("%.2f KB", size / 1024.0);
             else sizeStr = String.format("%.2f MB", size / (1024.0 * 1024.0));
 
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yy HH:mm", java.util.Locale.getDefault());
+            java.text.SimpleDateFormat sdf =
+                    new java.text.SimpleDateFormat("dd/MM/yy HH:mm", java.util.Locale.getDefault());
             String dateStr = sdf.format(new java.util.Date(file.lastModified()));
             tvMeta.setText(sizeStr + "    " + dateStr);
 
@@ -1601,7 +1615,6 @@ if (searchBarRoot != null) {
                 path = path.substring(rootPath.length());
                 if (path.startsWith("/")) path = path.substring(1);
             }
-            // ตัดชื่อไฟล์ออก เหลือแค่โฟลเดอร์
             int lastSlash = path.lastIndexOf('/');
             if (lastSlash >= 0) path = path.substring(0, lastSlash + 1);
             else path = "/";
@@ -1609,13 +1622,20 @@ if (searchBarRoot != null) {
 
             String lower = name.toLowerCase();
             if (lower.endsWith(".java")) {
-                imgIcon.setColorFilter(android.graphics.Color.parseColor("#00E5FF"));
+                imgIcon.setColorFilter(android.graphics.Color.parseColor("#7DCFFF"));
             } else if (lower.endsWith(".xml")) {
-                imgIcon.setColorFilter(android.graphics.Color.parseColor("#FF6D00"));
+                imgIcon.setColorFilter(android.graphics.Color.parseColor("#E0AF68"));
             } else if (lower.endsWith(".gradle") || lower.endsWith(".properties")) {
-                imgIcon.setColorFilter(android.graphics.Color.parseColor("#78909C"));
+                imgIcon.setColorFilter(android.graphics.Color.parseColor("#9ECE6A"));
             } else {
-                imgIcon.setColorFilter(android.graphics.Color.parseColor("#B0BEC5"));
+                imgIcon.setColorFilter(android.graphics.Color.parseColor("#7AA2F7"));
+            }
+
+            // ปุ่มลบ (ถ้ามีใน layout)
+            android.widget.ImageButton btnDelete = convertView.findViewById(R.id.btnDeleteFile);
+            if (btnDelete != null) {
+                btnDelete.setOnClickListener(v ->
+                        confirmAndDeleteFile(file, resultFiles, this, tvHint));
             }
 
             return convertView;
@@ -1627,8 +1647,12 @@ if (searchBarRoot != null) {
     final Runnable[] searchTask = new Runnable[1];
 
     etSearch.addTextChangedListener(new android.text.TextWatcher() {
-        @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-        @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        @Override
+        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+        @Override
+        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
         @Override
         public void afterTextChanged(android.text.Editable s) {
             String q = s.toString().trim();
@@ -1677,7 +1701,6 @@ if (searchBarRoot != null) {
         imm.showSoftInput(etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
     }
 }
-
     private void triggerTreeRefresh(FileNode parentNode) { 
         if (projectTreeManager != null) projectTreeManager.refreshFileTree(); 
     }
