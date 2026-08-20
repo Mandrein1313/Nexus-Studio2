@@ -121,6 +121,17 @@ public class EditorSearchManager {
         setupSearchHistory();
     }
 
+    // ===================== จัดการโฟกัส Editor =====================
+
+    private void setEditorFocusEnabled(boolean enabled) {
+        if (codeEditor == null) return;
+        codeEditor.setFocusable(enabled);
+        codeEditor.setFocusableInTouchMode(enabled);
+        if (!enabled) {
+            codeEditor.clearFocus();
+        }
+    }
+
     // ===================== ประวัติการค้นหา =====================
 
     private void setupSearchHistory() {
@@ -183,15 +194,21 @@ public class EditorSearchManager {
             return true;
         });
 
-        if (etFind != null) {
-            etFind.setOnFocusChangeListener((v, hasFocus) -> {
-                if (hasFocus && etFind.getText().toString().isEmpty() && !searchHistory.isEmpty()) {
+        View.OnFocusChangeListener searchFocusListener = (v, hasFocus) -> {
+            if (hasFocus) {
+                setEditorFocusEnabled(false);
+                if (v == etFind && etFind.getText().toString().isEmpty() && !searchHistory.isEmpty()) {
                     showHistoryPopup();
-                } else if (!hasFocus) {
+                }
+            } else {
+                if (v == etFind) {
                     etFind.postDelayed(this::hideHistoryPopup, 200);
                 }
-            });
-        }
+            }
+        };
+
+        if (etFind != null) etFind.setOnFocusChangeListener(searchFocusListener);
+        if (etReplace != null) etReplace.setOnFocusChangeListener(searchFocusListener);
     }
 
     private void showHistoryPopup() {
@@ -256,7 +273,13 @@ public class EditorSearchManager {
     public void show() {
         if (searchBar == null) return;
         searchBar.setVisibility(View.VISIBLE);
+
+        // ตัดโฟกัส editor ไม่ให้แย่งรับปุ่มจากคีย์บอร์ด
+        setEditorFocusEnabled(false);
+
         if (etFind != null) {
+            etFind.setFocusable(true);
+            etFind.setFocusableInTouchMode(true);
             etFind.requestFocus();
             InputMethodManager imm =
                     (InputMethodManager) activity.getSystemService(Context.INPUT_METHOD_SERVICE);
@@ -271,11 +294,15 @@ public class EditorSearchManager {
     }
 
     public void hide() {
-        if (searchBar != null) searchBar.setVisibility(View.GONE);
+        if (searchBar == null) return;
+        searchBar.setVisibility(View.GONE);
         hideHistoryPopup();
         searchMatches.clear();
         searchMatchIndex = -1;
         updateSearchCountLabel();
+
+        // คืนโฟกัสให้ editor
+        setEditorFocusEnabled(true);
 
         if (codeEditor != null) {
             codeEditor.getColorScheme().setColor(
@@ -283,6 +310,7 @@ public class EditorSearchManager {
                     NORMAL_SELECTION
             );
             try {
+                codeEditor.requestFocus();
                 int line = codeEditor.getCursor().getLeftLine();
                 int col = codeEditor.getCursor().getLeftColumn();
                 codeEditor.setSelection(line, col);
