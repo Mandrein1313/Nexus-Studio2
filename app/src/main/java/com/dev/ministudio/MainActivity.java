@@ -1527,7 +1527,7 @@ private void handleAiAction(boolean isOptimize) {
     if (isOptimize) aiLayoutAnalyzer.askAi(prompt, listener);
     else aiLayoutAnalyzer.analyzeCode(fileName, code, listener);
 }
-}
+
 
 // ฟังก์ชันอัปเดตหน้าจอ WebView ที่ใช้ซ้ำได้
 private void updateAiOutput(String markdownText) {
