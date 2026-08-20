@@ -230,7 +230,7 @@ private void initViews() {
     }
 
     if (btnFileSearch != null) {
-        btnFileSearch.setOnClickListener(v -> );
+        btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
 
     if (btnGitPush != null) {
