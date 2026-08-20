@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     
-    <!-- 🌟 สิทธิ์สำหรับการรัน Foreground Service เบื้องหลังขณะปิดหน้าจอ -->
+    <!-- สิทธิ์ Foreground Service -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
@@ -34,14 +34,20 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="true"> 
-        </activity>
+            android:exported="true" />
 
         <activity 
             android:name=".AiSettingsActivity"
             android:exported="false" />
 
-        <!-- 🌟 ลงทะเบียน Services ทั้งหมด -->
+        <!-- AI Chat แยกจาก Console -->
+        <activity
+            android:name=".ai.AiChatActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme" />
+
+        <!-- Services -->
         <service 
             android:name=".GitHubPushService"
             android:foregroundServiceType="dataSync"
@@ -59,7 +65,7 @@
             android:exported="false"
             android:foregroundServiceType="dataSync" />
 
-        <!-- 🌟 FileProvider สำหรับแชร์ไฟล์ APK ให้ระบบ Android เรียกหน้าติดตั้ง -->
+        <!-- FileProvider -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

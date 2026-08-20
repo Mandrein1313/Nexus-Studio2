@@ -57,6 +57,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.graphics.Insets;
 import android.content.SharedPreferences;
+import com.dev.ministudio.ai.AiChatActivity;
+import android.content.Intent;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -232,6 +234,10 @@ private void initViews() {
     if (btnFileSearch != null) {
         btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
+    
+    if (btnMainAi != null) {
+    btnMainAi.setOnClickListener(v -> openAiChat());
+}
 
     if (btnGitPush != null) {
         btnGitPush.setOnClickListener(v -> {
@@ -595,7 +601,7 @@ private void showFullPanelDialog(int initialTabPosition) {
 
     public void handleAiQuery() {
         if (fullPanelDialog == null || !fullPanelDialog.isShowing()) {
-            showFullPanelDialog(1);
+            openAiChat();
         }
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
@@ -693,6 +699,32 @@ private void showFullPanelDialog(int initialTabPosition) {
             etAiInput.setText("");
         }, 300);
     }
+    private void openAiChat() {
+    Intent intent = new Intent(this, AiChatActivity.class);
+
+    if (currentProject != null) {
+        intent.putExtra(AiChatActivity.EXTRA_PROJECT_NAME, currentProject.getProjectName());
+    }
+
+    // ส่งโค้ดที่เลือกอยู่ (ถ้ามี)
+    if (codeEditor != null && codeEditor.getCursor() != null) {
+        try {
+            String selected = codeEditor.getText()
+                    .subContent(
+                            codeEditor.getCursor().getLeftLine(),
+                            codeEditor.getCursor().getLeftColumn(),
+                            codeEditor.getCursor().getRightLine(),
+                            codeEditor.getCursor().getRightColumn()
+                    ).toString();
+            if (selected != null && !selected.trim().isEmpty()) {
+                intent.putExtra(AiChatActivity.EXTRA_CODE_SNIPPET, selected);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    startActivity(intent);
+}
     // 🌟 ระบบตรวจจับสกัดกั้นและแก้บั๊กอัจฉริยะ (AI Error Fixer Pipeline) สำหรับระบบที่ 1 ตัวใหม่ล่าสุดครับท่าน
     public void triggerAiErrorFixerPipeline() {
         if (codeEditor == null || currentProject == null) {
@@ -1470,7 +1502,7 @@ private void handleAiAction(boolean isOptimize) {
     }
 
     if (aiLayoutAnalyzer != null) aiLayoutAnalyzer.stopSpeaking();
-    showFullPanelDialog(1);
+    openAiChat();
 
     String fileName = (currentFile != null) ? currentFile.getName() : "UnknownFile.java";
     String code = codeEditor.getText().toString();
