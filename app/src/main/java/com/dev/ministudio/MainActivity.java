@@ -199,7 +199,7 @@ private void initViews() {
     ImageView btnPreview = findViewById(R.id.btnPreview);
     ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
     ImageView btnGitPush = findViewById(R.id.btnGitPush);
-    ImageView btnMainAi = findViewById(R.id.btnMainAi);  // ไอคอนจริง
+    ImageView btnMainAi = findViewById(R.id.btnMainAi);
     ImageView btnUndo = findViewById(R.id.btnUndo);
     ImageView btnRedo = findViewById(R.id.btnRedo);
 
@@ -234,10 +234,6 @@ private void initViews() {
     if (btnFileSearch != null) {
         btnFileSearch.setOnClickListener(v -> showFileSearchDialog());
     }
-    
-    if (btnMainAi != null) {
-    btnMainAi.setOnClickListener(v -> openAiChat());
-}
 
     if (btnGitPush != null) {
         btnGitPush.setOnClickListener(v -> {
@@ -249,8 +245,9 @@ private void initViews() {
         });
     }
 
+    // ผูกคลิกแค่จุดเดียว เปิด AI Chat
     if (btnMainAi != null) {
-        btnMainAi.setOnClickListener(v -> handleAiAction(false));
+        btnMainAi.setOnClickListener(v -> openAiChat());
     }
 
     // ===== Toggle ย่อ/ขยาย =====
@@ -293,6 +290,8 @@ private void initViews() {
 
     previewContainer = findViewById(R.id.previewContainer);
 }
+
+
 private void setupLogic() {
     aiLayoutAnalyzer = new com.dev.ministudio.AiLayoutAnalyzer(this);
     dialogManager = new ProjectDialogManager(this, parentNode -> {
@@ -1527,6 +1526,7 @@ private void handleAiAction(boolean isOptimize) {
 
     if (isOptimize) aiLayoutAnalyzer.askAi(prompt, listener);
     else aiLayoutAnalyzer.analyzeCode(fileName, code, listener);
+}
 }
 
 // ฟังก์ชันอัปเดตหน้าจอ WebView ที่ใช้ซ้ำได้
