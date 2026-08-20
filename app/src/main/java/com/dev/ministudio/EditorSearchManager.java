@@ -51,8 +51,6 @@ public class EditorSearchManager {
         cbCaseSensitive = root.findViewById(R.id.cbCaseSensitive);
 
         View btnNext = root.findViewById(R.id.btnSearchNext);
-        if (btnNext == null) btnNext = root.findViewById(R.id.btnNext);
-
         View btnPrev = root.findViewById(R.id.btnSearchPrev);
         View btnClose = root.findViewById(R.id.btnCloseSearch);
         View btnReplace = root.findViewById(R.id.btnReplace);
