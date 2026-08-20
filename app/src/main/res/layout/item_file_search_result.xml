@@ -5,7 +5,7 @@
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:paddingStart="16dp"
-    android:paddingEnd="16dp"
+    android:paddingEnd="8dp"
     android:paddingTop="12dp"
     android:paddingBottom="12dp"
     android:background="?attr/selectableItemBackground">
@@ -23,7 +23,8 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:orientation="vertical"
-        android:layout_marginStart="12dp">
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="8dp">
 
         <TextView
             android:id="@+id/tvFileName"
@@ -55,5 +56,16 @@
             android:ellipsize="middle"
             android:layout_marginTop="2dp" />
     </LinearLayout>
+
+    <!-- ปุ่มถังขยะ -->
+    <ImageButton
+        android:id="@+id/btnDeleteFile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:src="@android:drawable/ic_menu_delete"
+        android:contentDescription="ลบไฟล์"
+        android:tint="#F7768E"
+        android:scaleType="centerInside" />
 
 </LinearLayout>

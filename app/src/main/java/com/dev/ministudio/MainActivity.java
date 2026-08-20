@@ -1632,7 +1632,10 @@ private void showFileSearchDialog() {
             }
 
             // ปุ่มลบ (ถ้ามีใน layout)
-            
+            android.widget.ImageButton btnDelete = convertView.findViewById(R.id.btnDeleteFile);
+if (btnDelete != null) {
+    btnDelete.setOnClickListener(v -> confirmAndDeleteFile(file, resultFiles, adapter, tvHint));
+}
 
             return convertView;
         }
@@ -1696,6 +1699,67 @@ private void showFileSearchDialog() {
     if (imm != null) {
         imm.showSoftInput(etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
     }
+}
+private void confirmAndDeleteFile(java.io.File file,
+                                  java.util.List<java.io.File> resultFiles,
+                                  android.widget.BaseAdapter adapter,
+                                  android.widget.TextView tvHint) {
+    if (file == null || !file.exists()) {
+        showToast("ไม่พบไฟล์");
+        return;
+    }
+
+    new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("ลบไฟล์")
+            .setMessage("ต้องการลบ \"" + file.getName() + "\" หรือไม่?\n\nการลบไม่สามารถย้อนกลับได้")
+            .setPositiveButton("ลบ", (d, w) -> {
+                if (currentProject != null) {
+                    java.io.File current = currentProject.getCurrentOpenFile();
+                    if (current != null && current.getAbsolutePath().equals(file.getAbsolutePath())) {
+                        currentProject.removeFileFromTabs(file);
+                        currentProject.setCurrentOpenFile(null);
+                        if (codeEditor != null) codeEditor.setText("");
+                        setEditorActiveState(false);
+                        if (tvFilePath != null) tvFilePath.setText("No file open");
+                        if (tabAdapter != null) tabAdapter.notifyDataSetChanged();
+                    } else {
+                        currentProject.removeFileFromTabs(file);
+                        if (tabAdapter != null) tabAdapter.notifyDataSetChanged();
+                    }
+                }
+
+                boolean ok = deleteRecursive(file);
+                if (ok) {
+                    resultFiles.remove(file);
+                    adapter.notifyDataSetChanged();
+                    if (tvHint != null) {
+                        tvHint.setText(resultFiles.isEmpty()
+                                ? "ไม่พบไฟล์"
+                                : "ผลการค้นหา · " + resultFiles.size() + " ไฟล์");
+                    }
+                    if (projectTreeManager != null) {
+                        projectTreeManager.refreshFileTree();
+                    }
+                    showToast("ลบ \"" + file.getName() + "\" แล้ว");
+                } else {
+                    showToast("ลบไม่สำเร็จ");
+                }
+            })
+            .setNegativeButton("ยกเลิก", null)
+            .show();
+}
+
+private boolean deleteRecursive(java.io.File fileOrDir) {
+    if (fileOrDir == null || !fileOrDir.exists()) return false;
+    if (fileOrDir.isDirectory()) {
+        java.io.File[] children = fileOrDir.listFiles();
+        if (children != null) {
+            for (java.io.File child : children) {
+                if (!deleteRecursive(child)) return false;
+            }
+        }
+    }
+    return fileOrDir.delete();
 }
     private void triggerTreeRefresh(FileNode parentNode) { 
         if (projectTreeManager != null) projectTreeManager.refreshFileTree(); 
