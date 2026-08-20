@@ -19,11 +19,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import io.github.rosemoe.sora.widget.CodeEditor;
+import io.github.rosemoe.sora.widget.schemes.EditorColorScheme;
 
 /**
  * จัดการค้นหา / แทนที่ใน CodeEditor (Sora)
  */
 public class EditorSearchManager {
+
+    private static final int SEARCH_HIGHLIGHT = 0xFFE0AF68; // ทอง — คำที่ค้นเจอ
+    private static final int NORMAL_SELECTION = 0xFF364A82; // ฟ้า — เลือกข้อความปกติ
 
     private final Activity activity;
     private final CodeEditor codeEditor;
@@ -42,7 +46,6 @@ public class EditorSearchManager {
         this.codeEditor = codeEditor;
     }
 
-    /** ผูก view จาก layout แล้วตั้ง listener */
     public void bindViews(View root) {
         searchBar = root.findViewById(R.id.searchBar);
         etFind = root.findViewById(R.id.etFind);
@@ -64,10 +67,6 @@ public class EditorSearchManager {
 
         if (etFind != null) {
             etFind.setOnEditorActionListener((tv, actionId, event) -> {
-                if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                    findNext();
-                    return true;
-                }
                 findNext();
                 return true;
             });
@@ -128,6 +127,20 @@ public class EditorSearchManager {
         searchMatches.clear();
         searchMatchIndex = -1;
         updateSearchCountLabel();
+
+        // คืนสี selection ปกติ
+        if (codeEditor != null) {
+            codeEditor.getColorScheme().setColor(
+                    EditorColorScheme.SELECTED_TEXT_BACKGROUND,
+                    NORMAL_SELECTION
+            );
+            try {
+                int line = codeEditor.getCursor().getLeftLine();
+                int col = codeEditor.getCursor().getLeftColumn();
+                codeEditor.setSelection(line, col);
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     public boolean isVisible() {
@@ -305,6 +318,11 @@ public class EditorSearchManager {
             int[] s = indexToLineCol(startIdx);
             int[] e = indexToLineCol(endIdx);
             activity.runOnUiThread(() -> {
+                // ไฮไลต์คำค้นหาเป็นสีทอง เด่นบนธีมมืด
+                codeEditor.getColorScheme().setColor(
+                        EditorColorScheme.SELECTED_TEXT_BACKGROUND,
+                        SEARCH_HIGHLIGHT
+                );
                 codeEditor.setSelectionRegion(s[0], s[1], e[0], e[1]);
                 codeEditor.jumpToLine(s[0]);
             });
