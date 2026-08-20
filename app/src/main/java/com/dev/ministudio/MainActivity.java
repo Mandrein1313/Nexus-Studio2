@@ -1547,7 +1547,6 @@ private void showFileSearchDialog() {
     java.io.File root = new java.io.File(currentProject.getRootPath());
     final String rootPath = root.getAbsolutePath();
 
-    // ใช้ array กัน error "might not have been initialized"
     final android.widget.BaseAdapter[] adapterRef = new android.widget.BaseAdapter[1];
 
     adapterRef[0] = new android.widget.BaseAdapter() {
@@ -1571,7 +1570,7 @@ private void showFileSearchDialog() {
             if (convertView == null) {
                 convertView = getLayoutInflater().inflate(R.layout.item_file_search_result, parent, false);
             }
-            java.io.File file = resultFiles.get(position);
+            final java.io.File file = resultFiles.get(position);
 
             android.widget.TextView tvName = convertView.findViewById(R.id.tvFileName);
             android.widget.TextView tvMeta = convertView.findViewById(R.id.tvFileMeta);
@@ -1633,11 +1632,21 @@ private void showFileSearchDialog() {
                 imgIcon.setColorFilter(android.graphics.Color.parseColor("#7AA2F7"));
             }
 
+            // ปุ่มลบ — ไม่แย่งคลิกของแถว
             android.widget.ImageButton btnDelete = convertView.findViewById(R.id.btnDeleteFile);
             if (btnDelete != null) {
+                btnDelete.setFocusable(false);
+                btnDelete.setFocusableInTouchMode(false);
                 btnDelete.setOnClickListener(v ->
                         confirmAndDeleteFile(file, resultFiles, adapterRef[0], tvHint));
             }
+
+            // กดแถว / ชื่อไฟล์ → เปิดไฟล์
+            convertView.setOnClickListener(v -> {
+                dialog.dismiss();
+                openFile(file);
+                if (drawerLayout != null) drawerLayout.closeDrawers();
+            });
 
             return convertView;
         }
@@ -1685,14 +1694,8 @@ private void showFileSearchDialog() {
         }
     });
 
-    lvResults.setOnItemClickListener((parent, view, position, id) -> {
-        if (position >= 0 && position < resultFiles.size()) {
-            java.io.File file = resultFiles.get(position);
-            dialog.dismiss();
-            openFile(file);
-            if (drawerLayout != null) drawerLayout.closeDrawers();
-        }
-    });
+    // ใช้ convertView.setOnClickListener แทนแล้ว — เก็บหรือลบก็ได้
+    lvResults.setOnItemClickListener(null);
 
     dialog.show();
     etSearch.requestFocus();
