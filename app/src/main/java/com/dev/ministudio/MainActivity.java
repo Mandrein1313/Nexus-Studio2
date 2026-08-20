@@ -1701,7 +1701,7 @@ private void showFileSearchDialog() {
     if (imm != null) {
         imm.showSoftInput(etSearch, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
     }
-}}
+}
 private void confirmAndDeleteFile(java.io.File file,
                                   java.util.List<java.io.File> resultFiles,
                                   android.widget.BaseAdapter adapter,
