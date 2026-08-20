@@ -421,18 +421,16 @@
                 </HorizontalScrollView>
 
                 <!-- ขวาสุด: AI (ล็อคอยู่กับที่) -->
-                <TextView
-                    android:id="@+id/btnMainAi"
-                    android:layout_width="wrap_content"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="8dp"
-                    android:gravity="center"
-                    android:text="🤖 AI"
-                    android:textSize="13sp"
-                    android:textColor="#BB9AF7"
-                    android:background="@drawable/bg_dialog_input"
-                    android:paddingStart="14dp"
-                    android:paddingEnd="14dp" />
+                <ImageView
+                     android:id="@+id/btnMainAi"
+                     android:layout_width="40dp"
+                     android:layout_height="36dp"
+                     android:layout_marginStart="8dp"
+                     android:padding="6dp"
+                     android:src="@drawable/ic_ai_24"
+                     android:background="@drawable/bg_dialog_input"
+                     android:contentDescription="AI"
+                     android:scaleType="centerInside" />
             </LinearLayout>
         </LinearLayout>
 

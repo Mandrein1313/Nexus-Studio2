@@ -197,7 +197,7 @@ private void initViews() {
     ImageView btnPreview = findViewById(R.id.btnPreview);
     ImageView btnFileSearch = findViewById(R.id.btnFileSearch);
     ImageView btnGitPush = findViewById(R.id.btnGitPush);
-    TextView btnMainAi = findViewById(R.id.btnMainAi);
+    ImageView btnMainAi = findViewById(R.id.btnMainAi);  // ไอคอนจริง
     ImageView btnUndo = findViewById(R.id.btnUndo);
     ImageView btnRedo = findViewById(R.id.btnRedo);
 
