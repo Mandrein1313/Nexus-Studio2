@@ -1632,11 +1632,7 @@ private void showFileSearchDialog() {
             }
 
             // ปุ่มลบ (ถ้ามีใน layout)
-            android.widget.ImageButton btnDelete = convertView.findViewById(R.id.btnDeleteFile);
-            if (btnDelete != null) {
-                btnDelete.setOnClickListener(v ->
-                        confirmAndDeleteFile(file, resultFiles, this, tvHint));
-            }
+            
 
             return convertView;
         }
