@@ -114,13 +114,16 @@ public class MainActivity extends AppCompatActivity {
     // Views ตัวใหม่เพิ่มเติม
     private LinearLayout emptyStateView;
     private AiAutoCompleteManager aiAutoCompleteManager;
-   private LinearLayout aiSuggestionBar;
-   private TextView tvAiSuggestionText;
-   private String lastReceivedSuggestion = "";
-   private String pendingProjectName = "";
-   private boolean isLightEditorTheme = false;
-   private boolean isShortcutExpanded = false;
-   private EditorSearchManager editorSearchManager;
+    private LinearLayout aiSuggestionBar;
+    private TextView tvAiSuggestionText;
+    private String lastReceivedSuggestion = "";
+    private String pendingProjectName = "";
+    private boolean isLightEditorTheme = false;
+    private boolean isShortcutExpanded = false;
+    private EditorSearchManager editorSearchManager;
+   // เพิ่มตัวแปรนี้ในส่วนขอบเขตของคลาส MainActivity
+    private LogcatReader logcatReader;
+
    
 @Override
 protected void onCreate(Bundle savedInstanceState) {
