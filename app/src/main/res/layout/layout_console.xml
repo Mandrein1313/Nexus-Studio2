@@ -3,7 +3,7 @@
     android:id="@+id/consoleScrollView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#1E1E1E"
+    android:background="#1A1B26"
     android:fillViewport="true"
     android:clipToPadding="false">
 
@@ -16,7 +16,7 @@
         android:paddingTop="12dp"
         android:paddingBottom="80dp"
         android:text="> Ready to build..."
-        android:textColor="#FFFFFF"
+        android:textColor="#A9B1D6"
         android:textSize="12sp"
         android:fontFamily="monospace"
         android:lineSpacingMultiplier="1.2" />
