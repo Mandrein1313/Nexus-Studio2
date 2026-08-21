@@ -620,32 +620,64 @@ private String extractRepoName(String url) {
         writeFile(rootPath + "/app/src/main/res/values/styles.xml", stylesXml);
         
         // 5. คัดแยกการเจนไฟล์ซอร์สโค้ดเริ่มต้น
-        if ("Kotlin".equals(language)) {
-            String kotlinCode = "package " + packageName + "\n\n" +
-                "import android.app.Activity\n" +
-                "import android.os.Bundle\n" +
+                // 5. คัดแยกการเจนไฟล์ซอร์สโค้ดเริ่มต้น (พร้อมฝัง Crash Handler)[span_1](start_span)[span_1](end_span)
+        if ("Kotlin".equals(language)) {[span_2](start_span)[span_2](end_span)
+            String kotlinCode = "package " + packageName + "\n\n" +[span_3](start_span)[span_3](end_span)
+                "import android.app.Activity\n" +[span_4](start_span)[span_4](end_span)
+                "import android.os.Bundle\n" +[span_5](start_span)[span_5](end_span)
                 "import " + packageName + ".R\n\n" + 
-                "class MainActivity : Activity() {\n" +
-                "    override fun onCreate(savedInstanceState: Bundle?) {\n" +
-                "        super.onCreate(savedInstanceState)\n" +
-                "        setContentView(R.layout.activity_main)\n" +
-                "    }\n" +
-                "}";
-            writeFile(sourceDirPath + "/MainActivity.kt", kotlinCode);
+                "class MainActivity : Activity() {\n" +[span_6](start_span)[span_6](end_span)
+                "    override fun onCreate(savedInstanceState: Bundle?) {\n" +[span_7](start_span)[span_7](end_span)
+                "        super.onCreate(savedInstanceState)\n\n" +
+                
+                "        // --- CRASH HANDLER (ดักจับ App Crash ลงไฟล์) ---\n" +
+                "        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->\n" +
+                "            try {\n" +
+                "                val logDir = getExternalFilesDir(null)\n" +
+                "                val crashLog = java.io.File(logDir, \"crash.log\")\n" +
+                "                val writer = java.io.FileWriter(crashLog, true)\n" +
+                "                writer.write(\"--- CRASH REPORT: \${java.util.Date()} ---\\n\")\n" +
+                "                throwable.printStackTrace(java.io.PrintWriter(writer))\n" +
+                "                writer.write(\"\\n----------------------------------------\\n\")\n" +
+                "                writer.close()\n" +
+                "            } catch (ignored: Exception) {}\n" +
+                "            android.os.Process.killProcess(android.os.Process.myPid())\n" +
+                "        }\n\n" +
+                
+                "        setContentView(R.layout.activity_main)\n" +[span_8](start_span)[span_8](end_span)
+                "    }\n" +[span_9](start_span)[span_9](end_span)
+                "}";[span_10](start_span)[span_10](end_span)
+            writeFile(sourceDirPath + "/MainActivity.kt", kotlinCode);[span_11](start_span)[span_11](end_span)
         } else {
-            String javaCode = "package " + packageName + ";\n\n" +
-                "import android.app.Activity;\n" +
-                "import android.os.Bundle;\n" +
+            String javaCode = "package " + packageName + ";\n\n" +[span_12](start_span)[span_12](end_span)
+                "import android.app.Activity;\n" +[span_13](start_span)[span_13](end_span)
+                "import android.os.Bundle;\n" +[span_14](start_span)[span_14](end_span)
                 "import " + packageName + ".R;\n\n" + 
-                "public class MainActivity extends Activity {\n" +
-                "    @Override\n" +
-                "    protected void onCreate(Bundle savedInstanceState) { \n" +
-                "        super.onCreate(savedInstanceState);\n" +
-                "        setContentView(R.layout.activity_main);\n" +
-                "    }\n" +
-                "}";
-            writeFile(sourceDirPath + "/MainActivity.java", javaCode);
+                "public class MainActivity extends Activity {\n" +[span_15](start_span)[span_15](end_span)
+                "    @Override\n" +[span_16](start_span)[span_16](end_span)
+                "    protected void onCreate(Bundle savedInstanceState) { \n" +[span_17](start_span)[span_17](end_span)
+                "        super.onCreate(savedInstanceState);\n\n" +
+                
+                "        // --- CRASH HANDLER (ดักจับ App Crash ลงไฟล์) ---\n" +
+                "        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {\n" +
+                "            try {\n" +
+                "                java.io.File logDir = getExternalFilesDir(null);\n" +
+                "                java.io.File crashLog = new java.io.File(logDir, \"crash.log\");\n" +
+                "                java.io.FileWriter writer = new java.io.FileWriter(crashLog, true);\n" +
+                "                writer.write(\"--- CRASH REPORT: \" + new java.util.Date() + \" ---\\n\");\n" +
+                "                throwable.printStackTrace(new java.io.PrintWriter(writer));\n" +
+                "                writer.write(\"\\n----------------------------------------\\n\");\n" +
+                "                writer.close();\n" +
+                "            } catch (Exception ignored) {}\n" +
+                "            android.os.Process.killProcess(android.os.Process.myPid());\n" +
+                "        });\n\n" +
+                
+                "        setContentView(R.layout.activity_main);\n" +[span_18](start_span)[span_18](end_span)
+                "    }\n" +[span_19](start_span)[span_19](end_span)
+                "}";[span_20](start_span)[span_20](end_span)
+            writeFile(sourceDirPath + "/MainActivity.java", javaCode);[span_21](start_span)[span_21](end_span)
         }
+
 
         // 6. ส่งโครงสร้างและเตรียมค่าสำหรับส่งไปคอมไพล์บน GitHub CI/CD
         BuildEnvironmentManager envManager = new BuildEnvironmentManager(this);
