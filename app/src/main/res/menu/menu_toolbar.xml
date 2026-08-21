@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_build"
+        android:icon="@drawable/ic_play_arrow_24"
+        android:title="Build APK"
+        app:showAsAction="ifRoom"
+        app:iconTint="#C0CAF5" />
+
+    <item
+        android:id="@+id/action_search"
+        android:icon="@drawable/ic_search_24"
+        android:title="Search"
+        app:showAsAction="always"
+        app:iconTint="#C0CAF5" />
+</menu>
