@@ -547,8 +547,6 @@ private int parseHexColor(String hex) {
     }
     return 0;
 }
-
-    // 🌟 ฟังก์ชันเปิดหน้าต่าง Dialog คอนโซลแบบเต็มหน้าจอ (เวอร์ชันแก้ไขให้เห็น Status Bar + ดักปิดเสียง AI)
 private void showFullPanelDialog(int initialTabPosition) {
     if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
         dialogViewPager.setCurrentItem(initialTabPosition, true);
@@ -562,20 +560,20 @@ private void showFullPanelDialog(int initialTabPosition) {
     if (fullPanelDialog.getWindow() != null) {
         android.view.Window window = fullPanelDialog.getWindow();
         window.setLayout(
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-            android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT
         );
-        // กันเนื้อหาไม่ให้ทับ status bar / navigation bar
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
-        window.setStatusBarColor(android.graphics.Color.parseColor("#1E1E1E"));
-        window.setNavigationBarColor(android.graphics.Color.parseColor("#1E1E1E"));
+        window.setStatusBarColor(android.graphics.Color.parseColor("#1F2335"));
+        window.setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
     }
 
     dialogTabLayout = fullPanelDialog.findViewById(R.id.tabLayout);
     dialogViewPager = fullPanelDialog.findViewById(R.id.viewPager);
-    
-    fullPanelDialog.findViewById(R.id.btnCloseConsole).setOnClickListener(v -> fullPanelDialog.dismiss());
-    
+
+    fullPanelDialog.findViewById(R.id.btnCloseConsole)
+            .setOnClickListener(v -> fullPanelDialog.dismiss());
+
     View btnToggleExpand = fullPanelDialog.findViewById(R.id.btnToggleExpand);
     if (btnToggleExpand != null) btnToggleExpand.setVisibility(View.GONE);
 
@@ -583,19 +581,39 @@ private void showFullPanelDialog(int initialTabPosition) {
         if (dialogPanelAdapter != null) {
             TextView consoleView = dialogPanelAdapter.getTvConsole();
             android.webkit.WebView webView = dialogPanelAdapter.getWebAiOutput();
-            
+
             if (consoleView != null) consoleView.setText("");
             if (webView != null) {
-                chatHistory = ""; 
-                webView.loadDataWithBaseURL(null, "<html><body style='background-color:#1E1E1E;'></body></html>", "text/html", "utf-8", null);
+                chatHistory = "";
+                webView.loadDataWithBaseURL(null,
+                        "<html><body style='background-color:#1A1B26;'></body></html>",
+                        "text/html", "utf-8", null);
             }
         }
         if (tvConsole != null) tvConsole.setText("");
     });
 
+    // ===== ปุ่ม Logcat =====
+    TextView btnLogcat = fullPanelDialog.findViewById(R.id.btnLogcat);
+    if (btnLogcat != null) {
+        updateLogcatButtonUi(btnLogcat);
+        btnLogcat.setOnClickListener(v -> {
+            if (logcatReader != null && logcatReader.isRunning()) {
+                logcatReader.stop();
+                appendConsoleLine("⏹ หยุด Logcat\n",
+                        android.graphics.Color.parseColor("#565F89"));
+                updateLogcatButtonUi(btnLogcat);
+            } else {
+                String pkg = null; // หรือ applicationId ของโปรเจกต์ ถ้ามี
+                startLogcatMonitor(pkg);
+                btnLogcat.postDelayed(() -> updateLogcatButtonUi(btnLogcat), 300);
+            }
+        });
+    }
+
     dialogPanelAdapter = new PanelPagerAdapter(this);
     dialogViewPager.setAdapter(dialogPanelAdapter);
-    dialogViewPager.setUserInputEnabled(false); 
+    dialogViewPager.setUserInputEnabled(false);
 
     new TabLayoutMediator(dialogTabLayout, dialogViewPager, (tab, position) -> {
         tab.setText(position == 0 ? "Console" : "AI");
@@ -608,14 +626,25 @@ private void showFullPanelDialog(int initialTabPosition) {
         }
     });
 
-    // ดักปิดเสียง AI เมื่อปิดหน้าต่าง
     fullPanelDialog.setOnDismissListener(dialog -> {
         if (aiLayoutAnalyzer != null) {
-            aiLayoutAnalyzer.stopSpeaking(); 
+            aiLayoutAnalyzer.stopSpeaking();
         }
     });
 
     fullPanelDialog.show();
+}
+
+private void updateLogcatButtonUi(TextView btnLogcat) {
+    if (btnLogcat == null) return;
+    boolean on = logcatReader != null && logcatReader.isRunning();
+    if (on) {
+        btnLogcat.setText("⏹ Stop");
+        btnLogcat.setTextColor(android.graphics.Color.parseColor("#F7768E"));
+    } else {
+        btnLogcat.setText("Logcat");
+        btnLogcat.setTextColor(android.graphics.Color.parseColor("#7AA2F7"));
+    }
 }
 
     public void handleAiQuery() {
@@ -2164,7 +2193,12 @@ private void startLogcatMonitor(String packageName) {
     if (logcatReader == null) logcatReader = new LogcatReader();
     logcatReader.stop();
 
-    showFullPanelDialog(0); // แท็บ Console
+    if (fullPanelDialog == null || !fullPanelDialog.isShowing()) {
+        showFullPanelDialog(0);
+    } else if (dialogViewPager != null) {
+        dialogViewPager.setCurrentItem(0, true);
+    }
+
     appendConsoleLine("📡 เริ่มดัก Logcat" +
             (packageName != null ? " (" + packageName + ")" : "") + "\n",
             android.graphics.Color.parseColor("#7AA2F7"));
@@ -2173,10 +2207,9 @@ private void startLogcatMonitor(String packageName) {
         @Override
         public void onLine(String line) {
             int color = android.graphics.Color.parseColor("#A9B1D6");
-            if (line.contains("FATAL") || line.contains("AndroidRuntime")
-                    || line.contains("E/")) {
+            if (line.contains("FATAL") || line.contains("AndroidRuntime") || line.contains(" E/")) {
                 color = android.graphics.Color.parseColor("#F7768E");
-            } else if (line.contains("W/")) {
+            } else if (line.contains(" W/")) {
                 color = android.graphics.Color.parseColor("#E0AF68");
             }
             appendConsoleLine(line + "\n", color);
@@ -2192,6 +2225,10 @@ private void startLogcatMonitor(String packageName) {
         public void onStopped() {
             appendConsoleLine("⏹ หยุด Logcat\n",
                     android.graphics.Color.parseColor("#565F89"));
+            if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
+                TextView btn = fullPanelDialog.findViewById(R.id.btnLogcat);
+                updateLogcatButtonUi(btn);
+            }
         }
     });
 }

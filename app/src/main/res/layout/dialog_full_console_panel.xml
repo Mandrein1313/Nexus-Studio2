@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1E1E1E"
+    android:background="#1A1B26"
     android:fitsSystemWindows="true">
 
     <LinearLayout
@@ -12,17 +12,33 @@
         android:layout_height="50dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#252526"
-        android:paddingHorizontal="12dp">
+        android:background="#1F2335"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp">
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="🛠️ Nexus Studio Terminal"
-            android:textColor="#FFFFFF"
+            android:textColor="#C0CAF5"
             android:textSize="15sp"
             android:textStyle="bold" />
+
+        <!-- ปุ่ม Logcat -->
+        <TextView
+            android:id="@+id/btnLogcat"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginEnd="4dp"
+            android:text="Logcat"
+            android:textSize="12sp"
+            android:textColor="#7AA2F7"
+            android:background="@drawable/bg_dialog_input"
+            android:contentDescription="Toggle Logcat" />
 
         <ImageButton
             android:id="@+id/btnClearConsole"
@@ -31,7 +47,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_delete"
             android:contentDescription="Clear"
-            app:tint="#B0B3B8" />
+            app:tint="#A9B1D6" />
 
         <ImageButton
             android:id="@+id/btnCloseConsole"
@@ -40,17 +56,17 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:src="@android:drawable/ic_menu_close_clear_cancel"
             android:contentDescription="Close"
-            app:tint="#FF5252" />
+            app:tint="#F7768E" />
     </LinearLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#2D2D30"
-        app:tabTextColor="#80FFFFFF"
-        app:tabSelectedTextColor="#BB86FC"
-        app:tabIndicatorColor="#BB86FC"
+        android:background="#24283B"
+        app:tabTextColor="#565F89"
+        app:tabSelectedTextColor="#BB9AF7"
+        app:tabIndicatorColor="#BB9AF7"
         app:tabIndicatorHeight="3dp"
         app:tabMode="fixed"
         app:tabGravity="fill" />
