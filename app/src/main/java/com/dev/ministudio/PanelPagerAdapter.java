@@ -259,8 +259,8 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
         return spannable;
     }
 
-    @Override
-    public int getItemCount() { return 2; }
+        @Override
+      public int getItemCount() { return 1; } // เฉพาะ Console // เฉพาะ Console() { return 2; }
 
     @Override
     public int getItemViewType(int position) { return position; }

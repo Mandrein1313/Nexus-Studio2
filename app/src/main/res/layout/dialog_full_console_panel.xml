@@ -25,7 +25,6 @@
             android:textSize="15sp"
             android:textStyle="bold" />
 
-        <!-- ปุ่ม Logcat -->
         <TextView
             android:id="@+id/btnLogcat"
             android:layout_width="wrap_content"
@@ -59,10 +58,12 @@
             app:tint="#F7768E" />
     </LinearLayout>
 
+    <!-- ซ่อนแท็บ Console | AI — เหลือแค่ Console -->
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:background="#24283B"
         app:tabTextColor="#565F89"
         app:tabSelectedTextColor="#BB9AF7"

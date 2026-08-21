@@ -549,7 +549,9 @@ private int parseHexColor(String hex) {
 }
 private void showFullPanelDialog(int initialTabPosition) {
     if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
-        dialogViewPager.setCurrentItem(initialTabPosition, true);
+        if (dialogViewPager != null) {
+            dialogViewPager.setCurrentItem(0, true);
+        }
         return;
     }
 
@@ -571,6 +573,11 @@ private void showFullPanelDialog(int initialTabPosition) {
     dialogTabLayout = fullPanelDialog.findViewById(R.id.tabLayout);
     dialogViewPager = fullPanelDialog.findViewById(R.id.viewPager);
 
+    // ซ่อนแท็บ Console | AI
+    if (dialogTabLayout != null) {
+        dialogTabLayout.setVisibility(View.GONE);
+    }
+
     fullPanelDialog.findViewById(R.id.btnCloseConsole)
             .setOnClickListener(v -> fullPanelDialog.dismiss());
 
@@ -580,15 +587,7 @@ private void showFullPanelDialog(int initialTabPosition) {
     fullPanelDialog.findViewById(R.id.btnClearConsole).setOnClickListener(v -> {
         if (dialogPanelAdapter != null) {
             TextView consoleView = dialogPanelAdapter.getTvConsole();
-            android.webkit.WebView webView = dialogPanelAdapter.getWebAiOutput();
-
             if (consoleView != null) consoleView.setText("");
-            if (webView != null) {
-                chatHistory = "";
-                webView.loadDataWithBaseURL(null,
-                        "<html><body style='background-color:#1A1B26;'></body></html>",
-                        "text/html", "utf-8", null);
-            }
         }
         if (tvConsole != null) tvConsole.setText("");
     });
@@ -604,7 +603,7 @@ private void showFullPanelDialog(int initialTabPosition) {
                         android.graphics.Color.parseColor("#565F89"));
                 updateLogcatButtonUi(btnLogcat);
             } else {
-                String pkg = null; // หรือ applicationId ของโปรเจกต์ ถ้ามี
+                String pkg = null;
                 startLogcatMonitor(pkg);
                 btnLogcat.postDelayed(() -> updateLogcatButtonUi(btnLogcat), 300);
             }
@@ -615,14 +614,15 @@ private void showFullPanelDialog(int initialTabPosition) {
     dialogViewPager.setAdapter(dialogPanelAdapter);
     dialogViewPager.setUserInputEnabled(false);
 
-    new TabLayoutMediator(dialogTabLayout, dialogViewPager, (tab, position) -> {
-        tab.setText(position == 0 ? "Console" : "AI");
-    }).attach();
+    // ไม่ต้องมี TabLayoutMediator แล้ว เพราะเหลือหน้าเดียว + ซ่อนแท็บ
+    // ถ้าอยากเหลือชื่อแท็บไว้ อันนี้ก็พอ:
+    // new TabLayoutMediator(dialogTabLayout, dialogViewPager,
+    //         (tab, position) -> tab.setText("Console")).attach();
 
     dialogViewPager.post(() -> {
         if (dialogPanelAdapter != null) {
             tvConsole = dialogPanelAdapter.getTvConsole();
-            dialogViewPager.setCurrentItem(initialTabPosition, false);
+            dialogViewPager.setCurrentItem(0, false);
         }
     });
 
