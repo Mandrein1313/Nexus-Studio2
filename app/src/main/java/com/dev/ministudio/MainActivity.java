@@ -2252,3 +2252,4 @@ private void appendConsoleLine(String text, int color) {
         }
     });
 }
+ }
