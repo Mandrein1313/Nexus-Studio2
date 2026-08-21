@@ -2199,18 +2199,27 @@ private void startLogcatMonitor(String packageName) {
         dialogViewPager.setCurrentItem(0, true);
     }
 
-    appendConsoleLine("📡 เริ่มดัก Logcat" +
-            (packageName != null ? " (" + packageName + ")" : "") + "\n",
+    appendConsoleLine("📡 Logcat โหมด Crash (เงียบถ้าไม่มี Error)\n",
             android.graphics.Color.parseColor("#7AA2F7"));
+    if (packageName != null && !packageName.isEmpty()) {
+        appendConsoleLine("กรอง: " + packageName + "\n",
+                android.graphics.Color.parseColor("#565F89"));
+    }
 
     logcatReader.start(packageName, new LogcatReader.Listener() {
         @Override
         public void onLine(String line) {
-            int color = android.graphics.Color.parseColor("#A9B1D6");
-            if (line.contains("FATAL") || line.contains("AndroidRuntime") || line.contains(" E/")) {
-                color = android.graphics.Color.parseColor("#F7768E");
-            } else if (line.contains(" W/")) {
+            int color;
+            if (line.contains("FATAL") || line.contains("Fatal signal")) {
+                color = android.graphics.Color.parseColor("#FF5555");
+            } else if (line.contains("Caused by:") || line.contains("\tat ")) {
                 color = android.graphics.Color.parseColor("#E0AF68");
+            } else if (line.contains("AndroidRuntime")
+                    || line.contains(" E/")
+                    || line.contains(" F/")) {
+                color = android.graphics.Color.parseColor("#F7768E");
+            } else {
+                color = android.graphics.Color.parseColor("#A9B1D6");
             }
             appendConsoleLine(line + "\n", color);
         }
@@ -2243,5 +2252,3 @@ private void appendConsoleLine(String text, int color) {
         }
     });
 }
-
- }
