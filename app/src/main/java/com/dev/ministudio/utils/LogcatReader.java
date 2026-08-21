@@ -1,4 +1,4 @@
-package com.dev.ministudio.utils; 
+package com.dev.ministudio.utils;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -8,7 +8,8 @@ import java.io.InputStreamReader;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * อ่าน logcat แบบสตรีม — บนเครื่องทั่วไปมักเห็น log ของแอปตัวเองเป็นหลัก
+ * อ่าน logcat แบบสตรีม
+ * บนเครื่องทั่วไปมักเห็น log ของแอปตัวเอง + ระบบบางส่วน
  */
 public class LogcatReader {
 
@@ -28,47 +29,65 @@ public class LogcatReader {
         running.set(true);
 
         worker = new Thread(() -> {
+            BufferedReader reader = null;
             try {
-                // ล้าง buffer เก่า (บางเครื่องต้องใช้สิทธิ์)
+                // ไม่บังคับ clear — บางเครื่องไม่มีสิทธิ์
                 try {
-                    Runtime.getRuntime().exec(new String[]{"logcat", "-c"}).waitFor();
+                    Process clear = Runtime.getRuntime().exec(new String[]{"logcat", "-c"});
+                    clear.waitFor();
                 } catch (Exception ignored) {
                 }
 
-                // รูปแบบอ่านง่าย + กรองระดับ Warning ขึ้นไป
+                // *:E = Error ขึ้นไป (น้อย noise กว่า *:W)
+                // อยากเห็น Warning ด้วย เปลี่ยนเป็น "*:W"
                 ProcessBuilder pb = new ProcessBuilder(
                         "logcat",
                         "-v", "threadtime",
-                        "*:W"
+                        "*:E",
+                        "AndroidRuntime:E"
                 );
                 pb.redirectErrorStream(true);
                 process = pb.start();
 
-                BufferedReader reader = new BufferedReader(
-                        new InputStreamReader(process.getInputStream()));
+                reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 String line;
                 while (running.get() && (line = reader.readLine()) != null) {
                     if (packageFilter != null && !packageFilter.isEmpty()) {
-                        // กรองตาม package / tag สำคัญ
                         if (!line.contains(packageFilter)
                                 && !line.contains("AndroidRuntime")
-                                && !line.contains("FATAL EXCEPTION")) {
+                                && !line.contains("FATAL EXCEPTION")
+                                && !line.contains("Process:")) {
                             continue;
                         }
                     }
+                    // ข้าม junk ที่ไม่ช่วย debug
+                    if (isNoise(line)) continue;
+
                     final String out = line;
                     main.post(() -> {
                         if (listener != null) listener.onLine(out);
                     });
                 }
             } catch (Exception e) {
-                main.post(() -> {
-                    if (listener != null) {
-                        listener.onError("Logcat: " + e.getMessage());
+                // ตอนกด Stop มักขึ้น closed / interrupted — ไม่ต้องโชว์แดง
+                if (running.get()) {
+                    String msg = e.getMessage() != null ? e.getMessage() : "";
+                    if (!isStopNoise(msg)) {
+                        main.post(() -> {
+                            if (listener != null) listener.onError("Logcat: " + msg);
+                        });
                     }
-                });
+                }
             } finally {
                 running.set(false);
+                try {
+                    if (reader != null) reader.close();
+                } catch (Exception ignored) {
+                }
+                if (process != null) {
+                    process.destroy();
+                    process = null;
+                }
                 main.post(() -> {
                     if (listener != null) listener.onStopped();
                 });
@@ -80,12 +99,15 @@ public class LogcatReader {
     public void stop() {
         running.set(false);
         if (process != null) {
-            process.destroy();
+            try {
+                process.destroy();
+            } catch (Exception ignored) {
+            }
             process = null;
         }
         if (worker != null) {
             try {
-                worker.join(500);
+                worker.join(400);
             } catch (InterruptedException ignored) {
             }
             worker = null;
@@ -94,5 +116,20 @@ public class LogcatReader {
 
     public boolean isRunning() {
         return running.get();
+    }
+
+    private static boolean isStopNoise(String msg) {
+        String m = msg.toLowerCase();
+        return m.contains("closed")
+                || m.contains("interrupt")
+                || m.contains("stream closed")
+                || m.contains("pipe")
+                || m.contains("broken pipe");
+    }
+
+    private static boolean isNoise(String line) {
+        return line.contains("updateBlastSurfaceIfNeeded")
+                || line.contains("handleResized abandoned")
+                || line.contains("BLASTBufferQueue");
     }
 }
