@@ -60,6 +60,7 @@ import android.content.SharedPreferences;
 import com.dev.ministudio.ai.AiChatActivity;
 import android.content.Intent;
 import com.dev.ministudio.utils.LogcatReader;
+import com.dev.ministudio.ui.ExitConfirmDialog;
 
 
 public class MainActivity extends AppCompatActivity {
@@ -123,26 +124,12 @@ public class MainActivity extends AppCompatActivity {
     private EditorSearchManager editorSearchManager;
    // เพิ่มตัวแปรนี้ในส่วนขอบเขตของคลาส MainActivity
     private LogcatReader logcatReader;
+    
 
    
 @Override
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    
-   Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-    try {
-        java.io.File f = new java.io.File(
-                "/sdcard/MiniStudio/YourProject/crash.log");
-        java.io.FileWriter w = new java.io.FileWriter(f, true);
-        w.write(new java.util.Date() + "\n");
-        e.printStackTrace(new java.io.PrintWriter(w));
-        w.write("\n----\n");
-        w.close();
-    } catch (Exception ignored) {
-    }
-    // แล้วค่อย kill ต่อ
-    android.os.Process.killProcess(android.os.Process.myPid());
-});
 
     WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
 
@@ -154,9 +141,9 @@ protected void onCreate(Bundle savedInstanceState) {
     getWindow().setNavigationBarColor(barColor);
 
     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-    View decor = getWindow().getDecorView();
-    decor.setSystemUiVisibility(0);
-}
+        View decor = getWindow().getDecorView();
+        decor.setSystemUiVisibility(0);
+    }
 
     setContentView(R.layout.activity_main);
 
@@ -180,6 +167,28 @@ protected void onCreate(Bundle savedInstanceState) {
 
     initViews();
     setupLogic();
+
+    // ===== ยืนยันตอนกดกลับ =====
+    getOnBackPressedDispatcher().addCallback(this,
+            new androidx.activity.OnBackPressedCallback(true) {
+                @Override
+                public void handleOnBackPressed() {
+                    if (drawerLayout != null
+                            && drawerLayout.isDrawerOpen(androidx.core.view.GravityCompat.START)) {
+                        drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                        return;
+                    }
+                    if (editorSearchManager != null && editorSearchManager.isVisible()) {
+                        editorSearchManager.hide();
+                        return;
+                    }
+                    if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
+                        fullPanelDialog.dismiss();
+                        return;
+                    }
+                    com.dev.ministudio.ui.ExitConfirmDialog.show(MainActivity.this);
+                }
+            });
 }
 private void initViews() {
     codeEditor = findViewById(R.id.codeEditor);
