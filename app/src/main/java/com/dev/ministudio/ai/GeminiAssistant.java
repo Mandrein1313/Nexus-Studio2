@@ -16,6 +16,9 @@ import java.nio.charset.StandardCharsets;
 public class GeminiAssistant {
 
     private static final String API_URL = "https://api.groq.com/openai/v1/chat/completions";
+    // โมเดลที่มักใช้ได้บน Groq (เปลี่ยนได้จาก Settings ภายหลัง)
+    private static final String DEFAULT_MODEL = "llama-3.1-8b-instant";
+
     private final Context context;
 
     public GeminiAssistant(Context context) {
@@ -38,12 +41,18 @@ public class GeminiAssistant {
         return prefs.getString("groq_api_key", "");
     }
 
-    // 🌟 1. เมทอดรองรับสำหรับไฟล์ที่เรียกใช้ด้วยพิมพ์เล็ก (askAi) - ป้องกันแอปเด้งจากไฟล์เก่า
-    public void askAi(final String prompt, final AICallback callback) {
-        askAI(prompt, callback); // ส่งต่อไปทำงานที่ askAI ตัวจริงด้านล่าง
+    private String getModel() {
+        if (context == null) return DEFAULT_MODEL;
+        SharedPreferences prefs = context.getSharedPreferences("ai_settings", Context.MODE_PRIVATE);
+        String model = prefs.getString("groq_model", DEFAULT_MODEL);
+        if (model == null || model.trim().isEmpty()) return DEFAULT_MODEL;
+        return model.trim();
     }
 
-    // 🌟 2. เมทอดตัวจริงที่น้าแก้ไขล่าสุด (askAI)
+    public void askAi(final String prompt, final AICallback callback) {
+        askAI(prompt, callback);
+    }
+
     public void askAI(final String prompt, final AICallback callback) {
         if (callback == null) return;
 
@@ -66,7 +75,7 @@ public class GeminiAssistant {
                 conn.setReadTimeout(60000);
 
                 JSONObject body = new JSONObject();
-                body.put("model", "llama-3.3-70b-versatile");
+                body.put("model", getModel());  // ไม่ใช้ llama-3.3-70b-versatile แล้ว
 
                 JSONArray messages = new JSONArray();
                 JSONObject msg = new JSONObject();
@@ -87,7 +96,9 @@ public class GeminiAssistant {
                 if (responseCode >= 200 && responseCode < 300) {
                     reader = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8));
                 } else {
-                    reader = new BufferedReader(new InputStreamReader(conn.getErrorStream(), StandardCharsets.UTF_8));
+                    reader = new BufferedReader(new InputStreamReader(
+                            conn.getErrorStream() != null ? conn.getErrorStream() : conn.getInputStream(),
+                            StandardCharsets.UTF_8));
                 }
 
                 StringBuilder response = new StringBuilder();
@@ -114,7 +125,10 @@ public class GeminiAssistant {
     private String parseGroqResponse(String jsonResponse) {
         try {
             JSONObject json = new JSONObject(jsonResponse);
-            return json.getJSONArray("choices").getJSONObject(0).getJSONObject("message").getString("content");
+            return json.getJSONArray("choices")
+                    .getJSONObject(0)
+                    .getJSONObject("message")
+                    .getString("content");
         } catch (Exception e) {
             return "ไม่สามารถอ่านผลลัพธ์จาก AI ได้";
         }
