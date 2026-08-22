@@ -1,7 +1,10 @@
 package com.dev.ministudio.ai;
 
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
+import android.speech.tts.TextToSpeech;
+import android.speech.tts.UtteranceProgressListener;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.EditText;
@@ -13,6 +16,8 @@ import androidx.core.view.WindowCompat;
 
 import com.dev.ministudio.R;
 
+import java.util.Locale;
+
 public class AiChatActivity extends AppCompatActivity {
 
     private WebView webAiChat;
@@ -20,6 +25,12 @@ public class AiChatActivity extends AppCompatActivity {
     private String chatHistory = "";
     private GeminiAssistant geminiAssistant;
     private boolean isWaitingReply = false;
+
+    private TextToSpeech tts;
+    private boolean ttsReady = false;
+    private boolean isSpeaking = false;
+    private String lastAiReply = "";
+    private ImageButton btnSpeak;
 
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
@@ -36,20 +47,26 @@ public class AiChatActivity extends AppCompatActivity {
         setContentView(R.layout.activity_ai_chat);
 
         geminiAssistant = new GeminiAssistant(this);
+        initTts();
 
         webAiChat = findViewById(R.id.webAiChat);
         etAiInput = findViewById(R.id.etAiInput);
         ImageButton btnBack = findViewById(R.id.btnAiBack);
         ImageButton btnClear = findViewById(R.id.btnAiClear);
         ImageButton btnSend = findViewById(R.id.btnAiSend);
-        ImageButton btnSpeak = findViewById(R.id.btnAiSpeak);
+        btnSpeak = findViewById(R.id.btnAiSpeak);
 
         setupWebView();
 
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(v -> {
+            stopSpeaking();
+            finish();
+        });
 
         btnClear.setOnClickListener(v -> {
+            stopSpeaking();
             chatHistory = "";
+            lastAiReply = "";
             loadEmptyChat();
             Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
         });
@@ -61,8 +78,18 @@ public class AiChatActivity extends AppCompatActivity {
             return true;
         });
 
-        btnSpeak.setOnClickListener(v ->
-                Toast.makeText(this, "เสียง AI (เชื่อมต่อภายหลัง)", Toast.LENGTH_SHORT).show());
+        if (btnSpeak != null) {
+            btnSpeak.setOnClickListener(v -> {
+                if (isSpeaking) {
+                    stopSpeaking();
+                    Toast.makeText(this, "หยุดเสียงแล้ว", Toast.LENGTH_SHORT).show();
+                } else if (lastAiReply != null && !lastAiReply.isEmpty()) {
+                    speakText(lastAiReply);
+                } else {
+                    Toast.makeText(this, "ยังไม่มีข้อความ AI ให้พูด", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
 
         String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
         if (snippet != null && !snippet.isEmpty()) {
@@ -70,6 +97,81 @@ public class AiChatActivity extends AppCompatActivity {
         }
 
         loadEmptyChat();
+    }
+
+    private void initTts() {
+        tts = new TextToSpeech(this, status -> {
+            if (status == TextToSpeech.SUCCESS) {
+                int r = tts.setLanguage(new Locale("th", "TH"));
+                if (r == TextToSpeech.LANG_MISSING_DATA || r == TextToSpeech.LANG_NOT_SUPPORTED) {
+                    tts.setLanguage(Locale.US);
+                }
+                ttsReady = true;
+            } else {
+                ttsReady = false;
+            }
+        });
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
+            tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
+                @Override
+                public void onStart(String utteranceId) {
+                    isSpeaking = true;
+                    runOnUiThread(() -> {
+                        if (btnSpeak != null) btnSpeak.setAlpha(1f);
+                    });
+                }
+
+                @Override
+                public void onDone(String utteranceId) {
+                    isSpeaking = false;
+                    runOnUiThread(() -> {
+                        if (btnSpeak != null) btnSpeak.setAlpha(0.85f);
+                    });
+                }
+
+                @Override
+                public void onError(String utteranceId) {
+                    isSpeaking = false;
+                    runOnUiThread(() -> {
+                        if (btnSpeak != null) btnSpeak.setAlpha(0.85f);
+                    });
+                }
+            });
+        }
+    }
+
+    private void speakText(String text) {
+        if (tts == null || !ttsReady || text == null || text.trim().isEmpty()) {
+            Toast.makeText(this, "ระบบเสียงยังไม่พร้อม", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        stopSpeaking();
+
+        String clean = text
+                .replaceAll("```[\\s\\S]*?```", " (โค้ด) ")
+                .replaceAll("[#*_`]", "")
+                .replaceAll("\\s+", " ")
+                .trim();
+        if (clean.length() > 1200) {
+            clean = clean.substring(0, 1200) + "...";
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null, "ai_reply");
+        } else {
+            tts.speak(clean, TextToSpeech.QUEUE_FLUSH, null);
+        }
+        isSpeaking = true;
+        if (btnSpeak != null) btnSpeak.setAlpha(1f);
+    }
+
+    private void stopSpeaking() {
+        if (tts != null) {
+            tts.stop();
+        }
+        isSpeaking = false;
+        if (btnSpeak != null) btnSpeak.setAlpha(0.85f);
     }
 
     private void setupWebView() {
@@ -100,6 +202,7 @@ public class AiChatActivity extends AppCompatActivity {
             return;
         }
 
+        stopSpeaking();
         etAiInput.setText("");
         appendUserBubble(msg);
         appendAiBubble("⏳ กำลังคิด...");
@@ -110,8 +213,10 @@ public class AiChatActivity extends AppCompatActivity {
             public void onSuccess(String responseText) {
                 runOnUiThread(() -> {
                     isWaitingReply = false;
-                    // ลบข้อความ "กำลังคิด..." แล้วใส่คำตอบจริง
+                    lastAiReply = responseText;
                     replaceLastAiBubble(responseText);
+                    // พูดอัตโนมัติหลังตอบ — ถ้าไม่ต้องการ ลบบรรทัดนี้
+                    speakText(responseText);
                 });
             }
 
@@ -119,18 +224,17 @@ public class AiChatActivity extends AppCompatActivity {
             public void onError(String errorMessage) {
                 runOnUiThread(() -> {
                     isWaitingReply = false;
+                    lastAiReply = "";
                     replaceLastAiBubble("❌ " + errorMessage);
                 });
             }
         });
     }
 
-    /** แทนที่ bubble ล่าสุดของ AI (ข้อความกำลังคิด) ด้วยคำตอบจริง */
     private void replaceLastAiBubble(String text) {
         String marker = "⏳ กำลังคิด...";
         int idx = chatHistory.lastIndexOf(escapeHtml(marker));
         if (idx >= 0) {
-            // หา div ของ bubble ล่าสุดแบบง่าย: ตัดจากจุดเริ่ม bubble ล่าสุด
             int divStart = chatHistory.lastIndexOf("<div style='margin:12px 0;text-align:left;'>");
             if (divStart >= 0) {
                 chatHistory = chatHistory.substring(0, divStart);
@@ -188,6 +292,11 @@ public class AiChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        stopSpeaking();
+        if (tts != null) {
+            tts.shutdown();
+            tts = null;
+        }
         try {
             if (webAiChat != null) {
                 webAiChat.stopLoading();
