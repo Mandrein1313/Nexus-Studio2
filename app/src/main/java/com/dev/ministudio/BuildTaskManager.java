@@ -192,11 +192,9 @@ public class BuildTaskManager {
                         BufferedReader logReader = new BufferedReader(new InputStreamReader(logConn.getInputStream()));
                         final BuildSummaryAnalyzer analyzer = (externalAnalyzer != null) ? externalAnalyzer : new BuildSummaryAnalyzer();
                         
-                        // 🛠️ แก้ไข: ขณะที่ดึงประวัติแกะ Log ทีละบรรทัด เราจะซ่อนไม่ให้สตรีม Log สดพ่นซ้ำออกทางจอ Console 
-                        // โดยเปลี่ยน Callback เป็นดึงวิเคราะห์เข้าหน่วยจำอย่างเดียว (ไม่สั่งทำงานส่งพ่น Progress ออกหน้าจอซ้อนกันสองครั้งครับท่าน)
                         while ((line = logReader.readLine()) != null) {
                             boolean shouldStop = analyzer.analyzeLine(line, COLOR_WARNING, (txt, col) -> {
-                                // เก็บบันทึกข้อมูลภายในเงียบ ๆ เพื่อความสะอาด ไม่ส่งพ่นออก Console สดตัวนี้ครับท่าน
+                                // เก็บบันทึกข้อมูลภายในเงียบ ๆ
                             });
                             if (shouldStop) {
                                 break;
@@ -204,17 +202,10 @@ public class BuildTaskManager {
                         }
                         logReader.close();
 
-                        // พ่นรายงานสรุปผลการวิเคราะห์สีสวยงามรอบเดียว เน้น ๆ ตรงประเด็น
+                        // พ่นรายงานสรุปผลการวิเคราะห์สีสวยงามรอบเดียว
                         analyzer.printSummary((txt, col) -> sendProgress(txt, col));
-
-                        // สั่งยิงข้อมูลบั๊กเข้าท่อส่ง AI Fixer บนหน้าหลักโดยอัตโนมัติทันที
-                        uiHandler.post(() -> {
-                            if (context instanceof MainActivity) {
-                                MainActivity mainActivity = (MainActivity) context;
-                                sendProgress("\n🤖 [ระบบเชื่อมโยงอัตโนมัติ]: กำลังดีดหน้าจอส่งข้อมูลพังให้ AI Fixer ซ่อมแซมซอร์สโค้ด...\n", COLOR_INFO);
-                                mainActivity.triggerAiErrorFixerPipeline();
-                            }
-                        });
+                        
+                        // 🛑 ยกเลิกการเรียก triggerAiErrorFixerPipeline() อัตโนมัติที่จุดนี้
                         return;
                     }
                 }

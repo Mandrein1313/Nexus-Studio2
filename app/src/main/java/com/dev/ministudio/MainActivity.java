@@ -538,7 +538,6 @@ private void showFullPanelDialog(int initialTabPosition) {
     dialogTabLayout = fullPanelDialog.findViewById(R.id.tabLayout);
     dialogViewPager = fullPanelDialog.findViewById(R.id.viewPager);
 
-    // ซ่อนแท็บ Console | AI
     if (dialogTabLayout != null) {
         dialogTabLayout.setVisibility(View.GONE);
     }
@@ -575,14 +574,15 @@ private void showFullPanelDialog(int initialTabPosition) {
         });
     }
 
+    // ===== ปุ่ม AI วิเคราะห์ (กดเอง ไม่เด้งอัตโนมัติ) =====
+    View btnAiFixer = fullPanelDialog.findViewById(R.id.btnAiFixer);
+    if (btnAiFixer != null) {
+        btnAiFixer.setOnClickListener(v -> triggerAiErrorFixerPipeline());
+    }
+
     dialogPanelAdapter = new PanelPagerAdapter(this);
     dialogViewPager.setAdapter(dialogPanelAdapter);
     dialogViewPager.setUserInputEnabled(false);
-
-    // ไม่ต้องมี TabLayoutMediator แล้ว เพราะเหลือหน้าเดียว + ซ่อนแท็บ
-    // ถ้าอยากเหลือชื่อแท็บไว้ อันนี้ก็พอ:
-    // new TabLayoutMediator(dialogTabLayout, dialogViewPager,
-    //         (tab, position) -> tab.setText("Console")).attach();
 
     dialogViewPager.post(() -> {
         if (dialogPanelAdapter != null) {
