@@ -739,111 +739,178 @@ private void updateLogcatButtonUi(TextView btnLogcat) {
     startActivity(intent);
 }
     // 🌟 ระบบตรวจจับสกัดกั้นและแก้บั๊กอัจฉริยะ (AI Error Fixer Pipeline) สำหรับระบบที่ 1 ตัวใหม่ล่าสุดครับท่าน
-    public void triggerAiErrorFixerPipeline() {
-        if (codeEditor == null || currentProject == null) {
-            showToast("⚠️ ไม่สามารถเข้าถึงตัวจัดเตรียมรหัสซอร์สโค้ดได้");
-            return;
-        }
+ public void triggerAiErrorFixerPipeline() {
+    if (codeEditor == null || currentProject == null) {
+        showToast("⚠️ ไม่สามารถเข้าถึงตัวจัดเตรียมรหัสซอร์สโค้ดได้");
+        return;
+    }
 
-        // 1. ดึงข้อความล็อก Error จาก Console ออกมาทั้งหมด
-        String consoleLog = "";
-        if (dialogPanelAdapter != null && dialogPanelAdapter.getTvConsole() != null) {
-            consoleLog = dialogPanelAdapter.getTvConsole().getText().toString().trim();
-        } else if (tvConsole != null) {
-            consoleLog = tvConsole.getText().toString().trim();
-        }
+    // 1. ดึง Error Log จาก Console
+    String consoleLog = "";
+    if (dialogPanelAdapter != null && dialogPanelAdapter.getTvConsole() != null) {
+        consoleLog = dialogPanelAdapter.getTvConsole().getText().toString().trim();
+    } else if (tvConsole != null) {
+        consoleLog = tvConsole.getText().toString().trim();
+    }
 
-        if (consoleLog.isEmpty() || consoleLog.equals("> Ready to build...")) {
-            showToast("🔎 ยังไม่มีบันทึกข้อผิดพลาด (Error Log) ปรากฏขึ้นในคอนโซลครับท่าน");
-            return;
-        }
+    if (consoleLog.isEmpty() || consoleLog.equals("> Ready to build...")) {
+        showToast("🔎 ยังไม่มีบันทึกข้อผิดพลาด (Error Log) ในคอนโซล");
+        return;
+    }
 
-        // 2. ดึงข้อมูลโค้ดดิบในหน้าตัวแก้ไขปัจจุบันที่กำลังทำงาน
-        java.io.File currentFile = currentProject.getCurrentOpenFile();
-        final String fileName = (currentFile != null) ? currentFile.getName() : "UnknownFile.java";
-        String currentSourceCode = codeEditor.getText().toString();
+    // 2. ไฟล์ + โค้ดปัจจุบัน
+    java.io.File currentFile = currentProject.getCurrentOpenFile();
+    final String fileName = (currentFile != null) ? currentFile.getName() : "UnknownFile.java";
+    String currentSourceCode = codeEditor.getText().toString();
 
-        // 3. ปรับโครงสร้างเพื่อบังคับมุมมองแท็บย้ายไปหน้าต่างแผงแสดงผล AI อัตโนมัติ
-        if (dialogViewPager != null) {
-            dialogViewPager.setCurrentItem(1, true);
-        }
+    // 3. หยุดเสียง AI เดิม (ถ้ามี)
+    if (aiLayoutAnalyzer != null) {
+        aiLayoutAnalyzer.stopSpeaking();
+    }
 
-        // สั่งระงับเสียงพูดเดิมทันทีป้องกันการทำงานเหลื่อมล้ำซ้อนกันครับท่าน
-        if (aiLayoutAnalyzer != null) {
-            aiLayoutAnalyzer.stopSpeaking();
-        }
+    // 4. สร้างข้อความ error ส่งเข้า Dialog
+    final String errorContext =
+            "ชื่อไฟล์: " + fileName + "\n\n"
+                    + "❌ Error Log จาก Console:\n"
+                    + consoleLog + "\n\n"
+                    + "📄 ซอร์สโค้ดปัจจุบัน:\n"
+                    + currentSourceCode;
 
-        // 4. บันทึกและแสดงข้อความบอกฝั่งผู้ใช้ให้ทราบบนหน้ากระดานสนทนา
-        chatHistory += "\n\n🚨 **[ระบบตรวจจับอัตโนมัติ]:** ร้องขอให้แก้ไขบั๊กของไฟล์ `" + fileName + "` จากข้อความผิดพลาดในระบบ Console";
-        
-        runOnUiThread(() -> {
-            try {
-                android.webkit.WebView currentWeb = dialogPanelAdapter.getWebAiOutput();
-                if (currentWeb != null) {
-                    currentWeb.getSettings().setJavaScriptEnabled(true);
-                    currentWeb.removeJavascriptInterface("AndroidBridge");
-                    currentWeb.addJavascriptInterface(new WebAppInterface(MainActivity.this), "AndroidBridge");
-                    
-                    String tempHtml = AiHtmlFormatter.convertMarkdownToHtml(chatHistory + "\n\n🤖 *AI กำลังวิเคราะห์สาเหตุและค้นหาจุดพังเพื่อซ่อมโค้ดให้ท่าน...*");
-                    currentWeb.loadDataWithBaseURL(null, tempHtml, "text/html", "utf-8", null);
-                }
-            } catch (Exception e) { e.printStackTrace(); }
-        });
+    // 5. เปิด UI AI Build Doctor
+    runOnUiThread(() -> showAiBuildDoctorDialog(errorContext, fileName));
+}
 
-        // 5. ป้อนคำสั่ง Prompt คุณภาพวิเคราะห์เจาะลึกส่งให้โมเดลประมวลผลแก้ปัญหาตรงจุด
-        String errorFixerPrompt = "คุณคือระบบ AI ตรวจจับและแก้ไขบั๊กอัตโนมัติประจำโปรแกรม MiniStudio\n\n" +
-                "นี่คือชื่อไฟล์ที่เกิดปัญหา: " + fileName + "\n\n" +
-                "❌ ข้อความผิดพลาดที่เกิดขึ้นในหน้าจอ Console (Error Log):\n" +
-                "```\n" + consoleLog + "\n```\n\n" +
-                "📄 ซอร์สโค้ดปัจจุบันในไฟล์นี้ทั้งหมด:\n" +
-                "```java\n" + currentSourceCode + "\n```\n\n" +
-                "กรุณาทำตามคำสั่งต่อไปนี้อย่างเข้มงวด:\n" +
-                "1. อธิบายสั้นๆ ว่าโค้ดพังที่บรรทัดไหน และเกิดจากสาเหตุใด\n" +
-                "2. ส่งซอร์สโค้ดของไฟล์นี้ทั้งหมดที่แก้ไขปัญหาเสร็จสมบูรณ์ร้อยเปอร์เซ็นต์แล้วกลับมาให้ในบล็อกโค้ด ```java เพื่อให้ผู้ใช้สามารถกดปุ่มนำไปใช้งานสวมทับได้ทันที";
+/** เปิด dialog_ai_doctor.xml */
+private void showAiBuildDoctorDialog(String errorContext, String fileName) {
+    final android.app.Dialog dialog = new android.app.Dialog(this);
+    dialog.requestWindowFeature(android.view.Window.FEATURE_NO_TITLE);
+    dialog.setContentView(R.layout.dialog_ai_doctor);
+    dialog.setCancelable(true);
 
-        aiLayoutAnalyzer.askAi(errorFixerPrompt, new AiLayoutAnalyzer.OnAnalysisListener() {
-            @Override
-            public void onStart() {}
+    if (dialog.getWindow() != null) {
+        dialog.getWindow().setLayout(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+    }
 
-            @Override
-            public void onSuccess(android.text.SpannableString formattedResult) {
-                runOnUiThread(() -> {
-                    try {
-                        android.webkit.WebView currentWeb = dialogPanelAdapter.getWebAiOutput();
-                        chatHistory += "\n\n🤖 **AI Fixer แนะนำแนวทางแก้ไขสำหรับไฟล์ (" + fileName + "):**\n" + formattedResult.toString();
-                        
-                        if (currentWeb != null) {
-                            currentWeb.getSettings().setJavaScriptEnabled(true);
-                            currentWeb.removeJavascriptInterface("AndroidBridge");
-                            currentWeb.addJavascriptInterface(new WebAppInterface(MainActivity.this), "AndroidBridge");
-                            
-                            String htmlResult = AiHtmlFormatter.convertMarkdownToHtml(chatHistory);
-                            currentWeb.loadDataWithBaseURL(null, htmlResult, "text/html", "utf-8", null);
-                        }
-                    } catch (Exception e) { e.printStackTrace(); }
-                });
+    final android.widget.TextView tvAiOutput = dialog.findViewById(R.id.tvAiOutput);
+    final android.widget.EditText etAiInput = dialog.findViewById(R.id.etAiInput);
+    android.widget.Button btnSend = dialog.findViewById(R.id.btnSendToAi);
+    android.widget.Button btnClose = dialog.findViewById(R.id.btnDialogClose);
+
+    if (btnClose != null) {
+        btnClose.setOnClickListener(v -> dialog.dismiss());
+    }
+
+    if (tvAiOutput != null) {
+        tvAiOutput.setText("📋 ไฟล์: " + fileName
+                + "\n\n⏳ กำลังส่ง error ให้ AI วิเคราะห์...");
+    }
+
+    // วิเคราะห์รอบแรกอัตโนมัติ
+    runBuildDoctorAnalysis(errorContext, fileName, tvAiOutput);
+
+    if (btnSend != null) {
+        btnSend.setOnClickListener(v -> {
+            String extra = etAiInput != null ? etAiInput.getText().toString().trim() : "";
+            String promptBody = errorContext;
+            if (!extra.isEmpty()) {
+                promptBody = errorContext + "\n\nคำถามเพิ่มเติมจากผู้ใช้:\n" + extra;
             }
-
-            @Override
-            public void onError(String errorMessage) {
-                runOnUiThread(() -> {
-                    try {
-                        android.webkit.WebView currentWeb = dialogPanelAdapter.getWebAiOutput();
-                        chatHistory += "\n\n❌ **AI Fixer ไม่สามารถวิเคราะห์ได้:** " + errorMessage;
-                        
-                        if (currentWeb != null) {
-                            currentWeb.getSettings().setJavaScriptEnabled(true);
-                            currentWeb.removeJavascriptInterface("AndroidBridge");
-                            currentWeb.addJavascriptInterface(new WebAppInterface(MainActivity.this), "AndroidBridge");
-                            
-                            String htmlError = AiHtmlFormatter.convertMarkdownToHtml(chatHistory);
-                            currentWeb.loadDataWithBaseURL(null, htmlError, "text/html", "utf-8", null);
-                        }
-                    } catch (Exception e) { e.printStackTrace(); }
-                });
+            if (tvAiOutput != null) {
+                tvAiOutput.setText("⏳ กำลังวิเคราะห์...");
             }
+            if (etAiInput != null) etAiInput.setText("");
+            runBuildDoctorAnalysis(promptBody, fileName, tvAiOutput);
         });
     }
+
+    dialog.show();
+}
+
+private void runBuildDoctorAnalysis(String errorContext, String fileName,
+                                    android.widget.TextView tvAiOutput) {
+    String prompt =
+            "คุณคือระบบ AI ตรวจจับและแก้ไขบั๊ก Android (MiniStudio)\n\n"
+                    + "ไฟล์: " + fileName + "\n\n"
+                    + errorContext + "\n\n"
+                    + "กรุณา:\n"
+                    + "1. อธิบายสั้นๆ ว่าพังที่ไหน สาเหตุอะไร\n"
+                    + "2. วิธีแก้เป็นข้อๆ\n"
+                    + "3. ถ้าแก้โค้ดได้ ส่งโค้ดทั้งไฟล์ในบล็อก ```java";
+
+    com.dev.ministudio.ai.GeminiAssistant ai =
+            new com.dev.ministudio.ai.GeminiAssistant(this);
+
+    if (!ai.hasApiKey()) {
+        if (tvAiOutput != null) {
+            tvAiOutput.setText("❌ ไม่พบ Groq API Key\nไปตั้งค่าที่ AI Settings ก่อน");
+        }
+        return;
+    }
+
+    ai.askAI(prompt, new com.dev.ministudio.ai.GeminiAssistant.AICallback() {
+        @Override
+        public void onSuccess(String responseText) {
+            runOnUiThread(() -> {
+                if (tvAiOutput != null) {
+                    tvAiOutput.setText(responseText);
+                }
+            });
+        }
+
+        @Override
+        public void onError(String errorMessage) {
+            runOnUiThread(() -> {
+                if (tvAiOutput != null) {
+                    tvAiOutput.setText("❌ " + errorMessage);
+                }
+            });
+        }
+    });
+}
+
+
+
+private void runBuildDoctorAnalysis(String errorOrPrompt, android.widget.TextView tvAiOutput) {
+    String prompt =
+            "คุณเป็นผู้ช่วยวิเคราะห์ Android Build Error\n"
+                    + "นี่คือข้อมูล error:\n"
+                    + errorOrPrompt
+                    + "\n\nวิเคราะห์สาเหตุและวิธีแก้เป็นภาษาไทย กระชับ เป็นข้อๆ";
+
+    // ใช้ GeminiAssistant (Groq) ตัวเดียวกับแชท
+    com.dev.ministudio.ai.GeminiAssistant ai =
+            new com.dev.ministudio.ai.GeminiAssistant(this);
+
+    if (!ai.hasApiKey()) {
+        if (tvAiOutput != null) {
+            tvAiOutput.setText("❌ ไม่พบ Groq API Key\nไปตั้งค่าที่ AI Settings ก่อน");
+        }
+        return;
+    }
+
+    ai.askAI(prompt, new com.dev.ministudio.ai.GeminiAssistant.AICallback() {
+        @Override
+        public void onSuccess(String responseText) {
+            runOnUiThread(() -> {
+                if (tvAiOutput != null) {
+                    tvAiOutput.setText(responseText);
+                }
+            });
+        }
+
+        @Override
+        public void onError(String errorMessage) {
+            runOnUiThread(() -> {
+                if (tvAiOutput != null) {
+                    tvAiOutput.setText("❌ " + errorMessage);
+                }
+            });
+        }
+    });
+}
 
 private void toggleXmlPreview() {
     if (codeEditor == null || previewContainer == null) {
