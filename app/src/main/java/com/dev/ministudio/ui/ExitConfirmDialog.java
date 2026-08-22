@@ -2,6 +2,7 @@ package com.dev.ministudio.ui;
 
 import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.GradientDrawable;
@@ -12,7 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 /**
- * Dialog ยืนยันออกจากแอป โทน Tokyo Night
+ * Dialog ยืนยันออกจากหน้าแก้ไขกลับไปหน้ารายการโปรเจกต์ โทน Tokyo Night
  */
 public final class ExitConfirmDialog {
 
@@ -41,7 +42,7 @@ public final class ExitConfirmDialog {
         root.addView(icon);
 
         TextView title = new TextView(activity);
-        title.setText("ออกจาก Nexus Studio");
+        title.setText("กลับหน้ารายการโปรเจกต์");
         title.setTextColor(Color.parseColor("#C0CAF5"));
         title.setTextSize(18);
         title.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
@@ -49,7 +50,7 @@ public final class ExitConfirmDialog {
         root.addView(title);
 
         TextView msg = new TextView(activity);
-        msg.setText("คุณแน่ใจหรือไม่ว่าต้องการออกจากแอป?\nงานที่ยังไม่บันทึกอาจหายได้");
+        msg.setText("ต้องการออกจากตัวแก้ไข\nแล้วกลับไปหน้า Projects หรือไม่?");
         msg.setTextColor(Color.parseColor("#565F89"));
         msg.setTextSize(14);
         msg.setGravity(Gravity.CENTER);
@@ -75,7 +76,7 @@ public final class ExitConfirmDialog {
         btnCancel.setLayoutParams(cancelLp);
 
         Button btnExit = new Button(activity);
-        btnExit.setText("ออกจากแอป");
+        btnExit.setText("กลับ");
         btnExit.setAllCaps(false);
         btnExit.setTextColor(Color.parseColor("#1A1B26"));
         btnExit.setTextSize(14);
@@ -105,7 +106,11 @@ public final class ExitConfirmDialog {
         btnCancel.setOnClickListener(v -> dialog.dismiss());
         btnExit.setOnClickListener(v -> {
             dialog.dismiss();
-            activity.finishAffinity();
+            // กลับไปหน้า Projects (ไม่ปิดแอป)
+            Intent intent = new Intent(activity, com.dev.ministudio.ProjectListActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            activity.startActivity(intent);
+            activity.finish();
         });
 
         dialog.show();
