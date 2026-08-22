@@ -229,51 +229,6 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <LinearLayout
-            android:id="@+id/aiSuggestionBar"
-            android:layout_width="match_parent"
-            android:layout_height="38dp"
-            android:background="#2A2040"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:visibility="gone">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="✨ AI แนะนำ: "
-                android:textColor="#BB9AF7"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/tvAiSuggestionText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:text="..."
-                android:textColor="#A9B1D6"
-                android:textSize="12sp"
-                android:fontFamily="monospace" />
-
-            <Button
-                android:id="@+id/btnAcceptAiSuggestion"
-                android:layout_width="wrap_content"
-                android:layout_height="28dp"
-                android:backgroundTint="#BB9AF7"
-                android:text="แทรกโค้ด"
-                android:textColor="#1A1B26"
-                android:textSize="10sp"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
-                style="@style/Widget.MaterialComponents.Button.UnelevatedButton" />
-        </LinearLayout>
-
         <!-- แถบล่างทั้งชุด (รวมปุ่มทางลัดและแถบปุ่มหลัก) -->
         <LinearLayout
             android:layout_width="match_parent"

@@ -114,10 +114,6 @@ public class MainActivity extends AppCompatActivity {
     private String chatHistory = "";
     // Views ตัวใหม่เพิ่มเติม
     private LinearLayout emptyStateView;
-    private AiAutoCompleteManager aiAutoCompleteManager;
-    private LinearLayout aiSuggestionBar;
-    private TextView tvAiSuggestionText;
-    private String lastReceivedSuggestion = "";
     private String pendingProjectName = "";
     private boolean isLightEditorTheme = false;
     private boolean isShortcutExpanded = false;
@@ -348,29 +344,7 @@ private void setupLogic() {
     codeEditor.setUndoEnabled(true);
     codeEditor.setHighlightCurrentBlock(true);
 
-    // แผง AI suggestion
-    aiSuggestionBar = findViewById(R.id.aiSuggestionBar);
-    tvAiSuggestionText = findViewById(R.id.tvAiSuggestionText);
-    Button btnAcceptAi = findViewById(R.id.btnAcceptAiSuggestion);
-
-    aiAutoCompleteManager = new AiAutoCompleteManager(this, codeEditor, aiLayoutAnalyzer);
-
-    if (btnAcceptAi != null) {
-        btnAcceptAi.setOnClickListener(v -> {
-            if (codeEditor != null && !lastReceivedSuggestion.isEmpty()) {
-                int line = codeEditor.getCursor().getLeftLine();
-                int column = codeEditor.getCursor().getLeftColumn();
-                codeEditor.getText().insert(line, column, lastReceivedSuggestion);
-                lastReceivedSuggestion = "";
-                if (aiSuggestionBar != null) {
-                    aiSuggestionBar.setVisibility(View.GONE);
-                }
-                showToast("✨ เติมโค้ดสำเร็จ!");
-            }
-        });
-    }
-
-    // Auto-Save + AI Auto-Complete + รีเฟรช Preview
+    // Auto-Save + รีเฟรช Preview (ไม่มี AI suggestion แล้ว)
     codeEditor.subscribeEvent(ContentChangeEvent.class, (event, unsubscribe) -> {
         if (tvSaveStatus != null) {
             tvSaveStatus.setText("Editing...");
@@ -387,25 +361,7 @@ private void setupLogic() {
         };
         autoSaveHandler.postDelayed(saveRunnable, 1500);
 
-        if (codeEditor.getCursor() != null && aiAutoCompleteManager != null) {
-            String fullText = codeEditor.getText().toString();
-            int curLine = codeEditor.getCursor().getLeftLine();
-            int curCol = codeEditor.getCursor().getLeftColumn();
-
-            aiAutoCompleteManager.onTextChanged(fullText, curLine, curCol, suggestionText -> {
-                runOnUiThread(() -> {
-                    lastReceivedSuggestion = suggestionText;
-                    if (tvAiSuggestionText != null) {
-                        tvAiSuggestionText.setText(suggestionText);
-                    }
-                    if (aiSuggestionBar != null) {
-                        aiSuggestionBar.setVisibility(View.VISIBLE);
-                    }
-                });
-            });
-        }
-
-        // รีเฟรช Preview อัตโนมัติตอนแก้ XML (หน่วง 600ms กันกระตุก)
+        // รีเฟรช Preview อัตโนมัติตอนแก้ XML
         if (isPreviewMode && previewContainer != null && codeEditor != null) {
             previewContainer.postDelayed(() -> {
                 if (!isPreviewMode || previewContainer == null || codeEditor == null) return;
