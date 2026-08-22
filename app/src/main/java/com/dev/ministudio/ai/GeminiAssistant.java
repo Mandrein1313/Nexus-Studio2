@@ -17,7 +17,7 @@ public class GeminiAssistant {
 
     private static final String API_URL = "https://api.groq.com/openai/v1/chat/completions";
     // โมเดลที่มักใช้ได้บน Groq (เปลี่ยนได้จาก Settings ภายหลัง)
-    private static final String DEFAULT_MODEL = "llama-3.1-8b-instant";
+    private static final String body.put("model", getModel()); // หรือใส่ตรง ๆ "openai/gpt-oss-20b" = "llama-3.1-8b-instant";
 
     private final Context context;
 
@@ -42,10 +42,10 @@ public class GeminiAssistant {
     }
 
     private String getModel() {
-        if (context == null) return DEFAULT_MODEL;
+        if (context == null) return body.put("model", getModel()); // หรือใส่ตรง ๆ "openai/gpt-oss-20b";
         SharedPreferences prefs = context.getSharedPreferences("ai_settings", Context.MODE_PRIVATE);
-        String model = prefs.getString("groq_model", DEFAULT_MODEL);
-        if (model == null || model.trim().isEmpty()) return DEFAULT_MODEL;
+        String model = prefs.getString("groq_model", body.put("model", getModel()); // หรือใส่ตรง ๆ "openai/gpt-oss-20b");
+        if (model == null || model.trim().isEmpty()) return body.put("model", getModel()); // หรือใส่ตรง ๆ "openai/gpt-oss-20b";
         return model.trim();
     }
 
