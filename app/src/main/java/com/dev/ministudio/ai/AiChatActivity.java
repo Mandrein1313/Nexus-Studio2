@@ -2,23 +2,25 @@ package com.dev.ministudio.ai;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import com.dev.ministudio.R; 
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.WindowCompat;
+
+import com.dev.ministudio.R;
 
 public class AiChatActivity extends AppCompatActivity {
 
     private WebView webAiChat;
     private EditText etAiInput;
     private String chatHistory = "";
+    private GeminiAssistant geminiAssistant;
+    private boolean isWaitingReply = false;
 
-    // ส่งจาก MainActivity (optional)
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
     public static final String EXTRA_CODE_SNIPPET = "codeSnippet";
@@ -32,6 +34,8 @@ public class AiChatActivity extends AppCompatActivity {
         getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
 
         setContentView(R.layout.activity_ai_chat);
+
+        geminiAssistant = new GeminiAssistant(this);
 
         webAiChat = findViewById(R.id.webAiChat);
         etAiInput = findViewById(R.id.etAiInput);
@@ -57,12 +61,9 @@ public class AiChatActivity extends AppCompatActivity {
             return true;
         });
 
-        btnSpeak.setOnClickListener(v -> {
-            // ต่อกับระบบพูดของเดิม (AiLayoutAnalyzer) ภายหลังได้
-            Toast.makeText(this, "เสียง AI (เชื่อมต่อภายหลัง)", Toast.LENGTH_SHORT).show();
-        });
+        btnSpeak.setOnClickListener(v ->
+                Toast.makeText(this, "เสียง AI (เชื่อมต่อภายหลัง)", Toast.LENGTH_SHORT).show());
 
-        // ถ้ามีโค้ดส่งมาจาก editor
         String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
         if (snippet != null && !snippet.isEmpty()) {
             etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
@@ -76,8 +77,6 @@ public class AiChatActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         webAiChat.setBackgroundColor(Color.parseColor("#1A1B26"));
-
-        // สะพาน JS → Android (คัดลอก / แทรกโค้ด)
         webAiChat.addJavascriptInterface(new AiBridge(), "NexusAI");
     }
 
@@ -91,14 +90,53 @@ public class AiChatActivity extends AppCompatActivity {
 
     private void sendMessage() {
         String msg = etAiInput.getText().toString().trim();
-        if (msg.isEmpty()) return;
+        if (msg.isEmpty() || isWaitingReply) return;
+
+        if (!geminiAssistant.hasApiKey()) {
+            Toast.makeText(this,
+                    "ยังไม่มี Groq API Key\nไปตั้งค่าที่ AI Settings",
+                    Toast.LENGTH_LONG).show();
+            appendAiBubble("❌ ไม่พบ API Key — กรุณาไปหน้า AI Settings แล้วบันทึก groq_api_key");
+            return;
+        }
 
         etAiInput.setText("");
         appendUserBubble(msg);
+        appendAiBubble("⏳ กำลังคิด...");
+        isWaitingReply = true;
 
-        // TODO: เรียก AI API ของโปรเจกต์ (ย้ายจาก MainActivity / AiLayoutAnalyzer)
-        // ตอนนี้แสดงข้อความจำลอง
-        appendAiBubble("ได้รับข้อความแล้ว — เชื่อมต่อ API ในขั้นตอนถัดไป\n\nคุณพิมพ์ว่า:\n" + msg);
+        geminiAssistant.askAI(msg, new GeminiAssistant.AICallback() {
+            @Override
+            public void onSuccess(String responseText) {
+                runOnUiThread(() -> {
+                    isWaitingReply = false;
+                    // ลบข้อความ "กำลังคิด..." แล้วใส่คำตอบจริง
+                    replaceLastAiBubble(responseText);
+                });
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                runOnUiThread(() -> {
+                    isWaitingReply = false;
+                    replaceLastAiBubble("❌ " + errorMessage);
+                });
+            }
+        });
+    }
+
+    /** แทนที่ bubble ล่าสุดของ AI (ข้อความกำลังคิด) ด้วยคำตอบจริง */
+    private void replaceLastAiBubble(String text) {
+        String marker = "⏳ กำลังคิด...";
+        int idx = chatHistory.lastIndexOf(escapeHtml(marker));
+        if (idx >= 0) {
+            // หา div ของ bubble ล่าสุดแบบง่าย: ตัดจากจุดเริ่ม bubble ล่าสุด
+            int divStart = chatHistory.lastIndexOf("<div style='margin:12px 0;text-align:left;'>");
+            if (divStart >= 0) {
+                chatHistory = chatHistory.substring(0, divStart);
+            }
+        }
+        appendAiBubble(text);
     }
 
     private void appendUserBubble(String text) {
@@ -123,17 +161,17 @@ public class AiChatActivity extends AppCompatActivity {
                 + chatHistory
                 + "</body></html>";
         webAiChat.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
-        webAiChat.post(() -> webAiChat.scrollTo(0, webAiChat.getContentHeight()));
+        webAiChat.post(() -> webAiChat.pageDown(true));
     }
 
     private String escapeHtml(String s) {
+        if (s == null) return "";
         return s.replace("&", "&amp;")
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\n", "<br>");
     }
 
-    /** JS bridge — คัดลอก / ส่งโค้ดกลับ editor */
     public class AiBridge {
         @android.webkit.JavascriptInterface
         public void copyText(String text) {
@@ -150,8 +188,15 @@ public class AiChatActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if (webAiChat != null) {
-            webAiChat.destroy();
+        try {
+            if (webAiChat != null) {
+                webAiChat.stopLoading();
+                webAiChat.loadUrl("about:blank");
+                webAiChat.removeAllViews();
+                webAiChat.destroy();
+                webAiChat = null;
+            }
+        } catch (Exception ignored) {
         }
         super.onDestroy();
     }
