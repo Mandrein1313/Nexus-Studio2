@@ -54,7 +54,7 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- สลับโหมด: ชื่อไฟล์ | ในโค้ด -->
+    <!-- สลับโหมด: ชื่อไฟล์ | โค้ด -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="40dp"
@@ -71,7 +71,7 @@
             android:gravity="center"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:text="ชื่อไฟล์"
+            android:text="ค้นหาไฟล์"
             android:textSize="13sp"
             android:textColor="#C0CAF5"
             android:background="#292E42" />
@@ -84,7 +84,7 @@
             android:gravity="center"
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
-            android:text="ในโค้ด"
+            android:text="ค้นหาโค้ด"
             android:textSize="13sp"
             android:textColor="#565F89"
             android:background="@android:color/transparent" />

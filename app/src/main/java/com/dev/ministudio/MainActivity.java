@@ -1735,7 +1735,7 @@ private void showFileSearchDialog() {
                 tabName.setTextColor(0xFF565F89);
                 tabName.setBackgroundColor(0x00000000);
             }
-            etSearch.setHint("ค้นหาในโค้ดทั้งโปรเจกต์...");
+            etSearch.setHint("ค้นหาโค้ดทั้งโปรเจกต์...");
         } else {
             if (tabName != null) {
                 tabName.setTextColor(0xFFC0CAF5);
@@ -1964,8 +1964,8 @@ private void showFileSearchDialog() {
                             }
                             adapterRef[0].notifyDataSetChanged();
                             tvHint.setText(found.isEmpty()
-                                    ? "ไม่พบในโค้ด"
-                                    : "พบในโค้ด · " + found.size() + " จุด · " + resultFiles.size() + " ไฟล์");
+                                    ? "ไม่พบโค้ด"
+                                    : "พบโค้ด · " + found.size() + " จุด · " + resultFiles.size() + " ไฟล์");
                         });
                     } else {
                         // --- ค้นหาตามชื่อไฟล์ ---
