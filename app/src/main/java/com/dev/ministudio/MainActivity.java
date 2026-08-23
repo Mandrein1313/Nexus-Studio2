@@ -120,6 +120,7 @@ public class MainActivity extends AppCompatActivity {
     private EditorSearchManager editorSearchManager;
    // เพิ่มตัวแปรนี้ในส่วนขอบเขตของคลาส MainActivity
     private LogcatReader logcatReader;
+    private LocalBuildManager localBuildManager;
     
 
    
@@ -1645,6 +1646,11 @@ public boolean onOptionsItemSelected(MenuItem item) {
         startCloudBuildPipeline();
         return true;
     }
+    
+    if (id == R.id.action_build) {
+    showBuildModeDialog();
+    return true;
+}
 
     if (id == R.id.action_search) {
         if (editorSearchManager != null) {
@@ -2399,4 +2405,46 @@ private void appendConsoleLine(String text, int color) {
         }
     });
 }
- }
+
+private void showBuildModeDialog() {
+    final String[] modes = {
+            "☁️ Cloud (GitHub Actions)",
+            "📱 Local (บนเครื่อง)"
+    };
+
+    new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("เลือกวิธี Build")
+            .setItems(modes, (dialog, which) -> {
+                if (which == 0) {
+                    startCloudBuildPipeline(); // ของเดิม
+                } else {
+                    startLocalBuildPipeline(); // ใหม่
+                }
+            })
+            .setNegativeButton("ยกเลิก", null)
+            .show();
+}
+
+private void startLocalBuildPipeline() {
+    // เปิด Console ให้เห็น log
+    showFullPanelDialog(0);
+
+    appendConsoleLine("📱 Local Build\n",
+            android.graphics.Color.parseColor("#7AA2F7"));
+    appendConsoleLine("สถานะ: โครงระบบพร้อมแล้ว (ยังไม่ compile จริง)\n",
+            android.graphics.Color.parseColor("#E0AF68"));
+    appendConsoleLine("ขั้นถัดไป: ดาวน์โหลดเครื่องมือ (aapt/d8/ecj)\n",
+            android.graphics.Color.parseColor("#565F89"));
+
+    if (localBuildManager == null) {
+        localBuildManager = new LocalBuildManager(this);
+    }
+    localBuildManager.startBuild(
+            currentProject != null ? currentProject.getRootPath() : null,
+            msg -> appendConsoleLine(msg + "\n",
+                    android.graphics.Color.parseColor("#A9B1D6"))
+    );
+}
+
+
+    }
