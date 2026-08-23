@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#252526"
+    android:orientation="vertical"
+    android:paddingBottom="24dp">
+
+    <!-- แถบจับด้านบนสุด (ให้ฟีลลากลงได้) -->
+    <View
+        android:layout_width="36dp"
+        android:layout_height="4dp"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="#555555" />
+
+    <!-- หัวข้อของไดอะล็อกบอกว่ากำลังจัดการไฟล์ไหน -->
+    <TextView
+        android:id="@+id/tvDialogHeader"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:textColor="#A0A0A0"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#333333"
+        android:layout_marginBottom="8dp" />
+
+    <!-- รายการเมนูต่าง ๆ จะถูกแอดเข้ามาตรงนี้แบบ Dynamic -->
+    <LinearLayout
+        android:id="@+id/menuContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+</LinearLayout>

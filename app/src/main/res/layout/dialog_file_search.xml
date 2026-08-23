@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1B26">
+
+    <!-- แถบค้นหาด้านบน -->
+    <LinearLayout
+        android:id="@+id/searchBarRoot"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#1F2335"
+        android:paddingStart="4dp"
+        android:paddingEnd="8dp">
+
+        <ImageButton
+            android:id="@+id/btnSearchBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="ปิด"
+            android:tint="#A9B1D6" />
+
+        <EditText
+            android:id="@+id/etFileSearch"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:hint="ค้นหาไฟล์..."
+            android:textColor="#C0CAF5"
+            android:textColorHint="#565F89"
+            android:background="@android:color/transparent"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:maxLines="1"
+            android:textSize="16sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
+
+        <ImageButton
+            android:id="@+id/btnSearchClear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="ล้าง"
+            android:tint="#565F89"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#292E42" />
+
+    <TextView
+        android:id="@+id/tvSearchHint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ผลการค้นหา"
+        android:textColor="#565F89"
+        android:textSize="13sp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="8dp" />
+
+    <ListView
+        android:id="@+id/lvFileSearchResults"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#1A1B26"
+        android:divider="#292E42"
+        android:dividerHeight="1dp"
+        android:paddingBottom="8dp"
+        android:clipToPadding="false"
+        android:listSelector="#24283B" />
+
+</LinearLayout>

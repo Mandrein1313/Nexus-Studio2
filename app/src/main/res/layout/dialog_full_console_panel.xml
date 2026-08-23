@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1B26"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#1F2335"
+        android:paddingStart="12dp"
+        android:paddingEnd="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="🛠️ Nexus Studio Terminal"
+            android:textColor="#C0CAF5"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/btnLogcat"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginEnd="4dp"
+            android:text="Logcat"
+            android:textSize="12sp"
+            android:textColor="#7AA2F7"
+            android:background="@drawable/bg_dialog_input"
+            android:contentDescription="Toggle Logcat" />
+
+        <!-- 🤖 เพิ่มปุ่ม AI วิเคราะห์ error -->
+        <ImageButton
+            android:id="@+id/btnAiFixer"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_ai_24"
+            android:contentDescription="AI Fixer"
+            app:tint="#BB9AF7" />
+
+        <ImageButton
+            android:id="@+id/btnClearConsole"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="Clear"
+            app:tint="#A9B1D6" />
+
+        <ImageButton
+            android:id="@+id/btnCloseConsole"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="Close"
+            app:tint="#F7768E" />
+    </LinearLayout>
+
+    <!-- ซ่อนแท็บ Console | AI — เหลือแค่ Console -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:background="#24283B"
+        app:tabTextColor="#565F89"
+        app:tabSelectedTextColor="#BB9AF7"
+        app:tabIndicatorColor="#BB9AF7"
+        app:tabIndicatorHeight="3dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

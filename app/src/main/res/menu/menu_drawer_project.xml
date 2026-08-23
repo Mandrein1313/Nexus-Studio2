@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="none">
+        <item
+            android:id="@+id/nav_github_settings"
+            android:icon="@android:drawable/ic_menu_manage"
+            android:title="GitHub Settings" />
+
+        <item
+            android:id="@+id/nav_ai_settings"
+            android:icon="@android:drawable/ic_menu_edit"
+            android:title="AI Settings" />
+
+        <item
+            android:id="@+id/nav_toggle_theme"
+            android:icon="@android:drawable/ic_menu_view"
+            android:title="สลับธีมสว่าง/มืด" />
+    </group>
+
+    <item android:title="ทั่วไป">
+        <menu>
+            <item
+                android:id="@+id/nav_about"
+                android:icon="@android:drawable/ic_menu_info_details"
+                android:title="เกี่ยวกับ Nexus Studio" />
+        </menu>
+    </item>
+
+</menu>
