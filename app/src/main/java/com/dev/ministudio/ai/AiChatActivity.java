@@ -36,16 +36,14 @@ public class AiChatActivity extends AppCompatActivity {
     private String lastAiReply = "";
     private ImageButton btnSpeak;
 
-    /** เก็บบล็อกโค้ดสำหรับปุ่ม Copy / ใส่ Editor */
     private final ArrayList<String> codeBlocks = new ArrayList<>();
-
-    /** ประวัติ role/content ส่งให้ AI + เซฟลงเครื่อง */
     private final ArrayList<GeminiAssistant.ChatMessage> conversation = new ArrayList<>();
 
+    /** key แยกประวัติตามโปรเจกต์ */
+    private String projectKey = "default";
+    private String projectName = "";
+
     private static final String CHAT_PREFS = "ai_chat_history";
-    private static final String KEY_HTML = "chat_html";
-    private static final String KEY_JSON = "chat_json";
-    private static final String KEY_CODES = "chat_codes";
 
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
@@ -61,6 +59,16 @@ public class AiChatActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_ai_chat);
 
+        // ชื่อโปรเจกต์ → ใช้เป็น key ประวัติ
+        String name = getIntent().getStringExtra(EXTRA_PROJECT_NAME);
+        if (name != null && !name.trim().isEmpty()) {
+            projectName = name.trim();
+            projectKey = projectName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+        } else {
+            projectName = "";
+            projectKey = "default";
+        }
+
         geminiAssistant = new GeminiAssistant(this);
         initTts();
 
@@ -70,14 +78,7 @@ public class AiChatActivity extends AppCompatActivity {
         ImageButton btnClear = findViewById(R.id.btnAiClear);
         ImageButton btnSend = findViewById(R.id.btnAiSend);
         btnSpeak = findViewById(R.id.btnAiSpeak);
-
-        // ถ้ามีปุ่มใน layout (แนะนำ id = btnAiHistory)
-        ImageButton btnHistory = null;
-        try {
-            btnHistory = findViewById(getResources().getIdentifier(
-                    "btnAiHistory", "id", getPackageName()));
-        } catch (Exception ignored) {
-        }
+        ImageButton btnHistory = findViewById(R.id.btnAiHistory);
 
         setupWebView();
 
@@ -95,10 +96,9 @@ public class AiChatActivity extends AppCompatActivity {
             conversation.clear();
             clearConversationStorage();
             loadEmptyChat();
-            Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
         });
 
-        // กดค้างถังขยะ = เปิดรายการประวัติ (ใช้ได้แม้ยังไม่มีปุ่มแยก)
         btnClear.setOnLongClickListener(v -> {
             showHistoryDialog();
             return true;
@@ -133,7 +133,7 @@ public class AiChatActivity extends AppCompatActivity {
             etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
         }
 
-        // โหลดประวัติที่เซฟไว้ (ถ้าไม่มีจะเป็นหน้าว่าง)
+        // โหลดประวัติของโปรเจกต์นี้เท่านั้น
         loadConversation();
     }
 
@@ -223,12 +223,14 @@ public class AiChatActivity extends AppCompatActivity {
 
     private void loadEmptyChat() {
         chatHistory = "";
+        String hint = projectName.isEmpty()
+                ? "เริ่มสนทนากับ AI ได้เลย"
+                : "โปรเจกต์: " + escapeHtml(projectName) + " — เริ่มสนทนาได้เลย";
         String html = "<!DOCTYPE html><html><head><meta charset='utf-8'/>"
                 + "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
                 + "</head><body style='background:#1A1B26;color:#A9B1D6;"
                 + "font-family:sans-serif;padding:16px;'>"
-                + "<p style='color:#565F89;'>เริ่มสนทนากับ AI ได้เลย</p>"
-                + "<p style='color:#565F89;font-size:12px;'>กดค้างที่ถังขยะ = ดูประวัติ</p>"
+                + "<p style='color:#565F89;'>" + hint + "</p>"
                 + "</body></html>";
         webAiChat.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
     }
@@ -398,7 +400,11 @@ public class AiChatActivity extends AppCompatActivity {
                 .replace("\"", "&quot;");
     }
 
-    // ========== ประวัติการสนทนา (เซฟ / โหลด / dialog) ==========
+    // ========== ประวัติแยกตามโปรเจกต์ ==========
+
+    private String keyHtml()  { return "chat_html_" + projectKey; }
+    private String keyJson()  { return "chat_json_" + projectKey; }
+    private String keyCodes() { return "chat_codes_" + projectKey; }
 
     private void saveConversation() {
         try {
@@ -410,13 +416,12 @@ public class AiChatActivity extends AppCompatActivity {
                 arr.put(o);
             }
             JSONArray codes = new JSONArray();
-            for (String c : codeBlocks) {
-                codes.put(c);
-            }
+            for (String c : codeBlocks) codes.put(c);
+
             getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit()
-                    .putString(KEY_HTML, chatHistory)
-                    .putString(KEY_JSON, arr.toString())
-                    .putString(KEY_CODES, codes.toString())
+                    .putString(keyHtml(), chatHistory)
+                    .putString(keyJson(), arr.toString())
+                    .putString(keyCodes(), codes.toString())
                     .apply();
         } catch (Exception e) {
             e.printStackTrace();
@@ -427,9 +432,9 @@ public class AiChatActivity extends AppCompatActivity {
         try {
             android.content.SharedPreferences p =
                     getSharedPreferences(CHAT_PREFS, MODE_PRIVATE);
-            String html = p.getString(KEY_HTML, "");
-            String json = p.getString(KEY_JSON, "[]");
-            String codesJson = p.getString(KEY_CODES, "[]");
+            String html = p.getString(keyHtml(), "");
+            String json = p.getString(keyJson(), "[]");
+            String codesJson = p.getString(keyCodes(), "[]");
 
             conversation.clear();
             codeBlocks.clear();
@@ -460,7 +465,11 @@ public class AiChatActivity extends AppCompatActivity {
     }
 
     private void clearConversationStorage() {
-        getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit().clear().apply();
+        getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit()
+                .remove(keyHtml())
+                .remove(keyJson())
+                .remove(keyCodes())
+                .apply();
     }
 
     private void showHistoryDialog() {
@@ -474,13 +483,17 @@ public class AiChatActivity extends AppCompatActivity {
             }
         }
 
+        String title = projectName.isEmpty()
+                ? "ประวัติการสนทนา"
+                : "ประวัติ · " + projectName;
+
         if (titles.isEmpty()) {
-            Toast.makeText(this, "ยังไม่มีประวัติการสนทนา", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "ยังไม่มีประวัติในโปรเจกต์นี้", Toast.LENGTH_SHORT).show();
             return;
         }
 
         new androidx.appcompat.app.AlertDialog.Builder(this)
-                .setTitle("ประวัติการสนทนา (" + titles.size() + " รอบ)")
+                .setTitle(title + " (" + titles.size() + " รอบ)")
                 .setItems(titles.toArray(new String[0]), (d, which) -> {
                     if (webAiChat != null) {
                         webAiChat.post(() -> webAiChat.pageUp(true));
@@ -488,7 +501,7 @@ public class AiChatActivity extends AppCompatActivity {
                     Toast.makeText(this, titles.get(which), Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("ปิด", null)
-                .setNeutralButton("ล้างทั้งหมด", (d, w) -> {
+                .setNeutralButton("ล้างโปรเจกต์นี้", (d, w) -> {
                     stopSpeaking();
                     chatHistory = "";
                     lastAiReply = "";
@@ -496,7 +509,7 @@ public class AiChatActivity extends AppCompatActivity {
                     conversation.clear();
                     clearConversationStorage();
                     loadEmptyChat();
-                    Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
                 })
                 .show();
     }
