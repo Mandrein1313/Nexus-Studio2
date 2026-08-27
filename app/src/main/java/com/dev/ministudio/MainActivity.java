@@ -101,6 +101,8 @@ public class MainActivity extends AppCompatActivity {
     private BuildEnvironmentManager buildEnvManager;
     private static final int PICK_FILE_REQUEST_CODE = 2026; 
     
+    private static final int REQ_AI_CHAT = 3101;
+    
     private ProjectDialogManager dialogManager;
     
     // 🤖 ตัวจัดการวิเคราะห์เลย์เอาต์ระดับสูงเพื่อความเสถียร
@@ -754,14 +756,15 @@ private String buildAiCodeContext() {
     }
     return sb.toString();
 }
-    private void openAiChat() {
+    
+//private static final int REQ_AI_CHAT = 3101;
+private void openAiChat() {
     Intent intent = new Intent(this, AiChatActivity.class);
 
     if (currentProject != null) {
         intent.putExtra(AiChatActivity.EXTRA_PROJECT_NAME, currentProject.getProjectName());
     }
 
-    // ส่งโค้ดที่เลือกอยู่ (ถ้ามี)
     if (codeEditor != null && codeEditor.getCursor() != null) {
         try {
             String selected = codeEditor.getText()
@@ -778,7 +781,7 @@ private String buildAiCodeContext() {
         }
     }
 
-    startActivity(intent);
+    startActivityForResult(intent, REQ_AI_CHAT);
 }
     // 🌟 ระบบตรวจจับสกัดกั้นและแก้บั๊กอัจฉริยะ (AI Error Fixer Pipeline) สำหรับระบบที่ 1 ตัวใหม่ล่าสุดครับท่าน
  public void triggerAiErrorFixerPipeline() {
@@ -2159,12 +2162,37 @@ private boolean deleteRecursive(java.io.File fileOrDir) {
     public PanelPagerAdapter getDialogPanelAdapter() { return dialogPanelAdapter; }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 2026 && projectTreeManager != null) {
-            projectTreeManager.onActivityResult(requestCode, resultCode, data);
+protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+
+    if (requestCode == 2026 && projectTreeManager != null) {
+        projectTreeManager.onActivityResult(requestCode, resultCode, data);
+    }
+
+    if (requestCode == REQ_AI_CHAT && resultCode == RESULT_OK && data != null) {
+        String code = data.getStringExtra("insert_code");
+        if (code != null && !code.isEmpty() && codeEditor != null) {
+            // ถ้ามี selection อยู่ ให้แทนที่ช่วงที่เลือก — ไม่งั้นใส่ทั้งไฟล์
+            try {
+                if (codeEditor.getCursor() != null
+                        && codeEditor.getCursor().isSelected()) {
+                    int l1 = codeEditor.getCursor().getLeftLine();
+                    int c1 = codeEditor.getCursor().getLeftColumn();
+                    int l2 = codeEditor.getCursor().getRightLine();
+                    int c2 = codeEditor.getCursor().getRightColumn();
+                    codeEditor.getText().delete(l1, c1, l2, c2);
+                    codeEditor.getText().insert(l1, c1, code);
+                } else {
+                    codeEditor.setText(code);
+                }
+            } catch (Exception e) {
+                codeEditor.setText(code);
+            }
+            setEditorActiveState(true);
+            showToast("✨ นำโค้ดจาก AI เข้า Editor แล้ว");
         }
     }
+}
 
     public void setEditorActiveState(boolean isFileActive) {
         runOnUiThread(() -> {

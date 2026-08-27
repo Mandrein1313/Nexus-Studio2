@@ -266,7 +266,7 @@ public class AiChatActivity extends AppCompatActivity {
     }
 
     /**
-     * แปลง ```code``` เป็นกล่อง + ปุ่ม Copy
+     * แปลง ```code``` เป็นกล่อง + ปุ่ม Copy และปุ่ม Insert to Editor
      * ใช้ index ใน codeBlocks แทนการยัดโค้ดทั้งก้อนใน onclick
      */
     private String formatAiHtml(String text) {
@@ -298,11 +298,18 @@ public class AiChatActivity extends AppCompatActivity {
                     .append("<span style='color:#7AA2F7;font-size:12px;'>")
                     .append(escapeHtml(lang.isEmpty() ? "code" : lang))
                     .append("</span>")
+                    .append("<div>")
                     .append("<button type='button' onclick='NexusAI.copyCode(")
                     .append(index)
                     .append(")' style='background:#3B4261;color:#C0CAF5;border:none;")
+                    .append("border-radius:6px;padding:4px 10px;font-size:12px;margin-right:6px;cursor:pointer;'>")
+                    .append("Copy</button>")
+                    .append("<button type='button' onclick='NexusAI.insertCode(")
+                    .append(index)
+                    .append(")' style='background:#7C3AED;color:#FFFFFF;border:none;")
                     .append("border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;'>")
-                    .append("Copy</button></div>");
+                    .append("ใส่ Editor</button>")
+                    .append("</div></div>");
 
             out.append("<pre style='margin:0;padding:12px;overflow-x:auto;")
                     .append("font-family:monospace;font-size:13px;line-height:1.5;")
@@ -361,6 +368,25 @@ public class AiChatActivity extends AppCompatActivity {
                     cm.setPrimaryClip(android.content.ClipData.newPlainText("code", code));
                     Toast.makeText(AiChatActivity.this, "📋 คัดลอกโค้ดแล้ว", Toast.LENGTH_SHORT).show();
                 }
+            });
+        }
+
+        /** ใส่โค้ดลงใน Editor แล้วปิดแชท */
+        @android.webkit.JavascriptInterface
+        public void insertCode(int index) {
+            runOnUiThread(() -> {
+                if (index < 0 || index >= codeBlocks.size()) {
+                    Toast.makeText(AiChatActivity.this, "ไม่พบโค้ด", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String code = codeBlocks.get(index);
+
+                // ส่งกลับ MainActivity แล้วปิดแชท
+                android.content.Intent data = new android.content.Intent();
+                data.putExtra("insert_code", code);
+                setResult(RESULT_OK, data);
+                Toast.makeText(AiChatActivity.this, "✨ ใส่โค้ดใน Editor แล้ว", Toast.LENGTH_SHORT).show();
+                finish();
             });
         }
 
