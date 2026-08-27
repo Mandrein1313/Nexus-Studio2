@@ -754,62 +754,6 @@ private String buildAiCodeContext() {
     }
     return sb.toString();
 }
-
-/** ผูก JS bridge ให้ WebView AI ใน panel */
-private void setupAiWebBridge(android.webkit.WebView web) {
-    if (web == null) return;
-    try {
-        web.getSettings().setJavaScriptEnabled(true);
-        web.getSettings().setDomStorageEnabled(true);
-        web.removeJavascriptInterface("AndroidBridge");
-        web.addJavascriptInterface(new WebAppInterface(MainActivity.this), "AndroidBridge");
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
-}
-
-private void reloadPanelAiWeb(android.webkit.WebView web, String markdown) {
-    if (web == null) return;
-    String html = AiHtmlFormatter.convertMarkdownToHtml(markdown != null ? markdown : "");
-    web.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
-}
-
-/** context ไฟล์ + โค้ด (หรือ selection) ส่งให้ AI */
-private String buildAiCodeContext() {
-    StringBuilder sb = new StringBuilder();
-    if (currentProject != null) {
-        sb.append("โปรเจกต์: ").append(currentProject.getProjectName()).append("\n");
-        java.io.File f = currentProject.getCurrentOpenFile();
-        if (f != null) {
-            sb.append("ไฟล์: ").append(f.getName()).append("\n");
-        }
-    }
-    if (codeEditor != null && codeEditor.getCursor() != null) {
-        try {
-            String selected = codeEditor.getText()
-                    .subContent(
-                            codeEditor.getCursor().getLeftLine(),
-                            codeEditor.getCursor().getLeftColumn(),
-                            codeEditor.getCursor().getRightLine(),
-                            codeEditor.getCursor().getRightColumn()
-                    ).toString();
-            if (selected != null && !selected.trim().isEmpty()) {
-                sb.append("โค้ดที่เลือก:\n```\n").append(selected).append("\n```\n");
-                return sb.toString();
-            }
-        } catch (Exception ignored) {
-        }
-        // ไม่มี selection → ส่งทั้งไฟล์ (จำกัดความยาว)
-        String all = codeEditor.getText().toString();
-        if (all != null && !all.isEmpty()) {
-            if (all.length() > 6000) {
-                all = all.substring(0, 6000) + "\n... (ตัดส่วนที่เหลือ)";
-            }
-            sb.append("โค้ดปัจจุบัน:\n```\n").append(all).append("\n```\n");
-        }
-    }
-    return sb.toString();
-}
     private void openAiChat() {
     Intent intent = new Intent(this, AiChatActivity.class);
 
@@ -927,14 +871,17 @@ private void showAiBuildDoctorDialog(String errorContext, String fileName) {
     dialog.show();
 }
 
-private void runBuildDoctorAnalysis(String errorOrPrompt, android.widget.TextView tvAiOutput) {
+private void runBuildDoctorAnalysis(String errorOrPrompt, String fileName,
+                                    android.widget.TextView tvAiOutput) {
     String prompt =
-            "คุณเป็นผู้ช่วยวิเคราะห์ Android Build Error\n"
-                    + "นี่คือข้อมูล error:\n"
-                    + errorOrPrompt
-                    + "\n\nวิเคราะห์สาเหตุและวิธีแก้เป็นภาษาไทย กระชับ เป็นข้อๆ";
+            "คุณคือระบบ AI ตรวจจับและแก้ไขบั๊ก Android (Nexus Studio)\n\n"
+                    + "ไฟล์: " + fileName + "\n\n"
+                    + errorOrPrompt + "\n\n"
+                    + "กรุณา:\n"
+                    + "1. อธิบายสั้นๆ ว่าพังที่ไหน สาเหตุอะไร\n"
+                    + "2. วิธีแก้เป็นข้อๆ\n"
+                    + "3. ถ้าแก้โค้ดได้ ส่งโค้ดทั้งไฟล์ในบล็อก ```java";
 
-    // ใช้ GeminiAssistant (Groq) ตัวเดียวกับแชท
     com.dev.ministudio.ai.GeminiAssistant ai =
             new com.dev.ministudio.ai.GeminiAssistant(this);
 
@@ -945,7 +892,7 @@ private void runBuildDoctorAnalysis(String errorOrPrompt, android.widget.TextVie
         return;
     }
 
-    ai.askAI(prompt, new com.dev.ministudio.ai.GeminiAssistant.AICallback() {
+    ai.askAI(prompt, null, 0.3, 1024, new com.dev.ministudio.ai.GeminiAssistant.AICallback() {
         @Override
         public void onSuccess(String responseText) {
             runOnUiThread(() -> {
