@@ -36,6 +36,10 @@ public class AiChatActivity extends AppCompatActivity {
     /** เก็บบล็อกโค้ดสำหรับปุ่ม Copy (ไม่ยัดใน onclick) */
     private final ArrayList<String> codeBlocks = new ArrayList<>();
 
+    /** เก็บประวัติการสนทนาสำหรับส่งต่อให้ AI */
+    private final java.util.ArrayList<GeminiAssistant.ChatMessage> conversation =
+            new java.util.ArrayList<>();
+
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
     public static final String EXTRA_CODE_SNIPPET = "codeSnippet";
@@ -72,6 +76,7 @@ public class AiChatActivity extends AppCompatActivity {
             chatHistory = "";
             lastAiReply = "";
             codeBlocks.clear();
+            conversation.clear();   // ← เพิ่ม
             loadEmptyChat();
             Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
         });
@@ -216,26 +221,45 @@ public class AiChatActivity extends AppCompatActivity {
         appendAiBubble("⏳ กำลังคิด...");
         isWaitingReply = true;
 
-        geminiAssistant.askAI(msg, new GeminiAssistant.AICallback() {
-            @Override
-            public void onSuccess(String responseText) {
-                runOnUiThread(() -> {
-                    isWaitingReply = false;
-                    lastAiReply = responseText;
-                    replaceLastAiBubble(responseText);
-                    speakText(responseText);
-                });
-            }
+        // ส่งประวัติเก่า (ยังไม่รวมข้อความปัจจุบัน — askAI จะใส่ user ปัจจุบันให้)
+        java.util.ArrayList<GeminiAssistant.ChatMessage> historySnapshot =
+                new java.util.ArrayList<>(conversation);
 
-            @Override
-            public void onError(String errorMessage) {
-                runOnUiThread(() -> {
-                    isWaitingReply = false;
-                    lastAiReply = "";
-                    replaceLastAiBubble("❌ " + errorMessage);
+        // จำกัดความยาวประวัติ (เก็บประมาณ 8 รอบ = 16 ข้อความ)
+        while (historySnapshot.size() > 16) {
+            historySnapshot.remove(0);
+        }
+
+        geminiAssistant.askAI(msg, historySnapshot, 0.4, 2048,
+                new GeminiAssistant.AICallback() {
+                    @Override
+                    public void onSuccess(String responseText) {
+                        runOnUiThread(() -> {
+                            isWaitingReply = false;
+                            lastAiReply = responseText;
+
+                            // บันทึกลงประวัติสนทนา
+                            conversation.add(new GeminiAssistant.ChatMessage("user", msg));
+                            conversation.add(new GeminiAssistant.ChatMessage("assistant", responseText));
+                            while (conversation.size() > 16) {
+                                conversation.remove(0);
+                            }
+
+                            replaceLastAiBubble(responseText);
+                            speakText(responseText);
+                        });
+                    }
+
+                    @Override
+                    public void onError(String errorMessage) {
+                        runOnUiThread(() -> {
+                            isWaitingReply = false;
+                            lastAiReply = "";
+                            // ไม่บันทึก error ลงประวัติ
+                            replaceLastAiBubble("❌ " + errorMessage);
+                        });
+                    }
                 });
-            }
-        });
     }
 
     private void replaceLastAiBubble(String text) {
