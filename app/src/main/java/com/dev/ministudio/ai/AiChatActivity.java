@@ -16,6 +16,7 @@ import androidx.core.view.WindowCompat;
 
 import com.dev.ministudio.R;
 
+import java.util.ArrayList;
 import java.util.Locale;
 
 public class AiChatActivity extends AppCompatActivity {
@@ -31,6 +32,9 @@ public class AiChatActivity extends AppCompatActivity {
     private boolean isSpeaking = false;
     private String lastAiReply = "";
     private ImageButton btnSpeak;
+
+    /** เก็บบล็อกโค้ดสำหรับปุ่ม Copy (ไม่ยัดใน onclick) */
+    private final ArrayList<String> codeBlocks = new ArrayList<>();
 
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
@@ -67,6 +71,7 @@ public class AiChatActivity extends AppCompatActivity {
             stopSpeaking();
             chatHistory = "";
             lastAiReply = "";
+            codeBlocks.clear();
             loadEmptyChat();
             Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
         });
@@ -179,11 +184,14 @@ public class AiChatActivity extends AppCompatActivity {
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         webAiChat.setBackgroundColor(Color.parseColor("#1A1B26"));
+        webAiChat.removeJavascriptInterface("NexusAI");
         webAiChat.addJavascriptInterface(new AiBridge(), "NexusAI");
     }
 
     private void loadEmptyChat() {
-        String html = "<html><body style='background:#1A1B26;color:#A9B1D6;"
+        String html = "<!DOCTYPE html><html><head><meta charset='utf-8'/>"
+                + "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
+                + "</head><body style='background:#1A1B26;color:#A9B1D6;"
                 + "font-family:sans-serif;padding:16px;'>"
                 + "<p style='color:#565F89;'>เริ่มสนทนากับ AI ได้เลย</p>"
                 + "</body></html>";
@@ -232,7 +240,6 @@ public class AiChatActivity extends AppCompatActivity {
 
     private void replaceLastAiBubble(String text) {
         String marker = "⏳ กำลังคิด...";
-        // หา bubble ล่าสุดแบบง่าย
         int divStart = chatHistory.lastIndexOf("<div style='margin:12px 0;text-align:left;'>");
         if (divStart >= 0 && chatHistory.indexOf(marker, divStart) >= 0) {
             chatHistory = chatHistory.substring(0, divStart);
@@ -258,31 +265,30 @@ public class AiChatActivity extends AppCompatActivity {
         reloadChat();
     }
 
-    /** แปลง ```code``` เป็นกล่อง + ปุ่ม Copy */
+    /**
+     * แปลง ```code``` เป็นกล่อง + ปุ่ม Copy
+     * ใช้ index ใน codeBlocks แทนการยัดโค้ดทั้งก้อนใน onclick
+     */
     private String formatAiHtml(String text) {
         if (text == null) return "";
 
         StringBuilder out = new StringBuilder();
         java.util.regex.Pattern p = java.util.regex.Pattern.compile(
-                "```([a-zA-Z0-9]*)\\s*\\n([\\s\\S]*?)```");
+                "```([a-zA-Z0-9_+\\-]*)\\s*\\n?([\\s\\S]*?)```");
         java.util.regex.Matcher m = p.matcher(text);
 
         int last = 0;
-        int codeIndex = 0;
         while (m.find()) {
             out.append(escapeHtml(text.substring(last, m.start())).replace("\n", "<br>"));
 
             String lang = m.group(1) != null ? m.group(1) : "";
             String code = m.group(2) != null ? m.group(2) : "";
-            if (code.endsWith("\n")) code = code.substring(0, code.length() - 1);
+            while (code.endsWith("\n") || code.endsWith("\r")) {
+                code = code.substring(0, code.length() - 1);
+            }
 
-            // เก็บโค้ดใน data attribute ผ่าน JS แบบ escape สำหรับสตริงใน onclick
-            String safeForJs = code
-                    .replace("\\", "\\\\")
-                    .replace("'", "\\'")
-                    .replace("\"", "\\\"")
-                    .replace("\n", "\\n")
-                    .replace("\r", "");
+            int index = codeBlocks.size();
+            codeBlocks.add(code);
 
             out.append("<div style='margin:10px 0;background:#1A1B26;border:1px solid #3B4261;")
                     .append("border-radius:10px;overflow:hidden;'>");
@@ -292,10 +298,10 @@ public class AiChatActivity extends AppCompatActivity {
                     .append("<span style='color:#7AA2F7;font-size:12px;'>")
                     .append(escapeHtml(lang.isEmpty() ? "code" : lang))
                     .append("</span>")
-                    .append("<button type='button' onclick=\"NexusAI.copyText('")
-                    .append(safeForJs)
-                    .append("')\" style='background:#3B4261;color:#C0CAF5;border:none;")
-                    .append("border-radius:6px;padding:4px 10px;font-size:12px;'>")
+                    .append("<button type='button' onclick='NexusAI.copyCode(")
+                    .append(index)
+                    .append(")' style='background:#3B4261;color:#C0CAF5;border:none;")
+                    .append("border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;'>")
                     .append("Copy</button></div>");
 
             out.append("<pre style='margin:0;padding:12px;overflow-x:auto;")
@@ -305,7 +311,6 @@ public class AiChatActivity extends AppCompatActivity {
                     .append("</pre></div>");
 
             last = m.end();
-            codeIndex++;
         }
 
         if (last < text.length()) {
@@ -318,8 +323,14 @@ public class AiChatActivity extends AppCompatActivity {
     }
 
     private void reloadChat() {
-        String html = "<html><body style='background:#1A1B26;color:#A9B1D6;"
-                + "font-family:sans-serif;padding:12px;'>"
+        String html = "<!DOCTYPE html><html><head>"
+                + "<meta charset='utf-8'/>"
+                + "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
+                + "<style>"
+                + "body{background:#1A1B26;color:#A9B1D6;font-family:sans-serif;padding:12px;margin:0;}"
+                + "pre{white-space:pre;word-wrap:normal;}"
+                + "button{outline:none;}"
+                + "</style></head><body>"
                 + chatHistory
                 + "</body></html>";
         webAiChat.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
@@ -335,11 +346,34 @@ public class AiChatActivity extends AppCompatActivity {
     }
 
     public class AiBridge {
+        /** คัดลอกตาม index — ปลอดภัยกับโค้ดที่มี quote / บรรทัดยาว */
+        @android.webkit.JavascriptInterface
+        public void copyCode(int index) {
+            runOnUiThread(() -> {
+                if (index < 0 || index >= codeBlocks.size()) {
+                    Toast.makeText(AiChatActivity.this, "ไม่พบโค้ด", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                String code = codeBlocks.get(index);
+                android.content.ClipboardManager cm =
+                        (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+                if (cm != null) {
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("code", code));
+                    Toast.makeText(AiChatActivity.this, "📋 คัดลอกโค้ดแล้ว", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        /** เผื่อโค้ดเก่า */
         @android.webkit.JavascriptInterface
         public void copyText(String text) {
             runOnUiThread(() -> {
-                // แปลง \\n กลับเป็นบรรทัดจริง
-                String decoded = text.replace("\\n", "\n").replace("\\'", "'").replace("\\\"", "\"");
+                if (text == null) return;
+                String decoded = text
+                        .replace("\\n", "\n")
+                        .replace("\\'", "'")
+                        .replace("\\\"", "\"")
+                        .replace("\\\\", "\\");
                 android.content.ClipboardManager cm =
                         (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
                 if (cm != null) {
