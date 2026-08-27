@@ -52,13 +52,16 @@ public class AiLayoutAnalyzer {
         }
 
         if (listener != null) listener.onStart();
-        String prompt = "ไฟล์: " + fileName + "\n\nโค้ด:\n" + rawCode + "\n\nช่วยวิเคราะห์ปัญหา, Code Smell, คำแนะนำ และให้คะแนน 1-10 เป็นภาษาไทย";
-        
-        aiAssistant.askAi(prompt, new GeminiAssistant.AICallback() {
+        String prompt = "ไฟล์: " + fileName + "\n\nโค้ด:\n" + rawCode
+                + "\n\nช่วยวิเคราะห์ปัญหา, Code Smell, คำแนะนำ และให้คะแนน 1-10 เป็นภาษาไทย";
+
+        // ใช้ askAI (ตัว A ใหญ่) ตาม GeminiAssistant เวอร์ชันใหม่
+        aiAssistant.askAI(prompt, new GeminiAssistant.AICallback() {
             @Override
             public void onSuccess(final String responseText) {
                 mainHandler.post(() -> processResponse(responseText, listener));
             }
+
             @Override
             public void onError(final String errorMessage) {
                 mainHandler.post(() -> {
@@ -77,13 +80,16 @@ public class AiLayoutAnalyzer {
         }
 
         if (listener != null) listener.onStart();
-        String prompt = "คุณคือผู้เชี่ยวชาญด้าน Android Development ช่วยตอบคำถามหรือให้คำแนะนำเกี่ยวกับเรื่องนี้ให้หน่อยครับ: \n\n" + userQuestion;
-        
-        aiAssistant.askAi(prompt, new GeminiAssistant.AICallback() {
+        String prompt = "คุณคือผู้เชี่ยวชาญด้าน Android Development ช่วยตอบคำถามหรือให้คำแนะนำเกี่ยวกับเรื่องนี้ให้หน่อยครับ: \n\n"
+                + userQuestion;
+
+        // ใช้ askAI (ตัว A ใหญ่) ตาม GeminiAssistant เวอร์ชันใหม่
+        aiAssistant.askAI(prompt, new GeminiAssistant.AICallback() {
             @Override
             public void onSuccess(final String responseText) {
                 mainHandler.post(() -> processResponse(responseText, listener));
             }
+
             @Override
             public void onError(final String errorMessage) {
                 mainHandler.post(() -> {
@@ -94,17 +100,16 @@ public class AiLayoutAnalyzer {
     }
 
     private void processResponse(String responseText, OnAnalysisListener listener) {
-        // แตกตัวอักษรเพื่อส่งไปให้ระบบอ่านออกเสียง (ล้างเครื่องหมายแปลกๆ ออก)
         String cleanText = responseText
                 .replaceAll("`", "")
                 .replaceAll("/", " ")
                 .replaceAll("\\\\", " ")
                 .replaceAll("-", " ");
-        
+
         speakText(cleanText);
-        
+
         SpannableString formatted = new SpannableString(responseText);
-        
+
         if (listener != null) {
             listener.onSuccess(formatted);
         }
@@ -116,7 +121,6 @@ public class AiLayoutAnalyzer {
         }
     }
 
-    // ➕ 🛠️ เมทอดที่เพิ่มขึ้นมาใหม่: สำหรับสั่งให้ AI หยุดพูดทันทีในพริบตา!
     public void stopSpeaking() {
         if (tts != null && ttsInitialized) {
             try {
@@ -131,9 +135,9 @@ public class AiLayoutAnalyzer {
 
     public void shutdown() {
         if (tts != null) {
-            try { 
-                tts.stop(); 
-                tts.shutdown(); 
+            try {
+                tts.stop();
+                tts.shutdown();
             } catch (Exception e) {
                 e.printStackTrace();
             }
