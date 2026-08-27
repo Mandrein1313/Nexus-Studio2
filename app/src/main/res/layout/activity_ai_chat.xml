@@ -36,6 +36,18 @@
             android:textStyle="bold"
             android:layout_marginStart="4dp" />
 
+        <!-- ปุ่มประวัติการสนทนา -->
+        <ImageButton
+            android:id="@+id/btnAiHistory"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_recent_history"
+            android:contentDescription="ประวัติ"
+            android:layout_marginEnd="4dp"
+            app:tint="#7AA2F7" />
+
+        <!-- ล้างประวัติ -->
         <ImageButton
             android:id="@+id/btnAiClear"
             android:layout_width="40dp"

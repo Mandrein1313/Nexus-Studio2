@@ -16,6 +16,9 @@ import androidx.core.view.WindowCompat;
 
 import com.dev.ministudio.R;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -33,12 +36,16 @@ public class AiChatActivity extends AppCompatActivity {
     private String lastAiReply = "";
     private ImageButton btnSpeak;
 
-    /** เก็บบล็อกโค้ดสำหรับปุ่ม Copy (ไม่ยัดใน onclick) */
+    /** เก็บบล็อกโค้ดสำหรับปุ่ม Copy / ใส่ Editor */
     private final ArrayList<String> codeBlocks = new ArrayList<>();
 
-    /** เก็บประวัติการสนทนาสำหรับส่งต่อให้ AI */
-    private final java.util.ArrayList<GeminiAssistant.ChatMessage> conversation =
-            new java.util.ArrayList<>();
+    /** ประวัติ role/content ส่งให้ AI + เซฟลงเครื่อง */
+    private final ArrayList<GeminiAssistant.ChatMessage> conversation = new ArrayList<>();
+
+    private static final String CHAT_PREFS = "ai_chat_history";
+    private static final String KEY_HTML = "chat_html";
+    private static final String KEY_JSON = "chat_json";
+    private static final String KEY_CODES = "chat_codes";
 
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
@@ -64,10 +71,19 @@ public class AiChatActivity extends AppCompatActivity {
         ImageButton btnSend = findViewById(R.id.btnAiSend);
         btnSpeak = findViewById(R.id.btnAiSpeak);
 
+        // ถ้ามีปุ่มใน layout (แนะนำ id = btnAiHistory)
+        ImageButton btnHistory = null;
+        try {
+            btnHistory = findViewById(getResources().getIdentifier(
+                    "btnAiHistory", "id", getPackageName()));
+        } catch (Exception ignored) {
+        }
+
         setupWebView();
 
         btnBack.setOnClickListener(v -> {
             stopSpeaking();
+            saveConversation();
             finish();
         });
 
@@ -76,10 +92,21 @@ public class AiChatActivity extends AppCompatActivity {
             chatHistory = "";
             lastAiReply = "";
             codeBlocks.clear();
-            conversation.clear();   // ← เพิ่ม
+            conversation.clear();
+            clearConversationStorage();
             loadEmptyChat();
             Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
         });
+
+        // กดค้างถังขยะ = เปิดรายการประวัติ (ใช้ได้แม้ยังไม่มีปุ่มแยก)
+        btnClear.setOnLongClickListener(v -> {
+            showHistoryDialog();
+            return true;
+        });
+
+        if (btnHistory != null) {
+            btnHistory.setOnClickListener(v -> showHistoryDialog());
+        }
 
         btnSend.setOnClickListener(v -> sendMessage());
 
@@ -106,7 +133,8 @@ public class AiChatActivity extends AppCompatActivity {
             etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
         }
 
-        loadEmptyChat();
+        // โหลดประวัติที่เซฟไว้ (ถ้าไม่มีจะเป็นหน้าว่าง)
+        loadConversation();
     }
 
     private void initTts() {
@@ -194,11 +222,13 @@ public class AiChatActivity extends AppCompatActivity {
     }
 
     private void loadEmptyChat() {
+        chatHistory = "";
         String html = "<!DOCTYPE html><html><head><meta charset='utf-8'/>"
                 + "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
                 + "</head><body style='background:#1A1B26;color:#A9B1D6;"
                 + "font-family:sans-serif;padding:16px;'>"
                 + "<p style='color:#565F89;'>เริ่มสนทนากับ AI ได้เลย</p>"
+                + "<p style='color:#565F89;font-size:12px;'>กดค้างที่ถังขยะ = ดูประวัติ</p>"
                 + "</body></html>";
         webAiChat.loadDataWithBaseURL(null, html, "text/html", "utf-8", null);
     }
@@ -221,11 +251,8 @@ public class AiChatActivity extends AppCompatActivity {
         appendAiBubble("⏳ กำลังคิด...");
         isWaitingReply = true;
 
-        // ส่งประวัติเก่า (ยังไม่รวมข้อความปัจจุบัน — askAI จะใส่ user ปัจจุบันให้)
-        java.util.ArrayList<GeminiAssistant.ChatMessage> historySnapshot =
-                new java.util.ArrayList<>(conversation);
-
-        // จำกัดความยาวประวัติ (เก็บประมาณ 8 รอบ = 16 ข้อความ)
+        ArrayList<GeminiAssistant.ChatMessage> historySnapshot =
+                new ArrayList<>(conversation);
         while (historySnapshot.size() > 16) {
             historySnapshot.remove(0);
         }
@@ -238,7 +265,6 @@ public class AiChatActivity extends AppCompatActivity {
                             isWaitingReply = false;
                             lastAiReply = responseText;
 
-                            // บันทึกลงประวัติสนทนา
                             conversation.add(new GeminiAssistant.ChatMessage("user", msg));
                             conversation.add(new GeminiAssistant.ChatMessage("assistant", responseText));
                             while (conversation.size() > 16) {
@@ -246,6 +272,7 @@ public class AiChatActivity extends AppCompatActivity {
                             }
 
                             replaceLastAiBubble(responseText);
+                            saveConversation();
                             speakText(responseText);
                         });
                     }
@@ -255,7 +282,6 @@ public class AiChatActivity extends AppCompatActivity {
                         runOnUiThread(() -> {
                             isWaitingReply = false;
                             lastAiReply = "";
-                            // ไม่บันทึก error ลงประวัติ
                             replaceLastAiBubble("❌ " + errorMessage);
                         });
                     }
@@ -289,10 +315,6 @@ public class AiChatActivity extends AppCompatActivity {
         reloadChat();
     }
 
-    /**
-     * แปลง ```code``` เป็นกล่อง + ปุ่ม Copy และปุ่ม Insert to Editor
-     * ใช้ index ใน codeBlocks แทนการยัดโค้ดทั้งก้อนใน onclick
-     */
     private String formatAiHtml(String text) {
         if (text == null) return "";
 
@@ -376,8 +398,110 @@ public class AiChatActivity extends AppCompatActivity {
                 .replace("\"", "&quot;");
     }
 
+    // ========== ประวัติการสนทนา (เซฟ / โหลด / dialog) ==========
+
+    private void saveConversation() {
+        try {
+            JSONArray arr = new JSONArray();
+            for (GeminiAssistant.ChatMessage m : conversation) {
+                JSONObject o = new JSONObject();
+                o.put("role", m.role);
+                o.put("content", m.content);
+                arr.put(o);
+            }
+            JSONArray codes = new JSONArray();
+            for (String c : codeBlocks) {
+                codes.put(c);
+            }
+            getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit()
+                    .putString(KEY_HTML, chatHistory)
+                    .putString(KEY_JSON, arr.toString())
+                    .putString(KEY_CODES, codes.toString())
+                    .apply();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void loadConversation() {
+        try {
+            android.content.SharedPreferences p =
+                    getSharedPreferences(CHAT_PREFS, MODE_PRIVATE);
+            String html = p.getString(KEY_HTML, "");
+            String json = p.getString(KEY_JSON, "[]");
+            String codesJson = p.getString(KEY_CODES, "[]");
+
+            conversation.clear();
+            codeBlocks.clear();
+
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject o = arr.getJSONObject(i);
+                conversation.add(new GeminiAssistant.ChatMessage(
+                        o.optString("role", "user"),
+                        o.optString("content", "")
+                ));
+            }
+            JSONArray codes = new JSONArray(codesJson);
+            for (int i = 0; i < codes.length(); i++) {
+                codeBlocks.add(codes.optString(i, ""));
+            }
+
+            if (html != null && !html.trim().isEmpty()) {
+                chatHistory = html;
+                reloadChat();
+            } else {
+                loadEmptyChat();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            loadEmptyChat();
+        }
+    }
+
+    private void clearConversationStorage() {
+        getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit().clear().apply();
+    }
+
+    private void showHistoryDialog() {
+        final ArrayList<String> titles = new ArrayList<>();
+        for (int i = 0; i < conversation.size(); i++) {
+            GeminiAssistant.ChatMessage m = conversation.get(i);
+            if ("user".equals(m.role)) {
+                String t = m.content != null ? m.content.trim().replace("\n", " ") : "";
+                if (t.length() > 48) t = t.substring(0, 48) + "…";
+                titles.add((titles.size() + 1) + ". " + t);
+            }
+        }
+
+        if (titles.isEmpty()) {
+            Toast.makeText(this, "ยังไม่มีประวัติการสนทนา", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("ประวัติการสนทนา (" + titles.size() + " รอบ)")
+                .setItems(titles.toArray(new String[0]), (d, which) -> {
+                    if (webAiChat != null) {
+                        webAiChat.post(() -> webAiChat.pageUp(true));
+                    }
+                    Toast.makeText(this, titles.get(which), Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("ปิด", null)
+                .setNeutralButton("ล้างทั้งหมด", (d, w) -> {
+                    stopSpeaking();
+                    chatHistory = "";
+                    lastAiReply = "";
+                    codeBlocks.clear();
+                    conversation.clear();
+                    clearConversationStorage();
+                    loadEmptyChat();
+                    Toast.makeText(this, "ล้างประวัติแล้ว", Toast.LENGTH_SHORT).show();
+                })
+                .show();
+    }
+
     public class AiBridge {
-        /** คัดลอกตาม index — ปลอดภัยกับโค้ดที่มี quote / บรรทัดยาว */
         @android.webkit.JavascriptInterface
         public void copyCode(int index) {
             runOnUiThread(() -> {
@@ -395,7 +519,6 @@ public class AiChatActivity extends AppCompatActivity {
             });
         }
 
-        /** ใส่โค้ดลงใน Editor แล้วปิดแชท */
         @android.webkit.JavascriptInterface
         public void insertCode(int index) {
             runOnUiThread(() -> {
@@ -404,8 +527,7 @@ public class AiChatActivity extends AppCompatActivity {
                     return;
                 }
                 String code = codeBlocks.get(index);
-
-                // ส่งกลับ MainActivity แล้วปิดแชท
+                saveConversation();
                 android.content.Intent data = new android.content.Intent();
                 data.putExtra("insert_code", code);
                 setResult(RESULT_OK, data);
@@ -414,7 +536,6 @@ public class AiChatActivity extends AppCompatActivity {
             });
         }
 
-        /** เผื่อโค้ดเก่า */
         @android.webkit.JavascriptInterface
         public void copyText(String text) {
             runOnUiThread(() -> {
@@ -432,6 +553,12 @@ public class AiChatActivity extends AppCompatActivity {
                 }
             });
         }
+    }
+
+    @Override
+    protected void onPause() {
+        saveConversation();
+        super.onPause();
     }
 
     @Override
