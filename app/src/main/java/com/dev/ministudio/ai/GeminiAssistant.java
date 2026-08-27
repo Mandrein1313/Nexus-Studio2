@@ -22,7 +22,10 @@ import java.util.List;
 public class GeminiAssistant {
 
     private static final String API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String DEFAULT_MODEL = "llama-3.3-70b-versatile";
+
+    /** โมเดล default บน free/developer tier (llama-3.3-70b ถูก deprecate แล้ว) */
+    private static final String DEFAULT_MODEL = "openai/gpt-oss-20b";
+
     private static final String PREFS_NAME = "ai_settings";
     private static final String KEY_API = "groq_api_key";
     private static final String KEY_MODEL = "groq_model";
@@ -73,12 +76,28 @@ public class GeminiAssistant {
         String model = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
                 .getString(KEY_MODEL, DEFAULT_MODEL);
         if (model == null || model.trim().isEmpty()) return DEFAULT_MODEL;
-        return model.trim();
+        model = model.trim();
+
+        // โมเดลที่ free/developer tier ใช้ไม่ได้แล้ว → บังคับใช้ default
+        if (model.equals("llama-3.3-70b-versatile")
+                || model.equals("llama-3.1-8b-instant")
+                || model.equals("llama3-70b-8192")
+                || model.equals("llama3-8b-8192")
+                || model.equals("mixtral-8x7b-32768")
+                || model.equals("gemma2-9b-it")) {
+            return DEFAULT_MODEL;
+        }
+        return model;
     }
 
     /** เรียกแบบสั้น (ไม่มีประวัติ) — ใช้ system prompt มาตรฐาน */
     public void askAI(final String prompt, final AICallback callback) {
         askAI(prompt, null, 0.4, 2048, callback);
+    }
+
+    /** alias เดิม — โค้ดเก่าที่เรียก askAi ยังใช้ได้ */
+    public void askAi(final String prompt, final AICallback callback) {
+        askAI(prompt, callback);
     }
 
     /** เรียกแบบสั้น + ตั้ง temperature / maxTokens */
@@ -132,7 +151,7 @@ public class GeminiAssistant {
                 sys.put("content", SYSTEM_PROMPT);
                 messages.put(sys);
 
-                // ประวัติ (ตัดเหลือ 8 รอบล่าสุด เพื่อไม่กิน token)
+                // ประวัติ (ตัดเหลือ 8 รอบล่าสุด)
                 if (history != null && !history.isEmpty()) {
                     int start = Math.max(0, history.size() - 8);
                     for (int i = start; i < history.size(); i++) {
@@ -198,7 +217,7 @@ public class GeminiAssistant {
         }).start();
     }
 
-    /** เวอร์ชันสั้นสำหรับ autocomplete (temperature ต่ำ, max_tokens น้อย) */
+    /** เวอร์ชันสั้นสำหรับ autocomplete */
     public void askForCompletion(final String prompt, final AICallback callback) {
         askAI(prompt, null, 0.2, 256, callback);
     }
@@ -223,13 +242,15 @@ public class GeminiAssistant {
         if (code == 429 || lower.contains("rate limit")) {
             return "เรียก API บ่อยเกินไป (rate limit) — รอสักครู่แล้วลองใหม่";
         }
+        if (code == 400 || (code == 404 && lower.contains("model"))) {
+            return "โมเดลนี้ใช้ไม่ได้หรือไม่มีสิทธิ์ — ลองเปลี่ยนเป็น openai/gpt-oss-20b";
+        }
         if (code == 400) {
             return "คำขอไม่ถูกต้อง (400) — อาจโมเดลไม่รองรับหรือ prompt ยาวเกินไป";
         }
         if (code >= 500) {
             return "เซิร์ฟเวอร์ Groq มีปัญหาชั่วคราว (HTTP " + code + ") — ลองใหม่ภายหลัง";
         }
-        // ตัด body สั้น ๆ เผื่อ debug
         String shortBody = body;
         if (shortBody != null && shortBody.length() > 200) {
             shortBody = shortBody.substring(0, 200) + "...";
@@ -237,7 +258,6 @@ public class GeminiAssistant {
         return "HTTP " + code + (shortBody != null && !shortBody.isEmpty() ? "\n" + shortBody : "");
     }
 
-    // --- ช่วยสร้างประวัติแชทง่าย ๆ ---
     public static List<ChatMessage> newHistory() {
         return new ArrayList<>();
     }
