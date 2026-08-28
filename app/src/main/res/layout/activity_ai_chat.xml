@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1B26"
+    android:fitsSystemWindows="true">
+
+    <!-- Toolbar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#1F2335"
+        android:paddingStart="4dp"
+        android:paddingEnd="8dp">
+
+        <ImageButton
+            android:id="@+id/btnAiBack"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_arrow_back_24"
+            android:contentDescription="กลับ"
+            app:tint="#C0CAF5" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="AI Assistant"
+            android:textColor="#C0CAF5"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginStart="4dp" />
+
+        <!-- ปุ่มประวัติการสนทนา -->
+        <ImageButton
+            android:id="@+id/btnAiHistory"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_recent_history"
+            android:contentDescription="ประวัติ"
+            android:layout_marginEnd="4dp"
+            app:tint="#7AA2F7" />
+
+        <!-- ล้างประวัติ -->
+        <ImageButton
+            android:id="@+id/btnAiClear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="ล้างประวัติ"
+            app:tint="#F7768E" />
+    </LinearLayout>
+
+    <!-- พื้นที่แชท -->
+    <android.webkit.WebView
+        android:id="@+id/webAiChat"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="#1A1B26" />
+
+    <!-- แถบพิมพ์ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#1F2335"
+        android:padding="10dp">
+
+        <!-- ปุ่มแนบรูป -->
+        <ImageButton
+            android:id="@+id/btnAiAttach"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_gallery"
+            android:contentDescription="แนบรูป"
+            app:tint="#7AA2F7" />
+
+        <ImageButton
+            android:id="@+id/btnAiSpeak"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_lock_silent_mode_off"
+            android:contentDescription="เสียง"
+            android:layout_marginStart="4dp"
+            app:tint="#7AA2F7" />
+
+        <EditText
+            android:id="@+id/etAiInput"
+            android:layout_width="0dp"
+            android:layout_height="44dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_dialog_input"
+            android:hint="พิมพ์คำถามหรือปรึกษา AI ที่นี่..."
+            android:textColorHint="#565F89"
+            android:textColor="#C0CAF5"
+            android:textSize="14sp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:singleLine="true"
+            android:imeOptions="actionSend" />
+
+        <ImageButton
+            android:id="@+id/btnAiSend"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_dialog_input"
+            android:src="@android:drawable/ic_menu_send"
+            android:contentDescription="ส่ง"
+            app:tint="#BB9AF7" />
+    </LinearLayout>
+</LinearLayout>
