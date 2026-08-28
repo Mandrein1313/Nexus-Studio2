@@ -44,10 +44,12 @@ public class AiChatActivity extends AppCompatActivity {
     private String projectName = "";
     private String appPackageName = "";
     private String projectLanguage = "Java"; // default
+    private String projectUrl = ""; // ลิงก์ GitHub ถ้ามี
 
     // รูปที่แนบไว้รอส่ง
     private String pendingImageBase64 = null;
     private String pendingImageMime = "image/jpeg";
+    private String pendingImageDataUrl = null; // โชว์ใน bubble
 
     private static final String CHAT_PREFS = "ai_chat_history";
 
@@ -56,6 +58,7 @@ public class AiChatActivity extends AppCompatActivity {
     public static final String EXTRA_CODE_SNIPPET = "codeSnippet";
     public static final String EXTRA_PACKAGE_NAME = "packageName";
     public static final String EXTRA_LANGUAGE = "language"; // "Java" หรือ "Kotlin"
+    public static final String EXTRA_PROJECT_URL = "projectUrl";
 
     // เลือกรูปจากแกลเลอรี
     private final androidx.activity.result.ActivityResultLauncher<String> pickImageLauncher =
@@ -73,6 +76,7 @@ public class AiChatActivity extends AppCompatActivity {
                                     }
                                     pendingImageBase64 = result[0];
                                     pendingImageMime = result[1];
+                                    pendingImageDataUrl = "data:" + pendingImageMime + ";base64," + pendingImageBase64;
                                     Toast.makeText(this, "📎 แนบรูปแล้ว — พิมพ์คำถามแล้วกดส่ง", Toast.LENGTH_SHORT).show();
                                 });
                             } catch (Exception e) {
@@ -114,6 +118,10 @@ public class AiChatActivity extends AppCompatActivity {
             // เดาจากโฟลเดอร์บนดิสก์
             projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
         }
+
+        // อ่านลิงก์โปรเจกต์ (GitHub)
+        String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
+        projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
 
         geminiAssistant = new GeminiAssistant(this);
         initTts();
@@ -166,6 +174,7 @@ public class AiChatActivity extends AppCompatActivity {
                             .setPositiveButton("เลือกรูปใหม่", (d, w) -> pickImageLauncher.launch("image/*"))
                             .setNegativeButton("ลบรูปเดิม", (d, w) -> {
                                 pendingImageBase64 = null;
+                                pendingImageDataUrl = null;
                                 Toast.makeText(this, "ลบรูปที่แนบแล้ว", Toast.LENGTH_SHORT).show();
                             })
                             .setNeutralButton("ยกเลิก", null)
@@ -284,46 +293,52 @@ public class AiChatActivity extends AppCompatActivity {
 
     /** context โปรเจกต์ + package + ภาษา ให้ AI ใช้ตอนตอบ */
     private String buildProjectContext() {
-        StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
 
-        boolean isKotlin = projectLanguage != null
-                && projectLanguage.toLowerCase().contains("kotlin");
-        String langLabel = isKotlin ? "Kotlin" : "Java";
-        String srcFolder = isKotlin ? "kotlin" : "java";
-        String mainFile = isKotlin ? "MainActivity.kt" : "MainActivity.java";
+    boolean isKotlin = projectLanguage != null
+            && projectLanguage.toLowerCase().contains("kotlin");
+    String langLabel = isKotlin ? "Kotlin" : "Java";
+    String srcFolder = isKotlin ? "kotlin" : "java";
+    String mainFile = isKotlin ? "MainActivity.kt" : "MainActivity.java";
 
-        if (projectName != null && !projectName.isEmpty()) {
-            sb.append("โปรเจกต์: ").append(projectName).append("\n");
-        }
-        sb.append("ภาษา: ").append(langLabel).append("\n");
-
-        if (appPackageName != null && !appPackageName.isEmpty()) {
-            sb.append("package name: ").append(appPackageName).append("\n");
-            sb.append("เมื่อเขียนโค้ด ให้ใช้ package ").append(appPackageName)
-                    .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอ\n");
-        }
-
-        sb.append("โครงสร้างโปรเจกต์ (มาตรฐาน Nexus Studio):\n");
-        sb.append("- app/src/main/").append(srcFolder).append("/{package}/")
-                .append(mainFile).append("\n");
-        sb.append("- app/src/main/res/layout/activity_main.xml\n");
-        sb.append("- app/src/main/res/values/strings.xml, colors.xml, styles.xml\n");
-        sb.append("- app/src/main/res/drawable/, mipmap-*\n");
-        sb.append("- app/src/main/AndroidManifest.xml\n");
-        sb.append("- build.gradle / GitHub Actions (cloud build)\n");
-
-        sb.append("กฎการตอบ:\n");
-        if (isKotlin) {
-            sb.append("- เขียนโค้ดเป็น Kotlin (").append(mainFile).append(")\n");
-            sb.append("- ใช้ syntax Kotlin ไม่ใช่ Java\n");
-        } else {
-            sb.append("- เขียนโค้ดเป็น Java (").append(mainFile).append(")\n");
-            sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
-        }
-        sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
-
-        return sb.toString().trim();
+    if (projectName != null && !projectName.isEmpty()) {
+        sb.append("โปรเจกต์: ").append(projectName).append("\n");
     }
+    sb.append("ภาษา: ").append(langLabel).append("\n");
+
+    if (appPackageName != null && !appPackageName.isEmpty()) {
+        sb.append("package name: ").append(appPackageName).append("\n");
+        sb.append("เมื่อเขียนโค้ด ให้ใช้ package ").append(appPackageName)
+                .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอ\n");
+    }
+
+    // ลิงก์ Git — ใส่ครั้งเดียว ก่อน return
+    if (projectUrl != null && !projectUrl.isEmpty()) {
+        sb.append("ลิงก์โปรเจกต์ (Git): ").append(projectUrl).append("\n");
+        sb.append("ถ้าผู้ใช้อ้างถึง repo นี้ ให้ยึดชื่อ/URL นี้ในคำตอบ\n");
+    }
+
+    sb.append("โครงสร้างโปรเจกต์ (มาตรฐาน Nexus Studio):\n");
+    sb.append("- app/src/main/").append(srcFolder).append("/{package}/")
+            .append(mainFile).append("\n");
+    sb.append("- app/src/main/res/layout/activity_main.xml\n");
+    sb.append("- app/src/main/res/values/strings.xml, colors.xml, styles.xml\n");
+    sb.append("- app/src/main/res/drawable/, mipmap-*\n");
+    sb.append("- app/src/main/AndroidManifest.xml\n");
+    sb.append("- build.gradle / GitHub Actions (cloud build)\n");
+
+    sb.append("กฎการตอบ:\n");
+    if (isKotlin) {
+        sb.append("- เขียนโค้ดเป็น Kotlin (").append(mainFile).append(")\n");
+        sb.append("- ใช้ syntax Kotlin ไม่ใช่ Java\n");
+    } else {
+        sb.append("- เขียนโค้ดเป็น Java (").append(mainFile).append(")\n");
+        sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
+    }
+    sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
+
+    return sb.toString().trim();
+}
 
     private void initTts() {
         tts = new TextToSpeech(this, status -> {
@@ -439,13 +454,15 @@ public class AiChatActivity extends AppCompatActivity {
         etAiInput.setText("");
 
         // ถ้ามีรูปแนบอยู่
+        final String dataUrl = pendingImageDataUrl;
         final String imgB64 = pendingImageBase64;
         final String imgMime = pendingImageMime;
-        pendingImageBase64 = null; // ใช้ครั้งเดียว
+        pendingImageDataUrl = null;
+        pendingImageBase64 = null;
 
         // แสดงข้อความผู้ใช้
-        if (imgB64 != null && !imgB64.isEmpty()) {
-            appendUserBubble(msg + "\n📎 [แนบรูป]");
+        if (imgB64 != null && !imgB64.isEmpty() && dataUrl != null) {
+            appendUserBubbleWithImage(msg, dataUrl);
         } else {
             appendUserBubble(msg);
         }
@@ -548,6 +565,29 @@ public class AiChatActivity extends AppCompatActivity {
         reloadChat();
     }
 
+    /** แสดง bubble ผู้ใช้พร้อมรูป */
+    private void appendUserBubbleWithImage(String text, String dataUrl) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div style='margin:12px 0;text-align:right;'>");
+        sb.append("<div style='display:inline-block;max-width:85%;text-align:left;'>");
+
+        if (dataUrl != null && !dataUrl.isEmpty()) {
+            sb.append("<div style='margin-bottom:6px;'>")
+              .append("<img src='").append(dataUrl).append("' ")
+              .append("style='max-width:220px;max-height:220px;border-radius:12px;")
+              .append("border:1px solid #3B4261;display:block;background:#16161E;'/>")
+              .append("</div>");
+        }
+
+        sb.append("<span style='background:#3B4261;color:#C0CAF5;padding:10px 14px;")
+          .append("border-radius:16px 16px 4px 16px;display:inline-block;'>")
+          .append(escapeHtml(text != null ? text : "").replace("\n", "<br>"))
+          .append("</span></div></div>");
+
+        chatHistory += sb.toString();
+        reloadChat();
+    }
+
     private void appendAiBubble(String text) {
         chatHistory += "<div style='margin:12px 0;text-align:left;'>"
                 + "<div style='background:#24283B;color:#A9B1D6;padding:12px 14px;"
@@ -626,6 +666,7 @@ public class AiChatActivity extends AppCompatActivity {
                 + "body{background:#1A1B26;color:#A9B1D6;font-family:sans-serif;padding:12px;margin:0;}"
                 + "pre{white-space:pre;word-wrap:normal;}"
                 + "button{outline:none;}"
+                + "img{max-width:100%;height:auto;}"
                 + "</style></head><body>"
                 + chatHistory
                 + "</body></html>";
@@ -639,6 +680,13 @@ public class AiChatActivity extends AppCompatActivity {
                 .replace("<", "&lt;")
                 .replace(">", "&gt;")
                 .replace("\"", "&quot;");
+    }
+
+    /** ตัด data URL ออกจาก HTML ที่จะเซฟ */
+    private String chatHistoryForStorage() {
+        return chatHistory.replaceAll(
+                "<img src='data:image/[^']+' [^>]*>",
+                "<span style='color:#7AA2F7;'>📎 [รูปที่ส่ง]</span>");
     }
 
     // ========== ประวัติแยกตามโปรเจกต์ ==========
@@ -660,7 +708,7 @@ public class AiChatActivity extends AppCompatActivity {
             for (String c : codeBlocks) codes.put(c);
 
             getSharedPreferences(CHAT_PREFS, MODE_PRIVATE).edit()
-                    .putString(keyHtml(), chatHistory)
+                    .putString(keyHtml(), chatHistoryForStorage())
                     .putString(keyJson(), arr.toString())
                     .putString(keyCodes(), codes.toString())
                     .apply();

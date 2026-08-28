@@ -764,16 +764,19 @@ private String buildAiCodeContext() {
 
         String root = currentProject.getRootPath();
 
-        // package
         String pkg = readProjectPackageName(root);
         if (pkg != null && !pkg.isEmpty()) {
             intent.putExtra(AiChatActivity.EXTRA_PACKAGE_NAME, pkg);
         }
 
-        // ภาษา Java / Kotlin
         String lang = detectProjectLanguage(root);
         if (lang != null && !lang.isEmpty()) {
             intent.putExtra(AiChatActivity.EXTRA_LANGUAGE, lang);
+        }
+
+        String gitUrl = readGitRemoteUrl(root);
+        if (gitUrl != null && !gitUrl.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_PROJECT_URL, gitUrl);
         }
     }
 
@@ -794,6 +797,23 @@ private String buildAiCodeContext() {
     }
 
     startActivityForResult(intent, REQ_AI_CHAT);
+}
+private String readGitRemoteUrl(String rootPath) {
+    if (rootPath == null) return "";
+    try {
+        java.io.File cfg = new java.io.File(rootPath, ".git/config");
+        if (!cfg.exists()) return "";
+        String text = readFileText(cfg);
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("(?m)^\\s*url\\s*=\\s*(\\S+)")
+                .matcher(text);
+        if (m.find()) {
+            return m.group(1).trim();
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return "";
 }
 private String detectProjectLanguage(String rootPath) {
     if (rootPath == null) return "Java";

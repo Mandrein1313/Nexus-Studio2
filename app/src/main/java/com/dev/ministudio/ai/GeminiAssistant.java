@@ -36,12 +36,13 @@ public class GeminiAssistant {
     private static final String KEY_VISION_MODEL = "groq_vision_model";
 
     private static final String SYSTEM_PROMPT =
-            "คุณคือ Nexus AI ผู้ช่วยเขียนโค้ด Android/Java ในแอป Nexus Studio บนมือถือ\n" +
-            "- ตอบภาษาไทยเป็นหลัก ยกเว้นโค้ดและชื่อคลาส/เมธอด\n" +
-            "- โค้ดให้ใส่ใน markdown code block เช่น ```java ... ```\n" +
-            "- ตอบกระชับ ชัดเจน เหมาะกับหน้าจอมือถือ\n" +
-            "- ถ้ามี context โค้ดหรือ error ให้ใช้เป็นหลักในการตอบ\n" +
-            "- อย่าแต่งโค้ดที่ไม่เกี่ยวข้องหรือยาวเกินจำเป็น";
+        "คุณคือ Nexus AI ผู้ช่วยเขียนโค้ด Android ในแอป Nexus Studio บนมือถือ\n" +
+        "- ตอบภาษาไทยเป็นหลัก ยกเว้นโค้ดและชื่อคลาส/เมธอด\n" +
+        "- โค้ดให้ใส่ใน markdown code block เช่น ```java ... ```\n" +
+        "- ตอบกระชับ ชัดเจน เหมาะกับหน้าจอมือถือ\n" +
+        "- ถ้ามี context โค้ดหรือ error ให้ใช้เป็นหลักในการตอบ\n" +
+        "- อย่าแต่งโค้ดที่ไม่เกี่ยวข้องหรือยาวเกินจำเป็น\n" +
+        "- ตอบเฉพาะคำตอบสุดท้าย ห้ามแสดงกระบวนการคิด แท็ก <think> หรือ reasoning ภายใน";
 
     private final Context context;
 
@@ -210,7 +211,7 @@ public class GeminiAssistant {
                 reader.close();
 
                 if (responseCode >= 200 && responseCode < 300) {
-                    callback.onSuccess(parseGroqResponse(response.toString()));
+                    callback.onSuccess(cleanAiResponse(parseGroqResponse(response.toString())));
                 } else {
                     callback.onError(friendlyHttpError(responseCode, response.toString()));
                 }
@@ -349,7 +350,7 @@ public class GeminiAssistant {
                 reader.close();
 
                 if (responseCode >= 200 && responseCode < 300) {
-                    callback.onSuccess(parseGroqResponse(response.toString()));
+                    callback.onSuccess(cleanAiResponse(parseGroqResponse(response.toString())));
                 } else {
                     callback.onError(friendlyHttpError(responseCode, response.toString()));
                 }
@@ -427,4 +428,24 @@ public class GeminiAssistant {
     public static void addAssistant(List<ChatMessage> history, String content) {
         if (history != null) history.add(new ChatMessage("assistant", content));
     }
+    
+    /** ตัด reasoning / think block ที่โมเดลบางตัวส่งมา */
+private String cleanAiResponse(String text) {
+    if (text == null) return "";
+    String s = text;
+
+    // แท็ก think
+    s = s.replaceAll("(?is)<think>.*?</think>", "");
+    s = s.replaceAll("(?is)<think>.*", "");
+    s = s.replaceAll("(?is)</?think>", "");
+
+    // บล็อก reasoning ภาษาอังกฤษที่พบบ่อย
+    s = s.replaceAll("(?is)Here's a thinking process that leads to the suggested answer:.*?(?=\\n\\n[A-Zก-๙]|\\Z)", "");
+    s = s.replaceAll("(?is)^\\s*1\\.\\s*\\*\\*Analyze the User's Request:\\*\\*.*?(?=\\n\\n|\\Z)", "");
+
+    // ตัดบรรทัดว่างซ้ำ
+    s = s.replaceAll("\n{3,}", "\n\n");
+
+    return s.trim();
+}
 }
