@@ -43,6 +43,7 @@ public class AiChatActivity extends AppCompatActivity {
     private String projectKey = "default";
     private String projectName = "";
     private String appPackageName = "";
+    private String projectLanguage = "Java"; // default
 
     private static final String CHAT_PREFS = "ai_chat_history";
 
@@ -50,6 +51,7 @@ public class AiChatActivity extends AppCompatActivity {
     public static final String EXTRA_FILE_PATH = "filePath";
     public static final String EXTRA_CODE_SNIPPET = "codeSnippet";
     public static final String EXTRA_PACKAGE_NAME = "packageName";
+    public static final String EXTRA_LANGUAGE = "language"; // "Java" หรือ "Kotlin"
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +76,15 @@ public class AiChatActivity extends AppCompatActivity {
         // อ่าน package name
         String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
         appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
+
+        // อ่านภาษา (Java/Kotlin)
+        String lang = getIntent().getStringExtra(EXTRA_LANGUAGE);
+        if (lang != null && !lang.trim().isEmpty()) {
+            projectLanguage = lang.trim();
+        } else if (!projectName.isEmpty()) {
+            // เดาจากโฟลเดอร์บนดิสก์
+            projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
+        }
 
         geminiAssistant = new GeminiAssistant(this);
         initTts();
@@ -143,18 +154,77 @@ public class AiChatActivity extends AppCompatActivity {
         loadConversation();
     }
 
-    /** context โปรเจกต์ + package ให้ AI ใช้ตอนตอบ */
+    /** ดูว่าโปรเจกต์ใช้ java หรือ kotlin เป็นหลัก */
+    private String detectProjectLanguage(String rootPath) {
+        try {
+            java.io.File kotlinDir = new java.io.File(rootPath, "app/src/main/kotlin");
+            java.io.File javaDir = new java.io.File(rootPath, "app/src/main/java");
+
+            boolean hasKt = kotlinDir.exists() && hasSourceFile(kotlinDir, ".kt");
+            boolean hasJava = javaDir.exists() && hasSourceFile(javaDir, ".java");
+
+            if (hasKt && !hasJava) return "Kotlin";
+            if (hasJava && !hasKt) return "Java";
+            if (hasKt) return "Kotlin"; // มีทั้งคู่ เน้น Kotlin
+        } catch (Exception ignored) {
+        }
+        return "Java";
+    }
+
+    private boolean hasSourceFile(java.io.File dir, String ext) {
+        if (dir == null || !dir.isDirectory()) return false;
+        java.io.File[] list = dir.listFiles();
+        if (list == null) return false;
+        for (java.io.File f : list) {
+            if (f.isDirectory()) {
+                if (hasSourceFile(f, ext)) return true;
+            } else if (f.getName().endsWith(ext)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** context โปรเจกต์ + package + ภาษา ให้ AI ใช้ตอนตอบ */
     private String buildProjectContext() {
         StringBuilder sb = new StringBuilder();
+
+        boolean isKotlin = projectLanguage != null
+                && projectLanguage.toLowerCase().contains("kotlin");
+        String langLabel = isKotlin ? "Kotlin" : "Java";
+        String srcFolder = isKotlin ? "kotlin" : "java";
+        String mainFile = isKotlin ? "MainActivity.kt" : "MainActivity.java";
+
         if (projectName != null && !projectName.isEmpty()) {
             sb.append("โปรเจกต์: ").append(projectName).append("\n");
         }
+        sb.append("ภาษา: ").append(langLabel).append("\n");
+
         if (appPackageName != null && !appPackageName.isEmpty()) {
             sb.append("package name: ").append(appPackageName).append("\n");
-            sb.append("เมื่อเขียนโค้ด Java/Kotlin ให้ใช้ package ")
-                    .append(appPackageName)
-                    .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอเปลี่ยน\n");
+            sb.append("เมื่อเขียนโค้ด ให้ใช้ package ").append(appPackageName)
+                    .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอ\n");
         }
+
+        sb.append("โครงสร้างโปรเจกต์ (มาตรฐาน Nexus Studio):\n");
+        sb.append("- app/src/main/").append(srcFolder).append("/{package}/")
+                .append(mainFile).append("\n");
+        sb.append("- app/src/main/res/layout/activity_main.xml\n");
+        sb.append("- app/src/main/res/values/strings.xml, colors.xml, styles.xml\n");
+        sb.append("- app/src/main/res/drawable/, mipmap-*\n");
+        sb.append("- app/src/main/AndroidManifest.xml\n");
+        sb.append("- build.gradle / GitHub Actions (cloud build)\n");
+
+        sb.append("กฎการตอบ:\n");
+        if (isKotlin) {
+            sb.append("- เขียนโค้ดเป็น Kotlin (").append(mainFile).append(")\n");
+            sb.append("- ใช้ syntax Kotlin ไม่ใช่ Java\n");
+        } else {
+            sb.append("- เขียนโค้ดเป็น Java (").append(mainFile).append(")\n");
+            sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
+        }
+        sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
+
         return sb.toString().trim();
     }
 
@@ -246,7 +316,7 @@ public class AiChatActivity extends AppCompatActivity {
         chatHistory = "";
         String hint = projectName.isEmpty()
                 ? "เริ่มสนทนากับ AI ได้เลย"
-                : "โปรเจกต์: " + escapeHtml(projectName) + " — เริ่มสนทนาได้เลย";
+                : "โปรเจกต์: " + escapeHtml(projectName) + " (" + escapeHtml(projectLanguage) + ") — เริ่มสนทนาได้เลย";
         String html = "<!DOCTYPE html><html><head><meta charset='utf-8'/>"
                 + "<meta name='viewport' content='width=device-width,initial-scale=1'/>"
                 + "</head><body style='background:#1A1B26;color:#A9B1D6;"
@@ -281,7 +351,7 @@ public class AiChatActivity extends AppCompatActivity {
             historySnapshot.remove(0);
         }
 
-        // แนบ context โปรเจกต์/package เฉพาะตอนส่ง AI — ประวัติเก็บแค่ข้อความผู้ใช้จริง
+        // แนบ context โปรเจกต์/package/ภาษา เฉพาะตอนส่ง AI — ประวัติเก็บแค่ข้อความผู้ใช้จริง
         String context = buildProjectContext();
         String promptToAi = context.isEmpty()
                 ? msg

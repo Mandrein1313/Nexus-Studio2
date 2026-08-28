@@ -762,10 +762,18 @@ private String buildAiCodeContext() {
     if (currentProject != null) {
         intent.putExtra(AiChatActivity.EXTRA_PROJECT_NAME, currentProject.getProjectName());
 
-        // ส่ง package ของโปรเจกต์ให้ AI รู้จัก
-        String pkg = readProjectPackageName(currentProject.getRootPath());
+        String root = currentProject.getRootPath();
+
+        // package
+        String pkg = readProjectPackageName(root);
         if (pkg != null && !pkg.isEmpty()) {
             intent.putExtra(AiChatActivity.EXTRA_PACKAGE_NAME, pkg);
+        }
+
+        // ภาษา Java / Kotlin
+        String lang = detectProjectLanguage(root);
+        if (lang != null && !lang.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_LANGUAGE, lang);
         }
     }
 
@@ -786,6 +794,36 @@ private String buildAiCodeContext() {
     }
 
     startActivityForResult(intent, REQ_AI_CHAT);
+}
+private String detectProjectLanguage(String rootPath) {
+    if (rootPath == null) return "Java";
+    try {
+        java.io.File kotlinDir = new java.io.File(rootPath, "app/src/main/kotlin");
+        java.io.File javaDir = new java.io.File(rootPath, "app/src/main/java");
+
+        boolean hasKt = kotlinDir.exists() && hasSourceFile(kotlinDir, ".kt");
+        boolean hasJava = javaDir.exists() && hasSourceFile(javaDir, ".java");
+
+        if (hasKt && !hasJava) return "Kotlin";
+        if (hasJava && !hasKt) return "Java";
+        if (hasKt) return "Kotlin";
+    } catch (Exception ignored) {
+    }
+    return "Java";
+}
+
+private boolean hasSourceFile(java.io.File dir, String ext) {
+    if (dir == null || !dir.isDirectory()) return false;
+    java.io.File[] list = dir.listFiles();
+    if (list == null) return false;
+    for (java.io.File f : list) {
+        if (f.isDirectory()) {
+            if (hasSourceFile(f, ext)) return true;
+        } else if (f.getName().endsWith(ext)) {
+            return true;
+        }
+    }
+    return false;
 }
 private String readProjectPackageName(String rootPath) {
     if (rootPath == null) return "";
