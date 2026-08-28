@@ -42,12 +42,14 @@ public class AiChatActivity extends AppCompatActivity {
     /** key แยกประวัติตามโปรเจกต์ */
     private String projectKey = "default";
     private String projectName = "";
+    private String appPackageName = "";
 
     private static final String CHAT_PREFS = "ai_chat_history";
 
     public static final String EXTRA_PROJECT_NAME = "projectName";
     public static final String EXTRA_FILE_PATH = "filePath";
     public static final String EXTRA_CODE_SNIPPET = "codeSnippet";
+    public static final String EXTRA_PACKAGE_NAME = "packageName";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +70,10 @@ public class AiChatActivity extends AppCompatActivity {
             projectName = "";
             projectKey = "default";
         }
+
+        // อ่าน package name
+        String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
 
         geminiAssistant = new GeminiAssistant(this);
         initTts();
@@ -135,6 +141,21 @@ public class AiChatActivity extends AppCompatActivity {
 
         // โหลดประวัติของโปรเจกต์นี้เท่านั้น
         loadConversation();
+    }
+
+    /** context โปรเจกต์ + package ให้ AI ใช้ตอนตอบ */
+    private String buildProjectContext() {
+        StringBuilder sb = new StringBuilder();
+        if (projectName != null && !projectName.isEmpty()) {
+            sb.append("โปรเจกต์: ").append(projectName).append("\n");
+        }
+        if (appPackageName != null && !appPackageName.isEmpty()) {
+            sb.append("package name: ").append(appPackageName).append("\n");
+            sb.append("เมื่อเขียนโค้ด Java/Kotlin ให้ใช้ package ")
+                    .append(appPackageName)
+                    .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอเปลี่ยน\n");
+        }
+        return sb.toString().trim();
     }
 
     private void initTts() {
@@ -253,13 +274,20 @@ public class AiChatActivity extends AppCompatActivity {
         appendAiBubble("⏳ กำลังคิด...");
         isWaitingReply = true;
 
+        // ประวัติเก่า (ยังไม่รวมข้อความปัจจุบัน)
         ArrayList<GeminiAssistant.ChatMessage> historySnapshot =
                 new ArrayList<>(conversation);
         while (historySnapshot.size() > 16) {
             historySnapshot.remove(0);
         }
 
-        geminiAssistant.askAI(msg, historySnapshot, 0.4, 2048,
+        // แนบ context โปรเจกต์/package เฉพาะตอนส่ง AI — ประวัติเก็บแค่ข้อความผู้ใช้จริง
+        String context = buildProjectContext();
+        String promptToAi = context.isEmpty()
+                ? msg
+                : (context + "\n\nคำถามผู้ใช้:\n" + msg);
+
+        geminiAssistant.askAI(promptToAi, historySnapshot, 0.4, 2048,
                 new GeminiAssistant.AICallback() {
                     @Override
                     public void onSuccess(String responseText) {

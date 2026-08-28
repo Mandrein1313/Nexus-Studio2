@@ -756,13 +756,17 @@ private String buildAiCodeContext() {
     }
     return sb.toString();
 }
-    
-//private static final int REQ_AI_CHAT = 3101;
-private void openAiChat() {
+    private void openAiChat() {
     Intent intent = new Intent(this, AiChatActivity.class);
 
     if (currentProject != null) {
         intent.putExtra(AiChatActivity.EXTRA_PROJECT_NAME, currentProject.getProjectName());
+
+        // ส่ง package ของโปรเจกต์ให้ AI รู้จัก
+        String pkg = readProjectPackageName(currentProject.getRootPath());
+        if (pkg != null && !pkg.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_PACKAGE_NAME, pkg);
+        }
     }
 
     if (codeEditor != null && codeEditor.getCursor() != null) {
@@ -782,6 +786,51 @@ private void openAiChat() {
     }
 
     startActivityForResult(intent, REQ_AI_CHAT);
+}
+private String readProjectPackageName(String rootPath) {
+    if (rootPath == null) return "";
+    try {
+        java.io.File gradle = new java.io.File(rootPath, "app/build.gradle");
+        if (!gradle.exists()) gradle = new java.io.File(rootPath, "build.gradle");
+        if (gradle.exists()) {
+            String text = readFileText(gradle);
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("applicationId\\s*[\"']([^\"']+)[\"']")
+                    .matcher(text);
+            if (m.find()) return m.group(1).trim();
+            m = java.util.regex.Pattern
+                    .compile("namespace\\s*[\"']([^\"']+)[\"']")
+                    .matcher(text);
+            if (m.find()) return m.group(1).trim();
+        }
+
+        java.io.File manifest = new java.io.File(rootPath, "app/src/main/AndroidManifest.xml");
+        if (!manifest.exists()) {
+            manifest = new java.io.File(rootPath, "src/main/AndroidManifest.xml");
+        }
+        if (manifest.exists()) {
+            String text = readFileText(manifest);
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("package\\s*=\\s*[\"']([^\"']+)[\"']")
+                    .matcher(text);
+            if (m.find()) return m.group(1).trim();
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
+    return "";
+}
+
+private String readFileText(java.io.File file) throws Exception {
+    StringBuilder sb = new StringBuilder();
+    try (java.io.BufferedReader br = new java.io.BufferedReader(
+            new java.io.InputStreamReader(new java.io.FileInputStream(file), "UTF-8"))) {
+        String line;
+        while ((line = br.readLine()) != null) {
+            sb.append(line).append('\n');
+        }
+    }
+    return sb.toString();
 }
     // 🌟 ระบบตรวจจับสกัดกั้นและแก้บั๊กอัจฉริยะ (AI Error Fixer Pipeline) สำหรับระบบที่ 1 ตัวใหม่ล่าสุดครับท่าน
  public void triggerAiErrorFixerPipeline() {
