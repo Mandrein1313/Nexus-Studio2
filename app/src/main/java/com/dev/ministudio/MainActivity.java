@@ -778,6 +778,12 @@ private String buildAiCodeContext() {
         if (gitUrl != null && !gitUrl.isEmpty()) {
             intent.putExtra(AiChatActivity.EXTRA_PROJECT_URL, gitUrl);
         }
+
+        // ✅ ประกาศ currentFile ตรงนี้
+        java.io.File currentFile = currentProject.getCurrentOpenFile();
+        if (currentFile != null) {
+            intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_PATH, currentFile.getAbsolutePath());
+        }
     }
 
     // โค้ดที่เลือกอยู่ (selection)
@@ -796,32 +802,25 @@ private String buildAiCodeContext() {
         } catch (Exception ignored) {
         }
     }
-    // ไฟล์ที่เปิดอยู่ใน editor ทั้งไฟล์
-   if (codeEditor != null) {
-     try {
-        String path = "";
-        if (currentFile != null) {
-            path = currentFile.getAbsolutePath();
-        }
 
-        String content = codeEditor.getText().toString();
-        if (content == null) content = "";
+    // ✅ เนื้อหาไฟล์ทั้งไฟล์ — ใช้ currentProject.getCurrentOpenFile()
+    if (codeEditor != null) {
+        try {
+            String content = codeEditor.getText().toString();
+            if (content == null) content = "";
 
-        final int MAX = 12000;
-        if (content.length() > MAX) {
-            content = content.substring(0, MAX)
-                    + "\n\n... [ตัดเหลือ " + MAX + " ตัวอักษร] ...\n";
-        }
+            final int MAX = 12000;
+            if (content.length() > MAX) {
+                content = content.substring(0, MAX)
+                        + "\n\n... [ตัดเหลือ " + MAX + " ตัวอักษร] ...\n";
+            }
 
-        if (!path.isEmpty()) {
-            intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_PATH, path);
+            if (!content.trim().isEmpty()) {
+                intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_CONTENT, content);
+            }
+        } catch (Exception ignored) {
         }
-        if (!content.trim().isEmpty()) {
-            intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_CONTENT, content);
-        }
-    } catch (Exception ignored) {
     }
-}
 
     startActivityForResult(intent, REQ_AI_CHAT);
 }
