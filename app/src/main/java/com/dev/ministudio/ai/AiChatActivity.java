@@ -231,7 +231,8 @@ public class AiChatActivity extends AppCompatActivity {
                 name = name.substring(slash + 1);
             }
             Toast.makeText(this, "แนบไฟล์: " + name, Toast.LENGTH_SHORT).show();
-        }
+            }
+          }
 
     /** ดูว่าโปรเจกต์ใช้ java หรือ kotlin เป็นหลัก */
     private String detectProjectLanguage(String rootPath) {
