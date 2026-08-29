@@ -90,150 +90,150 @@ public class AiChatActivity extends AppCompatActivity {
                     });
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(Color.parseColor("#1F2335"));
-        getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
+    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+    getWindow().setStatusBarColor(Color.parseColor("#1F2335"));
+    getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
 
-        setContentView(R.layout.activity_ai_chat);
+    setContentView(R.layout.activity_ai_chat);
 
-        // ชื่อโปรเจกต์ → ใช้เป็น key ประวัติ
-        String name = getIntent().getStringExtra(EXTRA_PROJECT_NAME);
-        if (name != null && !name.trim().isEmpty()) {
-            projectName = name.trim();
-            projectKey = projectName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
-        } else {
-            projectName = "";
-            projectKey = "default";
-        }
+    // ชื่อโปรเจกต์ → ใช้เป็น key ประวัติ
+    String name = getIntent().getStringExtra(EXTRA_PROJECT_NAME);
+    if (name != null && !name.trim().isEmpty()) {
+        projectName = name.trim();
+        projectKey = projectName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+    } else {
+        projectName = "";
+        projectKey = "default";
+    }
 
-        // อ่าน package name
-        String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
-        appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
+    // อ่าน package name
+    String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+    appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
 
-        // อ่านภาษา (Java/Kotlin)
-        String lang = getIntent().getStringExtra(EXTRA_LANGUAGE);
-        if (lang != null && !lang.trim().isEmpty()) {
-            projectLanguage = lang.trim();
-        } else if (!projectName.isEmpty()) {
-            // เดาจากโฟลเดอร์บนดิสก์
-            projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
-        }
+    // อ่านภาษา (Java/Kotlin)
+    String lang = getIntent().getStringExtra(EXTRA_LANGUAGE);
+    if (lang != null && !lang.trim().isEmpty()) {
+        projectLanguage = lang.trim();
+    } else if (!projectName.isEmpty()) {
+        // เดาจากโฟลเดอร์บนดิสก์
+        projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
+    }
 
-        // อ่านลิงก์โปรเจกต์ (GitHub)
-        String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
-        projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
+    // อ่านลิงก์โปรเจกต์ (GitHub)
+    String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
+    projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
 
-        // ไฟล์ที่เปิดอยู่ใน editor
-        String ofp = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
-        openFilePath = (ofp != null) ? ofp.trim() : "";
+    // ไฟล์ที่เปิดอยู่ใน editor
+    String ofp = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+    openFilePath = (ofp != null) ? ofp.trim() : "";
 
-        String ofc = getIntent().getStringExtra(EXTRA_OPEN_FILE_CONTENT);
-        openFileContent = (ofc != null) ? ofc : "";
+    String ofc = getIntent().getStringExtra(EXTRA_OPEN_FILE_CONTENT);
+    openFileContent = (ofc != null) ? ofc : "";
 
-        geminiAssistant = new GeminiAssistant(this);
-        initTts();
-        
+    geminiAssistant = new GeminiAssistant(this);
+    initTts();
+    
 
-        webAiChat = findViewById(R.id.webAiChat);
-        etAiInput = findViewById(R.id.etAiInput);
-        ImageButton btnBack = findViewById(R.id.btnAiBack);
-        ImageButton btnClear = findViewById(R.id.btnAiClear);
-        ImageButton btnSend = findViewById(R.id.btnAiSend);
-        btnSpeak = findViewById(R.id.btnAiSpeak);
-        ImageButton btnHistory = findViewById(R.id.btnAiHistory);
-        ImageButton btnAttach = findViewById(R.id.btnAiAttach);
+    webAiChat = findViewById(R.id.webAiChat);
+    etAiInput = findViewById(R.id.etAiInput);
+    ImageButton btnBack = findViewById(R.id.btnAiBack);
+    ImageButton btnClear = findViewById(R.id.btnAiClear);
+    ImageButton btnSend = findViewById(R.id.btnAiSend);
+    btnSpeak = findViewById(R.id.btnAiSpeak);
+    ImageButton btnHistory = findViewById(R.id.btnAiHistory);
+    ImageButton btnAttach = findViewById(R.id.btnAiAttach);
 
-        setupWebView();
+    setupWebView();
 
-        btnBack.setOnClickListener(v -> {
-            stopSpeaking();
-            saveConversation();
-            finish();
-        });
+    btnBack.setOnClickListener(v -> {
+        stopSpeaking();
+        saveConversation();
+        finish();
+    });
 
-        btnClear.setOnClickListener(v -> {
-            stopSpeaking();
-            chatHistory = "";
-            lastAiReply = "";
-            codeBlocks.clear();
-            conversation.clear();
-            clearConversationStorage();
-            loadEmptyChat();
-            Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
-        });
+    btnClear.setOnClickListener(v -> {
+        stopSpeaking();
+        chatHistory = "";
+        lastAiReply = "";
+        codeBlocks.clear();
+        conversation.clear();
+        clearConversationStorage();
+        loadEmptyChat();
+        Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
+    });
 
-        btnClear.setOnLongClickListener(v -> {
-            showHistoryDialog();
-            return true;
-        });
+    btnClear.setOnLongClickListener(v -> {
+        showHistoryDialog();
+        return true;
+    });
 
-        if (btnHistory != null) {
-            btnHistory.setOnClickListener(v -> showHistoryDialog());
-        }
+    if (btnHistory != null) {
+        btnHistory.setOnClickListener(v -> showHistoryDialog());
+    }
 
-        // ปุ่มแนบรูป
-        if (btnAttach != null) {
-            btnAttach.setOnClickListener(v -> {
-                if (pendingImageBase64 != null) {
-                    // ถ้ามีรูปอยู่แล้ว → ถามว่าจะเอารูปเดิมหรือเปลี่ยนใหม่
-                    new androidx.appcompat.app.AlertDialog.Builder(this)
-                            .setTitle("แนบรูป")
-                            .setMessage("มีรูปแนบอยู่แล้ว — เลือกรูปใหม่หรือลบรูปเดิม?")
-                            .setPositiveButton("เลือกรูปใหม่", (d, w) -> pickImageLauncher.launch("image/*"))
-                            .setNegativeButton("ลบรูปเดิม", (d, w) -> {
-                                pendingImageBase64 = null;
-                                pendingImageDataUrl = null;
-                                Toast.makeText(this, "ลบรูปที่แนบแล้ว", Toast.LENGTH_SHORT).show();
-                            })
-                            .setNeutralButton("ยกเลิก", null)
-                            .show();
-                } else {
-                    pickImageLauncher.launch("image/*");
-                }
-            });
-        }
-
-        btnSend.setOnClickListener(v -> sendMessage());
-
-        etAiInput.setOnEditorActionListener((tv, actionId, event) -> {
-            sendMessage();
-            return true;
-        });
-
-        if (btnSpeak != null) {
-            btnSpeak.setOnClickListener(v -> {
-                if (isSpeaking) {
-                    stopSpeaking();
-                    Toast.makeText(this, "หยุดเสียงแล้ว", Toast.LENGTH_SHORT).show();
-                } else if (lastAiReply != null && !lastAiReply.isEmpty()) {
-                    speakText(lastAiReply);
-                } else {
-                    Toast.makeText(this, "ยังไม่มีข้อความ AI ให้พูด", Toast.LENGTH_SHORT).show();
-                }
-            });
-        }
-
-        String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
-        if (snippet != null && !snippet.isEmpty()) {
-            etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
-        }
-
-        // โหลดประวัติของโปรเจกต์นี้เท่านั้น
-        loadConversation();
-
-        if (openFilePath != null && !openFilePath.isEmpty()) {
-            String name = openFilePath;
-            int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
-            if (slash >= 0 && slash < name.length() - 1) {
-                name = name.substring(slash + 1);
+    // ปุ่มแนบรูป
+    if (btnAttach != null) {
+        btnAttach.setOnClickListener(v -> {
+            if (pendingImageBase64 != null) {
+                // ถ้ามีรูปอยู่แล้ว → ถามว่าจะเอารูปเดิมหรือเปลี่ยนใหม่
+                new androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("แนบรูป")
+                        .setMessage("มีรูปแนบอยู่แล้ว — เลือกรูปใหม่หรือลบรูปเดิม?")
+                        .setPositiveButton("เลือกรูปใหม่", (d, w) -> pickImageLauncher.launch("image/*"))
+                        .setNegativeButton("ลบรูปเดิม", (d, w) -> {
+                            pendingImageBase64 = null;
+                            pendingImageDataUrl = null;
+                            Toast.makeText(this, "ลบรูปที่แนบแล้ว", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNeutralButton("ยกเลิก", null)
+                        .show();
+            } else {
+                pickImageLauncher.launch("image/*");
             }
-            Toast.makeText(this, "แนบไฟล์: " + name, Toast.LENGTH_SHORT).show();
-            }
-          }
+        });
+    }
 
+    btnSend.setOnClickListener(v -> sendMessage());
+
+    etAiInput.setOnEditorActionListener((tv, actionId, event) -> {
+        sendMessage();
+        return true;
+    });
+
+    if (btnSpeak != null) {
+        btnSpeak.setOnClickListener(v -> {
+            if (isSpeaking) {
+                stopSpeaking();
+                Toast.makeText(this, "หยุดเสียงแล้ว", Toast.LENGTH_SHORT).show();
+            } else if (lastAiReply != null && !lastAiReply.isEmpty()) {
+                speakText(lastAiReply);
+            } else {
+                Toast.makeText(this, "ยังไม่มีข้อความ AI ให้พูด", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
+    if (snippet != null && !snippet.isEmpty()) {
+        etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
+    }
+
+    // โหลดประวัติของโปรเจกต์นี้เท่านั้น
+    loadConversation();
+
+    // แสดง toast ถ้ามีไฟล์ที่เปิดอยู่
+    if (openFilePath != null && !openFilePath.isEmpty()) {
+        String displayName = openFilePath;
+        int slash = Math.max(displayName.lastIndexOf('/'), displayName.lastIndexOf('\\'));
+        if (slash >= 0 && slash < displayName.length() - 1) {
+            displayName = displayName.substring(slash + 1);
+        }
+        Toast.makeText(this, "แนบไฟล์: " + displayName, Toast.LENGTH_SHORT).show();
+    }
+}
     /** ดูว่าโปรเจกต์ใช้ java หรือ kotlin เป็นหลัก */
     private String detectProjectLanguage(String rootPath) {
         try {
