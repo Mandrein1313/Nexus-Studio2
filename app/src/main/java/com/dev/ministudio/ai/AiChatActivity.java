@@ -45,6 +45,8 @@ public class AiChatActivity extends AppCompatActivity {
     private String appPackageName = "";
     private String projectLanguage = "Java"; // default
     private String projectUrl = ""; // ลิงก์ GitHub ถ้ามี
+    private String openFilePath = "";
+    private String openFileContent = "";
 
     // รูปที่แนบไว้รอส่ง
     private String pendingImageBase64 = null;
@@ -59,7 +61,8 @@ public class AiChatActivity extends AppCompatActivity {
     public static final String EXTRA_PACKAGE_NAME = "packageName";
     public static final String EXTRA_LANGUAGE = "language"; // "Java" หรือ "Kotlin"
     public static final String EXTRA_PROJECT_URL = "projectUrl";
-
+    public static final String EXTRA_OPEN_FILE_PATH = "openFilePath";
+    public static final String EXTRA_OPEN_FILE_CONTENT = "openFileContent";
     // เลือกรูปจากแกลเลอรี
     private final androidx.activity.result.ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(
@@ -123,8 +126,16 @@ public class AiChatActivity extends AppCompatActivity {
         String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
         projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
 
+        // ไฟล์ที่เปิดอยู่ใน editor
+        String ofp = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        openFilePath = (ofp != null) ? ofp.trim() : "";
+
+        String ofc = getIntent().getStringExtra(EXTRA_OPEN_FILE_CONTENT);
+        openFileContent = (ofc != null) ? ofc : "";
+
         geminiAssistant = new GeminiAssistant(this);
         initTts();
+        
 
         webAiChat = findViewById(R.id.webAiChat);
         etAiInput = findViewById(R.id.etAiInput);
@@ -212,7 +223,15 @@ public class AiChatActivity extends AppCompatActivity {
 
         // โหลดประวัติของโปรเจกต์นี้เท่านั้น
         loadConversation();
-    }
+
+        if (openFilePath != null && !openFilePath.isEmpty()) {
+            String name = openFilePath;
+            int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+            if (slash >= 0 && slash < name.length() - 1) {
+                name = name.substring(slash + 1);
+            }
+            Toast.makeText(this, "แนบไฟล์: " + name, Toast.LENGTH_SHORT).show();
+        }
 
     /** ดูว่าโปรเจกต์ใช้ java หรือ kotlin เป็นหลัก */
     private String detectProjectLanguage(String rootPath) {
@@ -336,6 +355,17 @@ public class AiChatActivity extends AppCompatActivity {
         sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
     }
     sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
+
+   if (openFilePath != null && !openFilePath.isEmpty()) {
+      sb.append("ไฟล์ที่เปิดอยู่: ").append(openFilePath).append("\n");
+}
+   if (openFileContent != null && !openFileContent.trim().isEmpty()) {
+      sb.append("เนื้อหาไฟล์ที่เปิดอยู่ (อาจถูกตัดถ้ายาว):\n");
+      sb.append("```\n");
+      sb.append(openFileContent);
+      sb.append("\n```\n");
+      sb.append("เมื่อผู้ใช้พูดถึง \"ไฟล์นี้\" / \"โค้ดนี้\" ให้ยึดไฟล์ด้านบนเป็นหลัก\n");
+}
 
     return sb.toString().trim();
 }

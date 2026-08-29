@@ -2,7 +2,7 @@
     <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
         <item name="colorPrimary">#212121</item>
         <item name="colorPrimaryDark">#1E1E1E</item>
-        <item name="colorAccent">#DB4AFC00</item>
+        <item name="colorAccent">#DB0079FC</item>
         <item name="android:windowBackground">#121212</item>
 
         <item name="android:statusBarColor">#1E1E1E</item>
