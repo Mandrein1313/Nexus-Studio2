@@ -46,8 +46,8 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
-            fab:fab_addButtonColorNormal="#BB86FC"
-            fab:fab_addButtonColorPressed="#9965f4"
+            fab:fab_addButtonColorNormal="#FF00FCE4"
+            fab:fab_addButtonColorPressed="#FF00F031"
             fab:fab_expandDirection="up">
 
             <com.getbase.floatingactionbutton.FloatingActionButton
@@ -55,7 +55,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 fab:fab_title="สร้างโปรเจกต์ใหม่"
-                fab:fab_colorNormal="#FFFFFF"
+                fab:fab_colorNormal="#FF00FFE6"
                 fab:fab_size="mini" />
 
             <com.getbase.floatingactionbutton.FloatingActionButton
@@ -63,7 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 fab:fab_title="นำเข้าจาก GitHub"
-                fab:fab_colorNormal="#FFFFFF"
+                fab:fab_colorNormal="#FF00FFE6"
                 fab:fab_size="mini" />
 
         </com.getbase.floatingactionbutton.FloatingActionsMenu>
