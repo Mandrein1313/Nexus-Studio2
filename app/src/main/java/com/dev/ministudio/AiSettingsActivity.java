@@ -1,12 +1,15 @@
 package com.dev.ministudio;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -18,7 +21,6 @@ public class AiSettingsActivity extends AppCompatActivity {
     private Spinner spinTextModel;
     private Spinner spinVisionModel;
 
-    // รายการโมเดล — ปรับ/เพิ่มได้ตามที่ Groq รองรับ
     private static final String[] TEXT_MODELS = {
             "openai/gpt-oss-20b",
             "meta-llama/llama-4-scout-17b-16e-instruct",
@@ -36,8 +38,8 @@ public class AiSettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(Color.parseColor("#1E1E1E"));
-        getWindow().setNavigationBarColor(Color.parseColor("#1E1E1E"));
+        getWindow().setStatusBarColor(Color.parseColor("#1A1B26"));
+        getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
 
         setContentView(R.layout.activity_ai_settings);
 
@@ -45,20 +47,18 @@ public class AiSettingsActivity extends AppCompatActivity {
         spinTextModel = findViewById(R.id.spinTextModel);
         spinVisionModel = findViewById(R.id.spinVisionModel);
         Button btnSave = findViewById(R.id.btnSaveApi);
+        TextView tvGetApiKey = findViewById(R.id.tvGetApiKey);
 
         SharedPreferences prefs = getSharedPreferences("ai_settings", MODE_PRIVATE);
 
-        // API Key
         etApiKey.setText(prefs.getString("groq_api_key", ""));
 
-        // Spinner โมเดลข้อความ
         ArrayAdapter<String> textAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, TEXT_MODELS);
         spinTextModel.setAdapter(textAdapter);
         selectSpinnerValue(spinTextModel, TEXT_MODELS,
                 prefs.getString("groq_model", TEXT_MODELS[0]));
 
-        // Spinner โมเดลรูป
         ArrayAdapter<String> visionAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, VISION_MODELS);
         spinVisionModel.setAdapter(visionAdapter);
@@ -79,6 +79,19 @@ public class AiSettingsActivity extends AppCompatActivity {
             Toast.makeText(this, "บันทึกการตั้งค่า AI แล้ว", Toast.LENGTH_SHORT).show();
             finish();
         });
+
+        if (tvGetApiKey != null) {
+            tvGetApiKey.setOnClickListener(v -> {
+                try {
+                    startActivity(new Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://console.groq.com/keys")
+                    ));
+                } catch (Exception e) {
+                    Toast.makeText(this, "เปิดเบราว์เซอร์ไม่สำเร็จ", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     private void selectSpinnerValue(Spinner spinner, String[] items, String value) {

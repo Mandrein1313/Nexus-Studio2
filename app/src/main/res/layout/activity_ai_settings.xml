@@ -13,7 +13,6 @@
         android:layout_height="wrap_content"
         android:padding="20dp">
 
-        <!-- หัวข้อ -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -32,7 +31,7 @@
             android:lineSpacingMultiplier="1.2"
             android:paddingBottom="20dp" />
 
-        <!-- การ์ด API Key -->
+        <!-- API Key -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -71,7 +70,7 @@
                 android:paddingTop="8dp" />
         </LinearLayout>
 
-        <!-- การ์ด โมเดลข้อความ -->
+        <!-- โมเดลข้อความ -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -105,7 +104,7 @@
                 android:paddingRight="8dp" />
         </LinearLayout>
 
-        <!-- การ์ด โมเดลรูป -->
+        <!-- โมเดลรูป -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -139,7 +138,6 @@
                 android:paddingRight="8dp" />
         </LinearLayout>
 
-        <!-- ปุ่มบันทึก -->
         <Button
             android:id="@+id/btnSaveApi"
             android:layout_width="match_parent"
@@ -161,6 +159,19 @@
             android:textSize="11sp"
             android:gravity="center"
             android:paddingTop="12dp" />
+
+        <TextView
+            android:id="@+id/tvGetApiKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ยังไม่มี API Key? สร้างที่ console.groq.com"
+            android:textColor="#7AA2F7"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp"
+            android:clickable="true"
+            android:focusable="true" />
 
     </LinearLayout>
 </ScrollView>
