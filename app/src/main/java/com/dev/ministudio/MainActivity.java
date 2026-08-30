@@ -778,12 +778,6 @@ private String buildAiCodeContext() {
         if (gitUrl != null && !gitUrl.isEmpty()) {
             intent.putExtra(AiChatActivity.EXTRA_PROJECT_URL, gitUrl);
         }
-
-        // ✅ ประกาศ currentFile ตรงนี้
-        java.io.File currentFile = currentProject.getCurrentOpenFile();
-        if (currentFile != null) {
-            intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_PATH, currentFile.getAbsolutePath());
-        }
     }
 
     // โค้ดที่เลือกอยู่ (selection)
@@ -803,9 +797,19 @@ private String buildAiCodeContext() {
         }
     }
 
-    // ✅ เนื้อหาไฟล์ทั้งไฟล์ — ใช้ currentProject.getCurrentOpenFile()
+    // เนื้อหาไฟล์ใน editor (+ ชื่อไฟล์ถ้ามี)
     if (codeEditor != null) {
         try {
+            String path = "";
+            try {
+                CharSequence title = getTitle();
+                if (title != null) {
+                    String t = title.toString().trim();
+                    if (!t.isEmpty()) path = t;
+                }
+            } catch (Exception ignored) {
+            }
+
             String content = codeEditor.getText().toString();
             if (content == null) content = "";
 
@@ -815,6 +819,9 @@ private String buildAiCodeContext() {
                         + "\n\n... [ตัดเหลือ " + MAX + " ตัวอักษร] ...\n";
             }
 
+            if (!path.isEmpty()) {
+                intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_PATH, path);
+            }
             if (!content.trim().isEmpty()) {
                 intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_CONTENT, content);
             }
