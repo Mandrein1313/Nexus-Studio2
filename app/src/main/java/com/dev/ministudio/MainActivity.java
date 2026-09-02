@@ -618,13 +618,29 @@ private void showFullPanelDialog(int initialTabPosition) {
 }
 private void updateLogcatButtonUi(TextView btnLogcat) {
     if (btnLogcat == null) return;
+
     boolean on = logcatReader != null && logcatReader.isRunning();
+
     if (on) {
         btnLogcat.setText("⏹ Stop");
         btnLogcat.setTextColor(android.graphics.Color.parseColor("#F7768E"));
     } else {
         btnLogcat.setText("Logcat");
         btnLogcat.setTextColor(android.graphics.Color.parseColor("#7AA2F7"));
+    }
+
+    // อัปเดตข้อความสถานะใต้หัวข้อ (ถ้ามีใน layout ใหม่)
+    if (fullPanelDialog != null) {
+        TextView tvStatus = fullPanelDialog.findViewById(R.id.tvConsoleStatus);
+        if (tvStatus != null) {
+            if (on) {
+                tvStatus.setText("Logcat กำลังทำงาน");
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#9ECE6A"));
+            } else {
+                tvStatus.setText("Build · Logcat · AI");
+                tvStatus.setTextColor(android.graphics.Color.parseColor("#565F89"));
+            }
+        }
     }
 }
 
