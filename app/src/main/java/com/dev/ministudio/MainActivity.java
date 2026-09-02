@@ -934,6 +934,19 @@ private String getConsoleSelection() {
 private String extractLastError(String fullLog) {
     if (fullLog == null || fullLog.trim().isEmpty()) return "";
 
+    // 1) ถ้ามีบล็อกวิเคราะห์ของแอปเอง ให้ใช้ช่วงนั้น
+    String marker = "วิเคราะห์สาเหตุการบิลด์ล้มเหลว";
+    int idx = fullLog.lastIndexOf(marker);
+    if (idx < 0) idx = fullLog.lastIndexOf("Compile Error");
+    if (idx < 0) idx = fullLog.lastIndexOf("##[error]");
+
+    if (idx >= 0) {
+        String tail = fullLog.substring(idx);
+        if (tail.length() > 3500) tail = tail.substring(0, 3500);
+        return tail.trim();
+    }
+
+    // 2) fallback แบบเดิม
     String[] lines = fullLog.split("\n");
     StringBuilder block = new StringBuilder();
     boolean collecting = false;
@@ -946,8 +959,7 @@ private String extractLastError(String fullLog) {
             if (lower.contains("error")
                     || lower.contains("exception")
                     || lower.contains("failed")
-                    || lower.contains("cannot")
-                    || lower.contains("unable")
+                    || lower.contains("identifier")
                     || lower.contains("fatal")) {
                 collecting = true;
                 block.insert(0, line + "\n");
