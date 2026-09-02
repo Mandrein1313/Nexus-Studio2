@@ -12,7 +12,6 @@ public class BuildSummaryAnalyzer {
         void onAppendLog(String text, int color);
     }
 
-    // รองรับ path เต็ม / ชื่อไฟล์สั้น / มีคำว่า ERROR: นำหน้า
     private static final Pattern JAVAC_ERROR =
             Pattern.compile(
                     "(?:ERROR:\\s+)?(?:[^\\s]+/)*([^/\\s]+\\.java):(\\d+):\\s*(?:error:)?\\s*(.*)",
@@ -37,7 +36,6 @@ public class BuildSummaryAnalyzer {
     private ParsedError lastError;
     private final ArrayList<ParsedError> errorList = new ArrayList<>();
 
-    /** คำแนะนำจาก AI (ถ้ามี) */
     private String aiSuggestion = null;
 
     private final int COLOR_HEADER = Color.parseColor("#FF5252");
@@ -73,9 +71,6 @@ public class BuildSummaryAnalyzer {
         this.aiSuggestion = suggestion;
     }
 
-    /**
-     * สร้าง prompt ส่งให้ AI — รองรับหลาย error
-     */
     public String createAiPrompt() {
         if (!hasError) return null;
 
@@ -116,10 +111,6 @@ public class BuildSummaryAnalyzer {
         return prompt.toString();
     }
 
-    /**
-     * วิเคราะห์ทีละบรรทัดจาก log
-     * @return true ถ้าเป็นบรรทัดสำคัญที่ควรไฮไลต์ใน console (เช่น build failed)
-     */
     public boolean analyzeLine(String line, int defaultColor, LogOutputListener listener) {
         if (line == null) return false;
 
@@ -129,7 +120,6 @@ public class BuildSummaryAnalyzer {
             return false;
         }
 
-        // ลูกศรชี้คอลัมน์ผิด
         if (hasError && lastError != null && line.contains("^")) {
             int colIndex = line.indexOf("^");
             if (colIndex >= 0) {
@@ -181,7 +171,6 @@ public class BuildSummaryAnalyzer {
                 file = file.substring(file.lastIndexOf("/") + 1);
             }
 
-            // กัน error ซ้ำ (ไฟล์ + บรรทัด + ข้อความ)
             for (ParsedError existing : errorList) {
                 if (existing.file.equals(file)
                         && existing.line == lineNumber
@@ -203,7 +192,6 @@ public class BuildSummaryAnalyzer {
         return false;
     }
 
-    /** แสดงสรุปใน console — รองรับหลาย error */
     public void printSummary(LogOutputListener listener) {
         if (!hasError || listener == null) return;
 
@@ -290,18 +278,23 @@ public class BuildSummaryAnalyzer {
 
         switch (errorType) {
             case "JAVA_ERROR":
-                return "ตรวจสอบไวยากรณ์, เครื่องหมาย {}, (), ; ตรงบรรทัดที่ระบุ"
+                return "พบ Compile Error — เข้าไปดูรายละเอียดบน GitHub → แท็บ Actions ของโปรเจกต์นี้"
                         + (errorList.size() > 1 ? " (มีหลายจุด — แก้ทีละไฟล์/บรรทัด)" : "");
+
             case "XML_AAPT2_ERROR":
-                return "ตรวจสอบแท็ก XML เปิด-ปิด ไม่ตรงกัน หรือแอตทริบิวต์ผิด";
+                return "พบข้อผิดพลาด XML — เข้าไปดู log เต็มบน GitHub Actions ของโปรเจกต์นี้";
+
             case "KOTLIN_ERROR":
-                return "ตรวจสอบประเภทตัวแปร, Null Safety, หรือการสืบทอดคลาส";
+                return "พบข้อผิดพลาด Kotlin — เข้าไปดู log เต็มบน GitHub Actions ของโปรเจกต์นี้";
+
             case "GIT_URL_MISSING":
-                return "กรุณาตรวจสอบ URL ของ Repository ในการตั้งค่าให้ถูกต้อง";
+                return "ไม่พบ Repository — ตรวจสอบ URL บน GitHub และการตั้งค่าในแอป";
+
             case "AUTH_ERROR":
-                return "กรุณาตรวจสอบ GitHub Token หรือสิทธิ์การเข้าถึงคลังโค้ด";
+                return "Authentication ล้มเหลว — ตรวจสอบ GitHub Token / สิทธิ์ repo บน GitHub";
+
             default:
-                return "ตรวจสอบโค้ดและลอง Build ใหม่ครับ";
+                return "บิลด์ล้มเหลว — เข้าไปดู log เต็มบน GitHub → แท็บ Actions ของโปรเจกต์นี้";
         }
     }
 }
