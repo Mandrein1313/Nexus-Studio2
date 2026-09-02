@@ -294,255 +294,254 @@ private String extractRepoName(String url) {
 
     // 🟢 หน้าต่างสร้างโปรเจกต์แบบ Advance เพิ่มตัวเลือก Language และ Minimum SDK (ดีไซน์พรีเมียมดาร์กโมด)
     private void showCreateProjectDialog() {
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
-        
-        // 1. คอนเทนเนอร์หลัก
-        LinearLayout mainLayout = new LinearLayout(this);
-        mainLayout.setOrientation(LinearLayout.VERTICAL);
-        int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
-        mainLayout.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
-        mainLayout.setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"));
+    final float density = getResources().getDisplayMetrics().density;
+    int dp = (int) (1 * density);
 
-        // 2. แถวหัวข้อไดอะล็อกพร้อมไอคอน
-        LinearLayout titleLayout = new LinearLayout(this);
-        titleLayout.setOrientation(LinearLayout.HORIZONTAL);
-        titleLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        titleLayout.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
+    // ---- styles ----
+    GradientDrawable inputBg = new GradientDrawable();
+    inputBg.setColor(Color.parseColor("#1F2335"));
+    inputBg.setCornerRadius(12 * density);
+    inputBg.setStroke(dp, Color.parseColor("#3B4261"));
 
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("🚀 New Project");
-        tvTitle.setTextColor(android.graphics.Color.WHITE);
-        tvTitle.setTextSize(18);
-        tvTitle.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
-        titleLayout.addView(tvTitle);
-        mainLayout.addView(titleLayout);
+    GradientDrawable cardBg = new GradientDrawable();
+    cardBg.setColor(Color.parseColor("#24283B"));
+    cardBg.setCornerRadius(16 * density);
+    cardBg.setStroke(dp, Color.parseColor("#3B4261"));
 
-        // 3. คำอธิบายรายละเอียด
-        TextView tvDesc = new TextView(this);
-        tvDesc.setText("กำหนดค่าโครงสร้างและสภาพแวดล้อมสำหรับโปรเจกต์ใหม่ของคุณ");
-        tvDesc.setTextColor(android.graphics.Color.parseColor("#8E8E93"));
-        tvDesc.setTextSize(13);
-        tvDesc.setLineSpacing(0, 1.2f);
-        tvDesc.setPadding(0, 0, 0, (int) (20 * getResources().getDisplayMetrics().density));
-        mainLayout.addView(tvDesc);
+    GradientDrawable createBtnBg = new GradientDrawable();
+    createBtnBg.setColor(Color.parseColor("#7AA2F7"));
+    createBtnBg.setCornerRadius(12 * density);
 
-        LinearLayout.LayoutParams boxParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        boxParams.bottomMargin = (int) (14 * getResources().getDisplayMetrics().density);
+    GradientDrawable dialogBg = new GradientDrawable();
+    dialogBg.setColor(Color.parseColor("#1A1B26"));
+    dialogBg.setCornerRadius(20 * density);
 
-        // สไตล์สำหรับช่องกรอกและ Dropdown (สีเทาเข้ม ขอบมน เส้นขอบบาง)
-        android.graphics.drawable.GradientDrawable inputStyle = new android.graphics.drawable.GradientDrawable();
-        inputStyle.setColor(android.graphics.Color.parseColor("#252526"));
-        inputStyle.setCornerRadius((int) (8 * getResources().getDisplayMetrics().density));
-        inputStyle.setStroke((int) (1 * getResources().getDisplayMetrics().density), android.graphics.Color.parseColor("#3F3F46"));
+    int pad = (int) (16 * density);
+    int fieldPad = (int) (14 * density);
 
-        int inputPadding = (int) (12 * getResources().getDisplayMetrics().density);
+    // ---- root scroll ----
+    android.widget.ScrollView scroll = new android.widget.ScrollView(this);
+    scroll.setFillViewport(true);
 
-        // --- ช่องกรอกที่ 1: Project Name ---
-        TextView labelProjectName = new TextView(this);
-        labelProjectName.setText("Project Name");
-        labelProjectName.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
-        labelProjectName.setTextSize(13);
-        labelProjectName.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
-        mainLayout.addView(labelProjectName);
+    LinearLayout root = new LinearLayout(this);
+    root.setOrientation(LinearLayout.VERTICAL);
+    root.setPadding(pad, pad, pad, pad);
+    root.setBackgroundColor(Color.parseColor("#1A1B26"));
+    scroll.addView(root, new ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        final EditText etProjectName = new EditText(this);
-        etProjectName.setHint("e.g., MyGame");
-        etProjectName.setHintTextColor(android.graphics.Color.parseColor("#52525B"));
-        etProjectName.setTextColor(android.graphics.Color.WHITE);
-        etProjectName.setTextSize(14);
-        etProjectName.setSingleLine(true);
-        etProjectName.setBackground(inputStyle.getConstantState().newDrawable());
-        etProjectName.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
-        mainLayout.addView(etProjectName, boxParams);
+    // ---- header ----
+    TextView tvTitle = new TextView(this);
+    tvTitle.setText("✨ สร้างโปรเจกต์ใหม่");
+    tvTitle.setTextColor(Color.parseColor("#C0CAF5"));
+    tvTitle.setTextSize(20);
+    tvTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
+    root.addView(tvTitle);
 
-        // --- ช่องกรอกที่ 2: Package Name ---
-        TextView labelPackageName = new TextView(this);
-        labelPackageName.setText("Package Name");
-        labelPackageName.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
-        labelPackageName.setTextSize(13);
-        labelPackageName.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
-        mainLayout.addView(labelPackageName);
+    TextView tvDesc = new TextView(this);
+    tvDesc.setText("กำหนดชื่อ แพ็กเกจ ภาษา และ Minimum SDK");
+    tvDesc.setTextColor(Color.parseColor("#565F89"));
+    tvDesc.setTextSize(13);
+    tvDesc.setPadding(0, (int) (4 * density), 0, (int) (18 * density));
+    root.addView(tvDesc);
 
-        final EditText etPackageName = new EditText(this);
-        etPackageName.setHint("e.g., com.dev.mygame");
-        etPackageName.setHintTextColor(android.graphics.Color.parseColor("#52525B"));
-        etPackageName.setTextColor(android.graphics.Color.WHITE);
-        etPackageName.setTextSize(14);
-        etPackageName.setSingleLine(true);
-        etPackageName.setBackground(inputStyle.getConstantState().newDrawable());
-        etPackageName.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
-        mainLayout.addView(etPackageName, boxParams);
+    // ---- card: name + package ----
+    LinearLayout cardInfo = new LinearLayout(this);
+    cardInfo.setOrientation(LinearLayout.VERTICAL);
+    cardInfo.setPadding(pad, pad, pad, pad);
+    cardInfo.setBackground(cardBg);
 
-        // ระบบแปลงชื่อ Package อัตโนมัติ
-        etProjectName.addTextChangedListener(new android.text.TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+    LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+    cardLp.bottomMargin = (int) (12 * density);
 
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String name = s.toString().trim().toLowerCase().replaceAll("[^a-z0-9]", "");
-                if (!name.isEmpty()) {
-                    etPackageName.setText("com.example." + name);
-                } else {
-                    etPackageName.setText("");
-                }
-            }
+    TextView lbName = sectionLabel("ชื่อโปรเจกต์");
+    cardInfo.addView(lbName);
 
-            @Override
-            public void afterTextChanged(android.text.Editable s) {}
-        });
+    final EditText etProjectName = styledEdit(inputBg, fieldPad, "เช่น MyGame");
+    cardInfo.addView(etProjectName, fieldParams(density));
 
-        // --- ช่องเลือกที่ 3: Language (Spinner) ---
-        TextView labelLanguage = new TextView(this);
-        labelLanguage.setText("Language");
-        labelLanguage.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
-        labelLanguage.setTextSize(13);
-        labelLanguage.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
-        mainLayout.addView(labelLanguage);
+    TextView lbPkg = sectionLabel("Package Name");
+    lbPkg.setPadding(0, (int) (10 * density), 0, (int) (6 * density));
+    cardInfo.addView(lbPkg);
 
-        final android.widget.Spinner spinLanguage = new android.widget.Spinner(this);
-        spinLanguage.setBackground(inputStyle.getConstantState().newDrawable());
-        spinLanguage.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
-        
-        String[] languages = {"Java", "Kotlin"};
-        ArrayAdapter<String> langAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, languages) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(position, convertView, parent);
-                tv.setTextColor(android.graphics.Color.WHITE);
-                tv.setTextSize(14);
-                return tv;
-            }
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
-                tv.setTextColor(android.graphics.Color.WHITE);
-                tv.setBackgroundColor(android.graphics.Color.parseColor("#252526"));
-                tv.setPadding(30, 30, 30, 30);
-                return tv;
-            }
-        };
-        spinLanguage.setAdapter(langAdapter);
-        mainLayout.addView(spinLanguage, boxParams);
+    final EditText etPackageName = styledEdit(inputBg, fieldPad, "com.example.mygame");
+    cardInfo.addView(etPackageName, fieldParams(density));
 
-        // --- ช่องเลือกที่ 4: Minimum SDK (Spinner) ---
-        TextView labelMinSdk = new TextView(this);
-        labelMinSdk.setText("Minimum SDK");
-        labelMinSdk.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
-        labelMinSdk.setTextSize(13);
-        labelMinSdk.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
-        mainLayout.addView(labelMinSdk);
-
-        final android.widget.Spinner spinMinSdk = new android.widget.Spinner(this);
-        spinMinSdk.setBackground(inputStyle.getConstantState().newDrawable());
-        spinMinSdk.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
-
-        String[] sdkOptions = {
-                "API 21: Android 5.0 (Lollipop)",
-                "API 23: Android 6.0 (Marshmallow)",
-                "API 26: Android 8.0 (Oreo)",
-                "API 29: Android 10.0",
-                "API 33: Android 13.0"
-        };
-        ArrayAdapter<String> sdkAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, sdkOptions) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(position, convertView, parent);
-                tv.setTextColor(android.graphics.Color.WHITE);
-                tv.setTextSize(14);
-                return tv;
-            }
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
-                tv.setTextColor(android.graphics.Color.WHITE);
-                tv.setBackgroundColor(android.graphics.Color.parseColor("#252526"));
-                tv.setPadding(30, 30, 30, 30);
-                return tv;
-            }
-        };
-        spinMinSdk.setAdapter(sdkAdapter);
-        spinMinSdk.setSelection(1); // เลือก API 23 เป็นค่าเริ่มต้นตามสไตล์ IDE ทั่วไป
-        mainLayout.addView(spinMinSdk, boxParams);
-
-
-        final androidx.appcompat.app.AlertDialog dialog = builder.setView(mainLayout).create();
-
-        // 4. แถบปุ่มกดด้านล่าง (CANCEL / CREATE)
-        LinearLayout buttonLayout = new LinearLayout(this);
-        buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
-        buttonLayout.setGravity(android.view.Gravity.END);
-        LinearLayout.LayoutParams btnLayoutParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        btnLayoutParams.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
-        buttonLayout.setLayoutParams(btnLayoutParams);
-
-        // ปุ่มยกเลิก
-        android.widget.Button btnCancel = new android.widget.Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
-        btnCancel.setText("CANCEL");
-        btnCancel.setTextColor(android.graphics.Color.parseColor("#A1A1AA"));
-        btnCancel.setTextSize(14);
-        btnCancel.setAllCaps(true);
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-        buttonLayout.addView(btnCancel);
-
-        // ปุ่มสร้างโปรเจกต์
-        android.widget.Button btnCreate = new android.widget.Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
-        btnCreate.setText("CREATE");
-        btnCreate.setTextColor(android.graphics.Color.WHITE);
-        btnCreate.setTextSize(14);
-        btnCreate.setAllCaps(true);
-        
-        android.graphics.drawable.GradientDrawable createBtnBg = new android.graphics.drawable.GradientDrawable();
-        createBtnBg.setColor(android.graphics.Color.parseColor("#248A3D"));
-        createBtnBg.setCornerRadius((int) (6 * getResources().getDisplayMetrics().density));
-        btnCreate.setBackground(createBtnBg);
-        
-        LinearLayout.LayoutParams createBtnParams = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, (int) (40 * getResources().getDisplayMetrics().density));
-        createBtnParams.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
-        btnCreate.setLayoutParams(createBtnParams);
-        btnCreate.setPadding((int) (20 * getResources().getDisplayMetrics().density), 0, (int) (20 * getResources().getDisplayMetrics().density), 0);    
-
-        btnCreate.setOnClickListener(v -> {
-            String name = etProjectName.getText().toString().trim();
-            String packageName = etPackageName.getText().toString().trim();
-            String selectedLang = spinLanguage.getSelectedItem().toString(); // "Java" หรือ "Kotlin"
-            String selectedSdk = spinMinSdk.getSelectedItem().toString();   // "API 23: Android..."
-
-            if (name.isEmpty()) {
-                Toast.makeText(ProjectListActivity.this, "❌ กรุณากรอกชื่อโปรเจกต์", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (packageName.isEmpty() || !packageName.contains(".") || packageName.endsWith(".")) {
-                Toast.makeText(ProjectListActivity.this, "❌ รูปแบบ Package Name ไม่ถูกต้อง", Toast.LENGTH_LONG).show();
-                return;
-            }
-
-            // 🌟 ส่งค่าตัวแปร Language และ SDK ไปประมวลผลต่อที่ระบบสร้างโปรเจกต์หลังบ้าน
-            createNewProject(name, packageName, selectedLang, selectedSdk);
-            
-            refreshProjectList(); 
-            adapter.notifyDataSetChanged();
-            Toast.makeText(ProjectListActivity.this, "Project Created (" + selectedLang + ")!", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-
-        buttonLayout.addView(btnCreate);
-        mainLayout.addView(buttonLayout);
-
-        if (dialog.getWindow() != null) {
-            android.graphics.drawable.GradientDrawable dialogBg = new android.graphics.drawable.GradientDrawable();
-            dialogBg.setColor(android.graphics.Color.parseColor("#1E1E1E"));
-            dialogBg.setCornerRadius((int) (14 * getResources().getDisplayMetrics().density));
-            dialog.getWindow().setBackgroundDrawable(dialogBg);
+    // auto package จากชื่อ
+    etProjectName.addTextChangedListener(new TextWatcher() {
+        @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+        @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
+            String name = s.toString().trim().toLowerCase().replaceAll("[^a-z0-9]", "");
+            etPackageName.setText(name.isEmpty() ? "" : "com.example." + name);
         }
+        @Override public void afterTextChanged(Editable s) {}
+    });
 
-        dialog.show();
+    root.addView(cardInfo, cardLp);
+
+    // ---- card: language + sdk ----
+    LinearLayout cardEnv = new LinearLayout(this);
+    cardEnv.setOrientation(LinearLayout.VERTICAL);
+    cardEnv.setPadding(pad, pad, pad, pad);
+    cardEnv.setBackground(cardBg.getConstantState() != null
+            ? cardBg.getConstantState().newDrawable() : cardBg);
+
+    TextView lbLang = sectionLabel("ภาษา");
+    cardEnv.addView(lbLang);
+
+    final Spinner spinLanguage = styledSpinner(inputBg, fieldPad,
+            new String[]{"Java", "Kotlin"});
+    cardEnv.addView(spinLanguage, fieldParams(density));
+
+    TextView lbSdk = sectionLabel("Minimum SDK");
+    lbSdk.setPadding(0, (int) (10 * density), 0, (int) (6 * density));
+    cardEnv.addView(lbSdk);
+
+    final Spinner spinMinSdk = styledSpinner(inputBg, fieldPad, new String[]{
+            "API 21 · Android 5.0 (Lollipop)",
+            "API 23 · Android 6.0 (Marshmallow)",
+            "API 26 · Android 8.0 (Oreo)",
+            "API 29 · Android 10",
+            "API 33 · Android 13"
+    });
+    spinMinSdk.setSelection(1);
+    cardEnv.addView(spinMinSdk, fieldParams(density));
+
+    root.addView(cardEnv, cardLp);
+
+    // ---- buttons ----
+    LinearLayout buttons = new LinearLayout(this);
+    buttons.setOrientation(LinearLayout.HORIZONTAL);
+    buttons.setGravity(android.view.Gravity.END);
+    buttons.setPadding(0, (int) (8 * density), 0, 0);
+
+    Button btnCancel = new Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
+    btnCancel.setText("ยกเลิก");
+    btnCancel.setAllCaps(false);
+    btnCancel.setTextColor(Color.parseColor("#A9B1D6"));
+    btnCancel.setTextSize(14);
+    buttons.addView(btnCancel);
+
+    Button btnCreate = new Button(this);
+    btnCreate.setText("สร้างโปรเจกต์");
+    btnCreate.setAllCaps(false);
+    btnCreate.setTextColor(Color.parseColor("#1A1B26"));
+    btnCreate.setTextSize(14);
+    btnCreate.setTypeface(Typeface.DEFAULT_BOLD);
+    btnCreate.setBackground(createBtnBg);
+    btnCreate.setPadding((int) (20 * density), 0, (int) (20 * density), 0);
+    LinearLayout.LayoutParams createLp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT, (int) (44 * density));
+    createLp.leftMargin = (int) (8 * density);
+    buttons.addView(btnCreate, createLp);
+
+    root.addView(buttons);
+
+    final AlertDialog dialog = new AlertDialog.Builder(this)
+            .setView(scroll)
+            .create();
+
+    if (dialog.getWindow() != null) {
+        dialog.getWindow().setBackgroundDrawable(dialogBg);
     }
 
-    // 🌟 เมธอดเวอร์ชันอัปเกรด: รับค่าตัวแปรภาษาและ SDK มาจำแนกเขียนโค้ดและสร้างโฟลเดอร์จริง
+    btnCancel.setOnClickListener(v -> dialog.dismiss());
+    btnCreate.setOnClickListener(v -> {
+        String projectName = etProjectName.getText().toString().trim();
+        String packageName = etPackageName.getText().toString().trim();
+        String language = (String) spinLanguage.getSelectedItem();
+        String minSdk = (String) spinMinSdk.getSelectedItem();
+
+        if (projectName.isEmpty()) {
+            Toast.makeText(this, "กรุณาใส่ชื่อโปรเจกต์", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (packageName.isEmpty()) {
+            Toast.makeText(this, "กรุณาใส่ Package Name", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (new File("/sdcard/MiniStudio/" + projectName).exists()) {
+            Toast.makeText(this, "มีโปรเจกต์ชื่อนี้อยู่แล้ว", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        createNewProject(projectName, packageName,
+                language != null ? language : "Java",
+                minSdk != null ? minSdk : "API 23");
+        refreshProjectList();
+        if (adapter != null) adapter.notifyDataSetChanged();
+        Toast.makeText(this, "สร้างโปรเจกต์ " + projectName + " แล้ว", Toast.LENGTH_SHORT).show();
+        dialog.dismiss();
+    });
+
+    dialog.show();
+}
+
+// ----- helpers (วางในคลาส ProjectListActivity) -----
+
+private TextView sectionLabel(String text) {
+    TextView tv = new TextView(this);
+    tv.setText(text);
+    tv.setTextColor(Color.parseColor("#A9B1D6"));
+    tv.setTextSize(12);
+    tv.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
+    return tv;
+}
+
+private EditText styledEdit(GradientDrawable bg, int pad, String hint) {
+    EditText et = new EditText(this);
+    et.setHint(hint);
+    et.setHintTextColor(Color.parseColor("#565F89"));
+    et.setTextColor(Color.parseColor("#C0CAF5"));
+    et.setTextSize(14);
+    et.setSingleLine(true);
+    et.setBackground(bg.getConstantState() != null
+            ? bg.getConstantState().newDrawable() : bg);
+    et.setPadding(pad, pad, pad, pad);
+    return et;
+}
+
+private Spinner styledSpinner(GradientDrawable bg, int pad, String[] items) {
+    Spinner sp = new Spinner(this);
+    sp.setBackground(bg.getConstantState() != null
+            ? bg.getConstantState().newDrawable() : bg);
+    sp.setPadding(pad, pad / 2, pad, pad / 2);
+
+    ArrayAdapter<String> ad = new ArrayAdapter<String>(
+            this, android.R.layout.simple_spinner_item, items) {
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            TextView tv = (TextView) super.getView(position, convertView, parent);
+            tv.setTextColor(Color.parseColor("#C0CAF5"));
+            tv.setTextSize(14);
+            return tv;
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView, ViewGroup parent) {
+            TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
+            tv.setTextColor(Color.parseColor("#C0CAF5"));
+            tv.setBackgroundColor(Color.parseColor("#24283B"));
+            int p = (int) (14 * getResources().getDisplayMetrics().density);
+            tv.setPadding(p, p, p, p);
+            return tv;
+        }
+    };
+    ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    sp.setAdapter(ad);
+    return sp;
+}
+
+private LinearLayout.LayoutParams fieldParams(float density) {
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.bottomMargin = (int) (4 * density);
+    return lp;
+}
     // 🌟 เมธอดเวอร์ชันอัปเกรด: รับค่าตัวแปรภาษาและ SDK มาจำแนกเขียนโค้ดและสร้างโฟลเดอร์จริง
     private void createNewProject(String projectName, String packageName, String language, String minSdkVersionString) {
         String rootPath = "/sdcard/MiniStudio/" + projectName;
