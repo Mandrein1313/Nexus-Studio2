@@ -63,6 +63,8 @@ public class AiChatActivity extends AppCompatActivity {
     public static final String EXTRA_PROJECT_URL = "projectUrl";
     public static final String EXTRA_OPEN_FILE_PATH = "openFilePath";
     public static final String EXTRA_OPEN_FILE_CONTENT = "openFileContent";
+    public static final String EXTRA_BUILD_ERROR = "buildError";
+
     // เลือกรูปจากแกลเลอรี
     private final androidx.activity.result.ActivityResultLauncher<String> pickImageLauncher =
             registerForActivityResult(
@@ -90,150 +92,161 @@ public class AiChatActivity extends AppCompatActivity {
                     });
 
     @Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-    getWindow().setStatusBarColor(Color.parseColor("#1F2335"));
-    getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        getWindow().setStatusBarColor(Color.parseColor("#1F2335"));
+        getWindow().setNavigationBarColor(Color.parseColor("#1A1B26"));
 
-    setContentView(R.layout.activity_ai_chat);
+        setContentView(R.layout.activity_ai_chat);
 
-    // ชื่อโปรเจกต์ → ใช้เป็น key ประวัติ
-    String name = getIntent().getStringExtra(EXTRA_PROJECT_NAME);
-    if (name != null && !name.trim().isEmpty()) {
-        projectName = name.trim();
-        projectKey = projectName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
-    } else {
-        projectName = "";
-        projectKey = "default";
-    }
-
-    // อ่าน package name
-    String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
-    appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
-
-    // อ่านภาษา (Java/Kotlin)
-    String lang = getIntent().getStringExtra(EXTRA_LANGUAGE);
-    if (lang != null && !lang.trim().isEmpty()) {
-        projectLanguage = lang.trim();
-    } else if (!projectName.isEmpty()) {
-        // เดาจากโฟลเดอร์บนดิสก์
-        projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
-    }
-
-    // อ่านลิงก์โปรเจกต์ (GitHub)
-    String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
-    projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
-
-    // ไฟล์ที่เปิดอยู่ใน editor
-    String ofp = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
-    openFilePath = (ofp != null) ? ofp.trim() : "";
-
-    String ofc = getIntent().getStringExtra(EXTRA_OPEN_FILE_CONTENT);
-    openFileContent = (ofc != null) ? ofc : "";
-
-    geminiAssistant = new GeminiAssistant(this);
-    initTts();
-    
-
-    webAiChat = findViewById(R.id.webAiChat);
-    etAiInput = findViewById(R.id.etAiInput);
-    ImageButton btnBack = findViewById(R.id.btnAiBack);
-    ImageButton btnClear = findViewById(R.id.btnAiClear);
-    ImageButton btnSend = findViewById(R.id.btnAiSend);
-    btnSpeak = findViewById(R.id.btnAiSpeak);
-    ImageButton btnHistory = findViewById(R.id.btnAiHistory);
-    ImageButton btnAttach = findViewById(R.id.btnAiAttach);
-
-    setupWebView();
-
-    btnBack.setOnClickListener(v -> {
-        stopSpeaking();
-        saveConversation();
-        finish();
-    });
-
-    btnClear.setOnClickListener(v -> {
-        stopSpeaking();
-        chatHistory = "";
-        lastAiReply = "";
-        codeBlocks.clear();
-        conversation.clear();
-        clearConversationStorage();
-        loadEmptyChat();
-        Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
-    });
-
-    btnClear.setOnLongClickListener(v -> {
-        showHistoryDialog();
-        return true;
-    });
-
-    if (btnHistory != null) {
-        btnHistory.setOnClickListener(v -> showHistoryDialog());
-    }
-
-    // ปุ่มแนบรูป
-    if (btnAttach != null) {
-        btnAttach.setOnClickListener(v -> {
-            if (pendingImageBase64 != null) {
-                // ถ้ามีรูปอยู่แล้ว → ถามว่าจะเอารูปเดิมหรือเปลี่ยนใหม่
-                new androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("แนบรูป")
-                        .setMessage("มีรูปแนบอยู่แล้ว — เลือกรูปใหม่หรือลบรูปเดิม?")
-                        .setPositiveButton("เลือกรูปใหม่", (d, w) -> pickImageLauncher.launch("image/*"))
-                        .setNegativeButton("ลบรูปเดิม", (d, w) -> {
-                            pendingImageBase64 = null;
-                            pendingImageDataUrl = null;
-                            Toast.makeText(this, "ลบรูปที่แนบแล้ว", Toast.LENGTH_SHORT).show();
-                        })
-                        .setNeutralButton("ยกเลิก", null)
-                        .show();
-            } else {
-                pickImageLauncher.launch("image/*");
-            }
-        });
-    }
-
-    btnSend.setOnClickListener(v -> sendMessage());
-
-    etAiInput.setOnEditorActionListener((tv, actionId, event) -> {
-        sendMessage();
-        return true;
-    });
-
-    if (btnSpeak != null) {
-        btnSpeak.setOnClickListener(v -> {
-            if (isSpeaking) {
-                stopSpeaking();
-                Toast.makeText(this, "หยุดเสียงแล้ว", Toast.LENGTH_SHORT).show();
-            } else if (lastAiReply != null && !lastAiReply.isEmpty()) {
-                speakText(lastAiReply);
-            } else {
-                Toast.makeText(this, "ยังไม่มีข้อความ AI ให้พูด", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
-
-    String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
-    if (snippet != null && !snippet.isEmpty()) {
-        etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
-    }
-
-    // โหลดประวัติของโปรเจกต์นี้เท่านั้น
-    loadConversation();
-
-    // แสดง toast ถ้ามีไฟล์ที่เปิดอยู่
-    if (openFilePath != null && !openFilePath.isEmpty()) {
-        String displayName = openFilePath;
-        int slash = Math.max(displayName.lastIndexOf('/'), displayName.lastIndexOf('\\'));
-        if (slash >= 0 && slash < displayName.length() - 1) {
-            displayName = displayName.substring(slash + 1);
+        // ชื่อโปรเจกต์ → ใช้เป็น key ประวัติ
+        String name = getIntent().getStringExtra(EXTRA_PROJECT_NAME);
+        if (name != null && !name.trim().isEmpty()) {
+            projectName = name.trim();
+            projectKey = projectName.replaceAll("[^a-zA-Z0-9._\\-]", "_");
+        } else {
+            projectName = "";
+            projectKey = "default";
         }
-        Toast.makeText(this, "แนบไฟล์: " + displayName, Toast.LENGTH_SHORT).show();
+
+        // อ่าน package name
+        String pkg = getIntent().getStringExtra(EXTRA_PACKAGE_NAME);
+        appPackageName = (pkg != null && !pkg.trim().isEmpty()) ? pkg.trim() : "";
+
+        // อ่านภาษา (Java/Kotlin)
+        String lang = getIntent().getStringExtra(EXTRA_LANGUAGE);
+        if (lang != null && !lang.trim().isEmpty()) {
+            projectLanguage = lang.trim();
+        } else if (!projectName.isEmpty()) {
+            // เดาจากโฟลเดอร์บนดิสก์
+            projectLanguage = detectProjectLanguage("/sdcard/MiniStudio/" + projectName);
+        }
+
+        // อ่านลิงก์โปรเจกต์ (GitHub)
+        String url = getIntent().getStringExtra(EXTRA_PROJECT_URL);
+        projectUrl = (url != null && !url.trim().isEmpty()) ? url.trim() : "";
+
+        // ไฟล์ที่เปิดอยู่ใน editor
+        String ofp = getIntent().getStringExtra(EXTRA_OPEN_FILE_PATH);
+        openFilePath = (ofp != null) ? ofp.trim() : "";
+
+        String ofc = getIntent().getStringExtra(EXTRA_OPEN_FILE_CONTENT);
+        openFileContent = (ofc != null) ? ofc : "";
+
+        geminiAssistant = new GeminiAssistant(this);
+        initTts();
+
+        webAiChat = findViewById(R.id.webAiChat);
+        etAiInput = findViewById(R.id.etAiInput);
+        ImageButton btnBack = findViewById(R.id.btnAiBack);
+        ImageButton btnClear = findViewById(R.id.btnAiClear);
+        ImageButton btnSend = findViewById(R.id.btnAiSend);
+        btnSpeak = findViewById(R.id.btnAiSpeak);
+        ImageButton btnHistory = findViewById(R.id.btnAiHistory);
+        ImageButton btnAttach = findViewById(R.id.btnAiAttach);
+
+        setupWebView();
+
+        btnBack.setOnClickListener(v -> {
+            stopSpeaking();
+            saveConversation();
+            finish();
+        });
+
+        btnClear.setOnClickListener(v -> {
+            stopSpeaking();
+            chatHistory = "";
+            lastAiReply = "";
+            codeBlocks.clear();
+            conversation.clear();
+            clearConversationStorage();
+            loadEmptyChat();
+            Toast.makeText(this, "ล้างประวัติโปรเจกต์นี้แล้ว", Toast.LENGTH_SHORT).show();
+        });
+
+        btnClear.setOnLongClickListener(v -> {
+            showHistoryDialog();
+            return true;
+        });
+
+        if (btnHistory != null) {
+            btnHistory.setOnClickListener(v -> showHistoryDialog());
+        }
+
+        // ปุ่มแนบรูป
+        if (btnAttach != null) {
+            btnAttach.setOnClickListener(v -> {
+                if (pendingImageBase64 != null) {
+                    // ถ้ามีรูปอยู่แล้ว → ถามว่าจะเอารูปเดิมหรือเปลี่ยนใหม่
+                    new androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("แนบรูป")
+                            .setMessage("มีรูปแนบอยู่แล้ว — เลือกรูปใหม่หรือลบรูปเดิม?")
+                            .setPositiveButton("เลือกรูปใหม่", (d, w) -> pickImageLauncher.launch("image/*"))
+                            .setNegativeButton("ลบรูปเดิม", (d, w) -> {
+                                pendingImageBase64 = null;
+                                pendingImageDataUrl = null;
+                                Toast.makeText(this, "ลบรูปที่แนบแล้ว", Toast.LENGTH_SHORT).show();
+                            })
+                            .setNeutralButton("ยกเลิก", null)
+                            .show();
+                } else {
+                    pickImageLauncher.launch("image/*");
+                }
+            });
+        }
+
+        btnSend.setOnClickListener(v -> sendMessage());
+
+        etAiInput.setOnEditorActionListener((tv, actionId, event) -> {
+            sendMessage();
+            return true;
+        });
+
+        if (btnSpeak != null) {
+            btnSpeak.setOnClickListener(v -> {
+                if (isSpeaking) {
+                    stopSpeaking();
+                    Toast.makeText(this, "หยุดเสียงแล้ว", Toast.LENGTH_SHORT).show();
+                } else if (lastAiReply != null && !lastAiReply.isEmpty()) {
+                    speakText(lastAiReply);
+                } else {
+                    Toast.makeText(this, "ยังไม่มีข้อความ AI ให้พูด", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // ✅ โหลดประวัติก่อน
+        loadConversation();
+
+        // ✅ อ่าน snippet (ถ้ามี)
+        String snippet = getIntent().getStringExtra(EXTRA_CODE_SNIPPET);
+        if (snippet != null && !snippet.isEmpty()) {
+            etAiInput.setText("ช่วยอธิบายหรือปรับปรุงโค้ดนี้:\n" + snippet);
+            etAiInput.setSelection(etAiInput.getText().length());
+        }
+
+        // ✅ อ่าน build error (ถ้ามี) — สำคัญกว่า snippet
+        String buildError = getIntent().getStringExtra(EXTRA_BUILD_ERROR);
+        if (buildError != null && !buildError.trim().isEmpty()) {
+            etAiInput.setText(
+                    "ช่วยวิเคราะห์และแก้ error นี้:\n\n" + buildError.trim()
+            );
+            etAiInput.setSelection(etAiInput.getText().length());
+        }
+
+        // แสดง toast ถ้ามีไฟล์ที่เปิดอยู่
+        if (openFilePath != null && !openFilePath.isEmpty()) {
+            String displayName = openFilePath;
+            int slash = Math.max(displayName.lastIndexOf('/'), displayName.lastIndexOf('\\'));
+            if (slash >= 0 && slash < displayName.length() - 1) {
+                displayName = displayName.substring(slash + 1);
+            }
+            Toast.makeText(this, "แนบไฟล์: " + displayName, Toast.LENGTH_SHORT).show();
+        }
     }
-}
+
     /** ดูว่าโปรเจกต์ใช้ java หรือ kotlin เป็นหลัก */
     private String detectProjectLanguage(String rootPath) {
         try {
@@ -313,63 +326,62 @@ protected void onCreate(Bundle savedInstanceState) {
 
     /** context โปรเจกต์ + package + ภาษา ให้ AI ใช้ตอนตอบ */
     private String buildProjectContext() {
-    StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new StringBuilder();
 
-    boolean isKotlin = projectLanguage != null
-            && projectLanguage.toLowerCase().contains("kotlin");
-    String langLabel = isKotlin ? "Kotlin" : "Java";
-    String srcFolder = isKotlin ? "kotlin" : "java";
-    String mainFile = isKotlin ? "MainActivity.kt" : "MainActivity.java";
+        boolean isKotlin = projectLanguage != null
+                && projectLanguage.toLowerCase().contains("kotlin");
+        String langLabel = isKotlin ? "Kotlin" : "Java";
+        String srcFolder = isKotlin ? "kotlin" : "java";
+        String mainFile = isKotlin ? "MainActivity.kt" : "MainActivity.java";
 
-    if (projectName != null && !projectName.isEmpty()) {
-        sb.append("โปรเจกต์: ").append(projectName).append("\n");
+        if (projectName != null && !projectName.isEmpty()) {
+            sb.append("โปรเจกต์: ").append(projectName).append("\n");
+        }
+        sb.append("ภาษา: ").append(langLabel).append("\n");
+
+        if (appPackageName != null && !appPackageName.isEmpty()) {
+            sb.append("package name: ").append(appPackageName).append("\n");
+            sb.append("เมื่อเขียนโค้ด ให้ใช้ package ").append(appPackageName)
+                    .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอ\n");
+        }
+
+        if (projectUrl != null && !projectUrl.isEmpty()) {
+            sb.append("ลิงก์โปรเจกต์ (Git): ").append(projectUrl).append("\n");
+            sb.append("ถ้าผู้ใช้อ้างถึง repo นี้ ให้ยึดชื่อ/URL นี้ในคำตอบ\n");
+        }
+
+        sb.append("โครงสร้างโปรเจกต์ (มาตรฐาน Nexus Studio):\n");
+        sb.append("- app/src/main/").append(srcFolder).append("/{package}/")
+                .append(mainFile).append("\n");
+        sb.append("- app/src/main/res/layout/activity_main.xml\n");
+        sb.append("- app/src/main/res/values/strings.xml, colors.xml, styles.xml\n");
+        sb.append("- app/src/main/res/drawable/, mipmap-*\n");
+        sb.append("- app/src/main/AndroidManifest.xml\n");
+        sb.append("- build.gradle / GitHub Actions (cloud build)\n");
+
+        sb.append("กฎการตอบ:\n");
+        if (isKotlin) {
+            sb.append("- เขียนโค้ดเป็น Kotlin (").append(mainFile).append(")\n");
+            sb.append("- ใช้ syntax Kotlin ไม่ใช่ Java\n");
+        } else {
+            sb.append("- เขียนโค้ดเป็น Java (").append(mainFile).append(")\n");
+            sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
+        }
+        sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
+
+        if (openFilePath != null && !openFilePath.isEmpty()) {
+            sb.append("ไฟล์ที่เปิดอยู่: ").append(openFilePath).append("\n");
+        }
+        if (openFileContent != null && !openFileContent.trim().isEmpty()) {
+            sb.append("เนื้อหาไฟล์ที่เปิดอยู่ (อาจถูกตัดถ้ายาว):\n");
+            sb.append("```\n");
+            sb.append(openFileContent);
+            sb.append("\n```\n");
+            sb.append("เมื่อผู้ใช้พูดถึง \"ไฟล์นี้\" / \"โค้ดนี้\" ให้ยึดไฟล์ด้านบนเป็นหลัก\n");
+        }
+
+        return sb.toString().trim();
     }
-    sb.append("ภาษา: ").append(langLabel).append("\n");
-
-    if (appPackageName != null && !appPackageName.isEmpty()) {
-        sb.append("package name: ").append(appPackageName).append("\n");
-        sb.append("เมื่อเขียนโค้ด ให้ใช้ package ").append(appPackageName)
-                .append(" เท่านั้น ห้ามใช้ com.example อื่นเว้นแต่ผู้ใช้ขอ\n");
-    }
-
-    // ลิงก์ Git — ใส่ครั้งเดียว ก่อน return
-    if (projectUrl != null && !projectUrl.isEmpty()) {
-        sb.append("ลิงก์โปรเจกต์ (Git): ").append(projectUrl).append("\n");
-        sb.append("ถ้าผู้ใช้อ้างถึง repo นี้ ให้ยึดชื่อ/URL นี้ในคำตอบ\n");
-    }
-
-    sb.append("โครงสร้างโปรเจกต์ (มาตรฐาน Nexus Studio):\n");
-    sb.append("- app/src/main/").append(srcFolder).append("/{package}/")
-            .append(mainFile).append("\n");
-    sb.append("- app/src/main/res/layout/activity_main.xml\n");
-    sb.append("- app/src/main/res/values/strings.xml, colors.xml, styles.xml\n");
-    sb.append("- app/src/main/res/drawable/, mipmap-*\n");
-    sb.append("- app/src/main/AndroidManifest.xml\n");
-    sb.append("- build.gradle / GitHub Actions (cloud build)\n");
-
-    sb.append("กฎการตอบ:\n");
-    if (isKotlin) {
-        sb.append("- เขียนโค้ดเป็น Kotlin (").append(mainFile).append(")\n");
-        sb.append("- ใช้ syntax Kotlin ไม่ใช่ Java\n");
-    } else {
-        sb.append("- เขียนโค้ดเป็น Java (").append(mainFile).append(")\n");
-        sb.append("- ใช้ syntax Java ไม่ใช่ Kotlin\n");
-    }
-    sb.append("- แก้ UI ที่ activity_main.xml, logic ที่ MainActivity, resource ที่ res/values\n");
-
-   if (openFilePath != null && !openFilePath.isEmpty()) {
-      sb.append("ไฟล์ที่เปิดอยู่: ").append(openFilePath).append("\n");
-}
-   if (openFileContent != null && !openFileContent.trim().isEmpty()) {
-      sb.append("เนื้อหาไฟล์ที่เปิดอยู่ (อาจถูกตัดถ้ายาว):\n");
-      sb.append("```\n");
-      sb.append(openFileContent);
-      sb.append("\n```\n");
-      sb.append("เมื่อผู้ใช้พูดถึง \"ไฟล์นี้\" / \"โค้ดนี้\" ให้ยึดไฟล์ด้านบนเป็นหลัก\n");
-}
-
-    return sb.toString().trim();
-}
 
     private void initTts() {
         tts = new TextToSpeech(this, status -> {

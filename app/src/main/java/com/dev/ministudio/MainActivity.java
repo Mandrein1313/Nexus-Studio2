@@ -576,10 +576,25 @@ private void showFullPanelDialog(int initialTabPosition) {
         });
     }
 
-    // ===== ปุ่ม AI วิเคราะห์ (กดเอง ไม่เด้งอัตโนมัติ) =====
+    // ===== ปุ่ม AI วิเคราะห์ (กดเอง → เปิดแชทพร้อม error) =====
     View btnAiFixer = fullPanelDialog.findViewById(R.id.btnAiFixer);
     if (btnAiFixer != null) {
-        btnAiFixer.setOnClickListener(v -> triggerAiErrorFixerPipeline());
+        btnAiFixer.setOnClickListener(v -> {
+            if (dialogPanelAdapter != null) {
+                tvConsole = dialogPanelAdapter.getTvConsole();
+            }
+
+            String selected = getConsoleSelection();
+            String log = getConsoleText();
+
+            String payload;
+            if (selected != null && !selected.trim().isEmpty()) {
+                payload = selected.trim();
+            } else {
+                payload = extractLastError(log);
+            }
+            openAiChatWithError(payload);
+        });
     }
 
     dialogPanelAdapter = new PanelPagerAdapter(this);
@@ -601,7 +616,6 @@ private void showFullPanelDialog(int initialTabPosition) {
 
     fullPanelDialog.show();
 }
-
 private void updateLogcatButtonUi(TextView btnLogcat) {
     if (btnLogcat == null) return;
     boolean on = logcatReader != null && logcatReader.isRunning();
@@ -830,6 +844,127 @@ private String buildAiCodeContext() {
     }
 
     startActivityForResult(intent, REQ_AI_CHAT);
+}
+private void openAiChatWithError(String errorText) {
+    if (errorText == null || errorText.trim().isEmpty()) {
+        showToast("ไม่มีข้อความ error");
+        return;
+    }
+
+    Intent intent = new Intent(this, AiChatActivity.class);
+
+    if (currentProject != null) {
+        intent.putExtra(AiChatActivity.EXTRA_PROJECT_NAME, currentProject.getProjectName());
+
+        String root = currentProject.getRootPath();
+
+        String pkg = readProjectPackageName(root);
+        if (pkg != null && !pkg.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_PACKAGE_NAME, pkg);
+        }
+
+        String lang = detectProjectLanguage(root);
+        if (lang != null && !lang.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_LANGUAGE, lang);
+        }
+
+        String gitUrl = readGitRemoteUrl(root);
+        if (gitUrl != null && !gitUrl.isEmpty()) {
+            intent.putExtra(AiChatActivity.EXTRA_PROJECT_URL, gitUrl);
+        }
+
+        // path ไฟล์ที่เปิด — โปรเจกต์คุณมีเมธอดนี้แล้ว
+        try {
+            java.io.File openFile = currentProject.getCurrentOpenFile();
+            if (openFile != null) {
+                intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_PATH, openFile.getAbsolutePath());
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    if (codeEditor != null) {
+        try {
+            String content = codeEditor.getText().toString();
+            if (content == null) content = "";
+            final int MAX = 12000;
+            if (content.length() > MAX) {
+                content = content.substring(0, MAX)
+                        + "\n\n... [ตัดเหลือ " + MAX + " ตัวอักษร] ...\n";
+            }
+            if (!content.trim().isEmpty()) {
+                intent.putExtra(AiChatActivity.EXTRA_OPEN_FILE_CONTENT, content);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    intent.putExtra(AiChatActivity.EXTRA_BUILD_ERROR, errorText.trim());
+    startActivityForResult(intent, REQ_AI_CHAT);
+}
+
+private String getConsoleText() {
+    if (tvConsole == null && dialogPanelAdapter != null) {
+        tvConsole = dialogPanelAdapter.getTvConsole();
+    }
+    if (tvConsole != null) {
+        CharSequence cs = tvConsole.getText();
+        return cs != null ? cs.toString() : "";
+    }
+    return "";
+}
+
+private String getConsoleSelection() {
+    try {
+        if (tvConsole == null && dialogPanelAdapter != null) {
+            tvConsole = dialogPanelAdapter.getTvConsole();
+        }
+        if (tvConsole != null && tvConsole.hasSelection()) {
+            int start = tvConsole.getSelectionStart();
+            int end = tvConsole.getSelectionEnd();
+            if (start >= 0 && end > start) {
+                return tvConsole.getText().subSequence(start, end).toString();
+            }
+        }
+    } catch (Exception ignored) {
+    }
+    return "";
+}
+
+private String extractLastError(String fullLog) {
+    if (fullLog == null || fullLog.trim().isEmpty()) return "";
+
+    String[] lines = fullLog.split("\n");
+    StringBuilder block = new StringBuilder();
+    boolean collecting = false;
+
+    for (int i = lines.length - 1; i >= 0; i--) {
+        String line = lines[i];
+        String lower = line.toLowerCase();
+
+        if (!collecting) {
+            if (lower.contains("error")
+                    || lower.contains("exception")
+                    || lower.contains("failed")
+                    || lower.contains("cannot")
+                    || lower.contains("unable")
+                    || lower.contains("fatal")) {
+                collecting = true;
+                block.insert(0, line + "\n");
+            }
+        } else {
+            block.insert(0, line + "\n");
+            if (block.length() > 4000) break;
+        }
+    }
+
+    String result = block.toString().trim();
+    if (result.isEmpty()) {
+        result = fullLog.length() > 2000
+                ? fullLog.substring(fullLog.length() - 2000)
+                : fullLog;
+    }
+    return result;
 }
 private String readGitRemoteUrl(String rootPath) {
     if (rootPath == null) return "";
