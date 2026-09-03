@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- พื้นแท็บที่เลือก -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#1A1B26" />
+        </shape>
+    </item>
+    <!-- เส้นม่วงด้านล่าง -->
+    <item android:gravity="bottom">
+        <shape android:shape="rectangle">
+            <size android:height="2dp" />
+            <solid android:color="#BB9AF7" />
+        </shape>
+    </item>
+</layer-list>

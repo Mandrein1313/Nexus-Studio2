@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#1A1B26"
+    android:fitsSystemWindows="true">
+
+    <!-- แถบหัว -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="#16161E"
+        android:paddingStart="14dp"
+        android:paddingEnd="6dp"
+        android:elevation="4dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Nexus Terminal"
+                android:textColor="#C0CAF5"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvConsoleStatus"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Build · Logcat · AI"
+                android:textColor="#565F89"
+                android:textSize="11sp"
+                android:paddingTop="1dp" />
+        </LinearLayout>
+
+        <!-- Logcat แบบ chip -->
+        <TextView
+            android:id="@+id/btnLogcat"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginEnd="4dp"
+            android:text="Logcat"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="#7AA2F7"
+            android:background="@drawable/bg_console_chip"
+            android:contentDescription="Toggle Logcat" />
+
+        <ImageButton
+            android:id="@+id/btnAiFixer"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_ai_24"
+            android:contentDescription="ถาม AI เรื่อง error"
+            app:tint="#BB9AF7" />
+
+        <ImageButton
+            android:id="@+id/btnClearConsole"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_delete"
+            android:contentDescription="ล้าง console"
+            app:tint="#A9B1D6" />
+
+        <ImageButton
+            android:id="@+id/btnCloseConsole"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@android:drawable/ic_menu_close_clear_cancel"
+            android:contentDescription="ปิด"
+            app:tint="#F7768E" />
+    </LinearLayout>
+
+    <!-- เส้นคั่นบาง ๆ -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#3B4261" />
+
+    <!-- แท็บเก่า (ซ่อนไว้ เผื่อใช้ภายหลัง) -->
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/tabLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:background="#24283B"
+        app:tabTextColor="#565F89"
+        app:tabSelectedTextColor="#BB9AF7"
+        app:tabIndicatorColor="#BB9AF7"
+        app:tabIndicatorHeight="2dp"
+        app:tabMode="fixed"
+        app:tabGravity="fill" />
+
+    <androidx.viewpager2.widget.ViewPager2
+        android:id="@+id/viewPager"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+</LinearLayout>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1B26"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚙️ AI Settings"
+            android:textColor="#C0CAF5"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ตั้งค่า Groq API และโมเดลที่ใช้ตอบแชท / วิเคราะห์รูป"
+            android:textColor="#565F89"
+            android:textSize="13sp"
+            android:lineSpacingMultiplier="1.2"
+            android:paddingBottom="20dp" />
+
+        <!-- API Key -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_ai_settings_card"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Groq API Key"
+                android:textColor="#A9B1D6"
+                android:textSize="13sp"
+                android:paddingBottom="8dp" />
+
+            <EditText
+                android:id="@+id/etApiKey"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:hint="gsk_..."
+                android:textColor="#C0CAF5"
+                android:textColorHint="#565F89"
+                android:textSize="14sp"
+                android:inputType="textPassword"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:background="@drawable/bg_ai_settings_input"
+                android:singleLine="true" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="คีย์เก็บบนเครื่องเท่านั้น ไม่ถูกอัปขึ้นเซิร์ฟเวอร์ของแอป"
+                android:textColor="#565F89"
+                android:textSize="11sp"
+                android:paddingTop="8dp" />
+        </LinearLayout>
+
+        <!-- โมเดลข้อความ -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_ai_settings_card"
+            android:padding="16dp"
+            android:layout_marginTop="14dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="โมเดลข้อความ"
+                android:textColor="#A9B1D6"
+                android:textSize="13sp"
+                android:paddingBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ใช้ตอนแชท เขียนโค้ด วิเคราะห์ error"
+                android:textColor="#565F89"
+                android:textSize="11sp"
+                android:paddingBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/spinTextModel"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_ai_settings_input"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp" />
+        </LinearLayout>
+
+        <!-- โมเดลรูป -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_ai_settings_card"
+            android:padding="16dp"
+            android:layout_marginTop="14dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="โมเดลวิเคราะห์รูป"
+                android:textColor="#A9B1D6"
+                android:textSize="13sp"
+                android:paddingBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="ใช้ตอนแนบรูปใน AI Assistant"
+                android:textColor="#565F89"
+                android:textSize="11sp"
+                android:paddingBottom="8dp" />
+
+            <Spinner
+                android:id="@+id/spinVisionModel"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/bg_ai_settings_input"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSaveApi"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="24dp"
+            android:text="บันทึกการตั้งค่า"
+            android:textColor="#1A1B26"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_ai_settings_button"
+            android:elevation="0dp"
+            android:stateListAnimator="@null" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="เปลี่ยนโมเดลแล้วคำขอครั้งถัดไปจะใช้ค่าใหม่ทันที"
+            android:textColor="#565F89"
+            android:textSize="11sp"
+            android:gravity="center"
+            android:paddingTop="12dp" />
+
+        <TextView
+            android:id="@+id/tvGetApiKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="ยังไม่มี API Key? สร้างที่ console.groq.com"
+            android:textColor="#7AA2F7"
+            android:textSize="13sp"
+            android:gravity="center"
+            android:paddingTop="16dp"
+            android:paddingBottom="12dp"
+            android:clickable="true"
+            android:focusable="true" />
+
+    </LinearLayout>
+</ScrollView>

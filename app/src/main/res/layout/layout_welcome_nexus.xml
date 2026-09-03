@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/welcomeRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1B26"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="28dp"
+        android:paddingEnd="28dp"
+        android:paddingTop="36dp"
+        android:paddingBottom="40dp">
+
+        <ImageView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_gravity="center_horizontal"
+            android:src="@mipmap/ic_launcher"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/welcomeTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="16dp"
+            android:text="Welcome to Nexus Studio"
+            android:textColor="#C0CAF5"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/welcomeSubtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="28dp"
+            android:text="Mobile Android IDE · เขียน แก้ บิลด์จากมือถือ"
+            android:textColor="#565F89"
+            android:textSize="13sp" />
+
+        <!-- ===== เริ่มต้น ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="เริ่มต้น"
+            android:textAllCaps="true"
+            android:textColor="#565F89"
+            android:textSize="11sp"
+            android:letterSpacing="0.06"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/welcomeNewProject"
+            style="@style/WelcomeRow"
+            android:text="＋    สร้างโปรเจกต์ใหม่" />
+
+        <TextView
+            android:id="@+id/welcomeImportGithub"
+            style="@style/WelcomeRow"
+            android:text="⬇    นำเข้าจาก GitHub" />
+
+        <TextView
+            android:id="@+id/welcomeOpenTree"
+            style="@style/WelcomeRow"
+            android:text="📂    เปิดไฟล์จากโปรเจกต์"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/welcomeAiChat"
+            style="@style/WelcomeRow"
+            android:text="🤖    เปิด AI Assistant"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/welcomeTerminal"
+            style="@style/WelcomeRow"
+            android:text="⌨    เปิด Terminal / Console"
+            android:visibility="gone" />
+
+        <!-- ===== ตั้งค่า ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="ตั้งค่า"
+            android:textAllCaps="true"
+            android:textColor="#565F89"
+            android:textSize="11sp"
+            android:letterSpacing="0.06"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/welcomeAiSettings"
+            style="@style/WelcomeRow"
+            android:text="⚙    AI Settings" />
+
+        <TextView
+            android:id="@+id/welcomeGithubSettings"
+            style="@style/WelcomeRow"
+            android:text="☁    ตั้งค่า GitHub" />
+
+        <TextView
+            android:id="@+id/welcomeToggleTheme"
+            style="@style/WelcomeRow"
+            android:text="🎨    สลับธีม Editor" />
+
+        <!-- ===== เกี่ยวกับ ===== -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:text="เกี่ยวกับ"
+            android:textAllCaps="true"
+            android:textColor="#565F89"
+            android:textSize="11sp"
+            android:letterSpacing="0.06"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:id="@+id/welcomeAbout"
+            style="@style/WelcomeRow"
+            android:text="ℹ    เกี่ยวกับ Nexus Studio" />
+
+    </LinearLayout>
+</ScrollView>
