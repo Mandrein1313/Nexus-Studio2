@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPreviewMode = false; 
     private String chatHistory = "";
     // Views ตัวใหม่เพิ่มเติม
-    private LinearLayout emptyStateView;
+    private View emptyStateView;
     private String pendingProjectName = "";
     private boolean isLightEditorTheme = false;
     private boolean isShortcutExpanded = false;
@@ -315,8 +315,17 @@ private void initViews() {
         rvErrorPanel.setLayoutManager(new LinearLayoutManager(this));
     }
 
+    
     previewContainer = findViewById(R.id.previewContainer);
+
+    // ผูกหน้า Welcome ใน editor (ถ้ามี layout)
+    try {
+        bindEditorWelcome();
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
 }
+
 private void bindEditorWelcome() {
     View welcome = findViewById(R.id.editorWelcome);
     if (welcome == null) return;
