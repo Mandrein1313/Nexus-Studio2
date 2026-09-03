@@ -46,7 +46,6 @@ public class ProjectListActivity extends AppCompatActivity {
     private FloatingActionsMenu fabMenu;
     private FloatingActionButton fabCreate;
     private FloatingActionButton fabGithub;
-    private View projectWelcome;
 
     // View สำหรับการแสดงรายการแบบแถวตามข้อกำหนดใหม่
     private LinearLayout projectRowsContainer;
@@ -109,7 +108,6 @@ public class ProjectListActivity extends AppCompatActivity {
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         drawerLayout = findViewById(R.id.drawer_layout);
-        projectWelcome = findViewById(R.id.projectWelcome);
 
         fabMenu = findViewById(R.id.multiple_actions);
         fabCreate = findViewById(R.id.action_create);
@@ -155,7 +153,6 @@ public class ProjectListActivity extends AppCompatActivity {
         }
 
         setupFabButtons();
-        bindProjectWelcome();
         checkPermissions();
 
         // โหลดข้อมูลและแสดงผลแถวโปรเจกต์
@@ -234,32 +231,6 @@ public class ProjectListActivity extends AppCompatActivity {
         }
     }
 
-    private void bindProjectWelcome() {
-        if (projectWelcome == null) return;
-
-        setGone(projectWelcome, R.id.welcomeOpenTree);
-        setGone(projectWelcome, R.id.welcomeAiChat);
-        setGone(projectWelcome, R.id.welcomeTerminal);
-
-        TextView sub = projectWelcome.findViewById(R.id.welcomeSubtitle);
-        if (sub != null) {
-            sub.setText("สร้างหรือนำเข้าโปรเจกต์เพื่อเริ่มต้น");
-        }
-
-        click(projectWelcome, R.id.welcomeNewProject, v -> showCreateProjectDialog());
-        click(projectWelcome, R.id.welcomeImportGithub, v -> importFromGitHub());
-        click(projectWelcome, R.id.welcomeAiSettings, v ->
-                startActivity(new Intent(this, AiSettingsActivity.class)));
-        click(projectWelcome, R.id.welcomeGithubSettings, v -> showGitHubSettingsDialog());
-        click(projectWelcome, R.id.welcomeToggleTheme, v -> toggleEditorThemePref());
-        click(projectWelcome, R.id.welcomeAbout, v ->
-                new AlertDialog.Builder(this)
-                        .setTitle("Nexus Studio")
-                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                        .setPositiveButton("ตกลง", null)
-                        .show());
-    }
-
     private void updateProjectEmptyState() {
         boolean empty = projects == null || projects.isEmpty();
         if (projectRowsContainer != null) {
@@ -268,19 +239,6 @@ public class ProjectListActivity extends AppCompatActivity {
         if (tvNoProjects != null) {
             tvNoProjects.setVisibility(empty ? View.VISIBLE : View.GONE);
         }
-        if (projectWelcome != null) {
-            projectWelcome.setVisibility(empty ? View.VISIBLE : View.GONE);
-        }
-    }
-
-    private void setGone(View root, int id) {
-        View v = root.findViewById(id);
-        if (v != null) v.setVisibility(View.GONE);
-    }
-
-    private void click(View root, int id, View.OnClickListener l) {
-        View v = root.findViewById(id);
-        if (v != null) v.setOnClickListener(l);
     }
 
     // ========== Project Management ==========
