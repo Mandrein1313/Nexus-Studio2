@@ -9,15 +9,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.text.InputType;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.ActionBarDrawerToggle;
@@ -31,35 +30,32 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
-import java.net.URL;
-import java.io.InputStream;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.Spinner;
+import android.widget.ArrayAdapter;
 import android.graphics.drawable.GradientDrawable;
-import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import android.content.IntentFilter;
 
 public class ProjectListActivity extends AppCompatActivity {
     private ArrayList<String> projects = new ArrayList<>();
-    private ArrayAdapter<String> adapter;
     private DrawerLayout drawerLayout;
     private FloatingActionsMenu fabMenu;
     private FloatingActionButton fabCreate;
     private FloatingActionButton fabGithub;
     private View projectWelcome;
 
+    // View สำหรับการแสดงรายการแบบแถวตามข้อกำหนดใหม่
+    private LinearLayout projectRowsContainer;
+    private TextView tvNoProjects;
+
     private final android.content.BroadcastReceiver cloneReceiver = new android.content.BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             refreshProjectList();
-            if (adapter != null) {
-                adapter.notifyDataSetChanged();
-            }
             updateProjectEmptyState();
         }
     };
@@ -82,7 +78,35 @@ public class ProjectListActivity extends AppCompatActivity {
         getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
         setContentView(R.layout.activity_project_list);
 
-        ListView listView = findViewById(R.id.projectListView);
+        // ผูก View Container และ Views ใหม่
+        projectRowsContainer = findViewById(R.id.projectRowsContainer);
+        tvNoProjects = findViewById(R.id.tvNoProjects);
+
+        // ผูก Event Click รายการแถวเมนูการตั้งค่าแบบใหม่
+        View rowNewProject = findViewById(R.id.rowNewProject);
+        if (rowNewProject != null) rowNewProject.setOnClickListener(v -> showCreateProjectDialog());
+
+        View rowImportGithub = findViewById(R.id.rowImportGithub);
+        if (rowImportGithub != null) rowImportGithub.setOnClickListener(v -> importFromGitHub());
+
+        View rowAiSettings = findViewById(R.id.rowAiSettings);
+        if (rowAiSettings != null) rowAiSettings.setOnClickListener(v ->
+                startActivity(new Intent(this, AiSettingsActivity.class)));
+
+        View rowGithubSettings = findViewById(R.id.rowGithubSettings);
+        if (rowGithubSettings != null) rowGithubSettings.setOnClickListener(v -> showGitHubSettingsDialog());
+
+        View rowToggleTheme = findViewById(R.id.rowToggleTheme);
+        if (rowToggleTheme != null) rowToggleTheme.setOnClickListener(v -> toggleEditorThemePref());
+
+        View rowAbout = findViewById(R.id.rowAbout);
+        if (rowAbout != null) rowAbout.setOnClickListener(v ->
+                new AlertDialog.Builder(this)
+                        .setTitle("Nexus Studio")
+                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
+                        .setPositiveButton("ตกลง", null)
+                        .show());
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         drawerLayout = findViewById(R.id.drawer_layout);
         projectWelcome = findViewById(R.id.projectWelcome);
@@ -91,15 +115,18 @@ public class ProjectListActivity extends AppCompatActivity {
         fabCreate = findViewById(R.id.action_create);
         fabGithub = findViewById(R.id.action_github);
 
-        setSupportActionBar(toolbar);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, toolbar, android.R.string.ok, android.R.string.cancel);
-        drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
+        }
+        if (drawerLayout != null && toolbar != null) {
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawerLayout, toolbar, android.R.string.ok, android.R.string.cancel);
+            drawerLayout.addDrawerListener(toggle);
+            toggle.syncState();
+        }
 
         com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
         if (navView != null) {
-            // ดันเมนูลงมาใต้ status bar
             int statusBarHeight = 0;
             int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
             if (resId > 0) {
@@ -122,76 +149,24 @@ public class ProjectListActivity extends AppCompatActivity {
                             .setPositiveButton("ตกลง", null)
                             .show();
                 }
-                drawerLayout.closeDrawers();
+                if (drawerLayout != null) drawerLayout.closeDrawers();
                 return true;
             });
         }
 
-        // 1. ตั้งค่าปุ่ม Fab ผ่านเมธอดแยก (สะอาดและดูดีขึ้น)
         setupFabButtons();
-
-        // 2. ผูก Welcome View
         bindProjectWelcome();
-
-        // 3. โหลดข้อมูลต่างๆ
         checkPermissions();
+
+        // โหลดข้อมูลและแสดงผลแถวโปรเจกต์
         refreshProjectList();
-
-        // 4. ตั้งค่า Adapter
-        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, projects) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = super.getView(position, convertView, parent);
-                TextView text = (TextView) view.findViewById(android.R.id.text1);
-                text.setTextColor(android.graphics.Color.WHITE);
-                text.setTextSize(18);
-                text.setCompoundDrawablesWithIntrinsicBounds(android.R.drawable.sym_def_app_icon, 0, 0, 0);
-                text.setCompoundDrawablePadding(30);
-                return view;
-            }
-        };
-        listView.setAdapter(adapter);
-
-        listView.setOnItemClickListener((parent, view, position, id) -> {
-            Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
-            intent.putExtra("projectName", projects.get(position));
-            startActivity(intent);
-        });
-
-        listView.setOnItemLongClickListener((parent, view, position, id) -> {
-            String projectName = projects.get(position);
-            File projectDir = new File("/sdcard/MiniStudio/" + projectName);
-
-            new AlertDialog.Builder(ProjectListActivity.this)
-                .setTitle("ลบโปรเจกต์")
-                .setMessage("คุณต้องการลบ " + projectName + " ใช่หรือไม่?")
-                .setPositiveButton("ลบ", (dialog, which) -> {
-                    deleteRecursive(projectDir);
-
-                    if (!projectDir.exists()) {
-                        projects.remove(position);
-                        adapter.notifyDataSetChanged();
-                        updateProjectEmptyState();
-                        Toast.makeText(ProjectListActivity.this, "ลบโปรเจกต์ " + projectName + " เรียบร้อยครับ", Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(ProjectListActivity.this, "ไม่สามารถลบไฟล์ได้ โปรดตรวจสอบสิทธิ์", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("ยกเลิก", null)
-                .show();
-            return true;
-        });
-
-        // 5. อัปเดต empty state
         updateProjectEmptyState();
 
-        // 6. ระบบตรวจสอบ GitHub
         SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
         if (!prefs.getBoolean("is_github_setup", false)) {
             new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
         }
 
-        // 7. เพิ่มตัวรับแจ้งเตือนเมื่อ Service ทำงานเสร็จ
         IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -201,15 +176,19 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     private void setupFabButtons() {
-        fabCreate.setOnClickListener(v -> {
-            showCreateProjectDialog(); // เรียกหน้าต่างสร้างโปรเจกต์
-            fabMenu.collapse();
-        });
+        if (fabCreate != null) {
+            fabCreate.setOnClickListener(v -> {
+                showCreateProjectDialog();
+                if (fabMenu != null) fabMenu.collapse();
+            });
+        }
 
-        fabGithub.setOnClickListener(v -> {
-            importFromGitHub(); // เรียกฟังก์ชันนำเข้า
-            fabMenu.collapse();
-        });
+        if (fabGithub != null) {
+            fabGithub.setOnClickListener(v -> {
+                importFromGitHub();
+                if (fabMenu != null) fabMenu.collapse();
+            });
+        }
     }
 
     private void importFromGitHub() {
@@ -229,7 +208,6 @@ public class ProjectListActivity extends AppCompatActivity {
                     return;
                 }
                 
-                // 💡 แกะชื่อ Repo จาก URL อัตโนมัติ
                 String projectName = extractRepoName(url);
                 if (projectName == null || projectName.isEmpty()) {
                     projectName = "Import_" + System.currentTimeMillis();
@@ -256,12 +234,9 @@ public class ProjectListActivity extends AppCompatActivity {
         }
     }
 
-    // ========== Welcome View ==========
-
     private void bindProjectWelcome() {
         if (projectWelcome == null) return;
 
-        // โหมดหน้า Projects: ซ่อนปุ่มของ editor
         setGone(projectWelcome, R.id.welcomeOpenTree);
         setGone(projectWelcome, R.id.welcomeAiChat);
         setGone(projectWelcome, R.id.welcomeTerminal);
@@ -286,10 +261,12 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     private void updateProjectEmptyState() {
-        ListView listView = findViewById(R.id.projectListView);
         boolean empty = projects == null || projects.isEmpty();
-        if (listView != null) {
-            listView.setVisibility(empty ? View.GONE : View.VISIBLE);
+        if (projectRowsContainer != null) {
+            projectRowsContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
+        }
+        if (tvNoProjects != null) {
+            tvNoProjects.setVisibility(empty ? View.VISIBLE : View.GONE);
         }
         if (projectWelcome != null) {
             projectWelcome.setVisibility(empty ? View.VISIBLE : View.GONE);
@@ -320,16 +297,70 @@ public class ProjectListActivity extends AppCompatActivity {
                 }
             }
         }
+        renderProjectRows();
+    }
+
+    private void renderProjectRows() {
+        if (projectRowsContainer == null) return;
+        projectRowsContainer.removeAllViews();
+
+        if (projects.isEmpty()) {
+            if (tvNoProjects != null) tvNoProjects.setVisibility(View.VISIBLE);
+            return;
+        }
+        if (tvNoProjects != null) tvNoProjects.setVisibility(View.GONE);
+
+        float d = getResources().getDisplayMetrics().density;
+        for (int i = 0; i < projects.size(); i++) {
+            final String name = projects.get(i);
+
+            TextView row = new TextView(this);
+            row.setText("📁    " + name);
+            row.setTextColor(Color.parseColor("#C0CAF5"));
+            row.setTextSize(15);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(0, (int) (14 * d), 0, (int) (14 * d));
+
+            TypedValue out = new TypedValue();
+            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, out, true);
+            row.setBackgroundResource(out.resourceId);
+
+            row.setOnClickListener(v -> {
+                Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
+                intent.putExtra("projectName", name);
+                startActivity(intent);
+            });
+
+            row.setOnLongClickListener(v -> {
+                confirmDeleteProject(name);
+                return true;
+            });
+
+            projectRowsContainer.addView(row);
+        }
+    }
+
+    private void confirmDeleteProject(String projectName) {
+        File projectDir = new File("/sdcard/MiniStudio/" + projectName);
+        new AlertDialog.Builder(this)
+                .setTitle("ลบโปรเจกต์")
+                .setMessage("ลบ \"" + projectName + "\" หรือไม่?")
+                .setPositiveButton("ลบ", (d, w) -> {
+                    deleteRecursive(projectDir);
+                    refreshProjectList();
+                    updateProjectEmptyState();
+                    Toast.makeText(this, "ลบแล้ว", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("ยกเลิก", null)
+                .show();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         refreshProjectList();
-        if (adapter != null) adapter.notifyDataSetChanged();
         updateProjectEmptyState();
 
-        // เมื่อผู้ใช้ตอบรับสิทธิ์แจ้งเตือนแล้ว พอกลับมาหน้านี้ ค่อยเช็กสิทธิ์ไฟล์ต่อ
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 checkFilePermission();
@@ -340,14 +371,12 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     private void checkPermissions() {
-        // 1. ขอสิทธิ์การแจ้งเตือนก่อน (Android 13+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 requestPermissions(new String[]{android.Manifest.permission.POST_NOTIFICATIONS}, 101);
                 return;
             }
         }
-        // 2. ถ้าสิทธิ์แจ้งเตือนผ่านแล้ว ค่อยเช็กสิทธิ์เข้าถึงไฟล์
         checkFilePermission();
     }
 
@@ -367,7 +396,6 @@ public class ProjectListActivity extends AppCompatActivity {
         final float density = getResources().getDisplayMetrics().density;
         int dp = (int) (1 * density);
 
-        // ---- styles ----
         GradientDrawable inputBg = new GradientDrawable();
         inputBg.setColor(Color.parseColor("#1F2335"));
         inputBg.setCornerRadius(12 * density);
@@ -389,7 +417,6 @@ public class ProjectListActivity extends AppCompatActivity {
         int pad = (int) (16 * density);
         int fieldPad = (int) (14 * density);
 
-        // ---- root scroll ----
         android.widget.ScrollView scroll = new android.widget.ScrollView(this);
         scroll.setFillViewport(true);
 
@@ -401,7 +428,6 @@ public class ProjectListActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // ---- header ----
         TextView tvTitle = new TextView(this);
         tvTitle.setText("✨ สร้างโปรเจกต์ใหม่");
         tvTitle.setTextColor(Color.parseColor("#C0CAF5"));
@@ -416,7 +442,6 @@ public class ProjectListActivity extends AppCompatActivity {
         tvDesc.setPadding(0, (int) (4 * density), 0, (int) (18 * density));
         root.addView(tvDesc);
 
-        // ---- card: name + package ----
         LinearLayout cardInfo = new LinearLayout(this);
         cardInfo.setOrientation(LinearLayout.VERTICAL);
         cardInfo.setPadding(pad, pad, pad, pad);
@@ -440,7 +465,6 @@ public class ProjectListActivity extends AppCompatActivity {
         final EditText etPackageName = styledEdit(inputBg, fieldPad, "com.example.mygame");
         cardInfo.addView(etPackageName, fieldParams(density));
 
-        // auto package จากชื่อ
         etProjectName.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
             @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
@@ -452,7 +476,6 @@ public class ProjectListActivity extends AppCompatActivity {
 
         root.addView(cardInfo, cardLp);
 
-        // ---- card: language + sdk ----
         LinearLayout cardEnv = new LinearLayout(this);
         cardEnv.setOrientation(LinearLayout.VERTICAL);
         cardEnv.setPadding(pad, pad, pad, pad);
@@ -482,7 +505,6 @@ public class ProjectListActivity extends AppCompatActivity {
 
         root.addView(cardEnv, cardLp);
 
-        // ---- buttons ----
         LinearLayout buttons = new LinearLayout(this);
         buttons.setOrientation(LinearLayout.HORIZONTAL);
         buttons.setGravity(android.view.Gravity.END);
@@ -542,7 +564,6 @@ public class ProjectListActivity extends AppCompatActivity {
                     language != null ? language : "Java",
                     minSdk != null ? minSdk : "API 23");
             refreshProjectList();
-            if (adapter != null) adapter.notifyDataSetChanged();
             updateProjectEmptyState();
             Toast.makeText(this, "สร้างโปรเจกต์ " + projectName + " แล้ว", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
@@ -550,8 +571,6 @@ public class ProjectListActivity extends AppCompatActivity {
 
         dialog.show();
     }
-
-    // ----- helpers -----
 
     private TextView sectionLabel(String text) {
         TextView tv = new TextView(this);
@@ -849,7 +868,6 @@ public class ProjectListActivity extends AppCompatActivity {
 
         int inputPadding = (int) (12 * getResources().getDisplayMetrics().density);
 
-        // --- GitHub Username ---
         TextView labelUsername = new TextView(this);
         labelUsername.setText("GitHub Username");
         labelUsername.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
@@ -867,7 +885,6 @@ public class ProjectListActivity extends AppCompatActivity {
         etUsername.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
         mainLayout.addView(etUsername, boxParams);
 
-        // --- GitHub Email ---
         TextView labelEmail = new TextView(this);
         labelEmail.setText("GitHub Email");
         labelEmail.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
@@ -885,7 +902,6 @@ public class ProjectListActivity extends AppCompatActivity {
         etEmail.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
         mainLayout.addView(etEmail, boxParams);
 
-        // --- Personal Access Token ---
         TextView labelToken = new TextView(this);
         labelToken.setText("Personal Access Token (Classic)");
         labelToken.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
