@@ -24,7 +24,7 @@ public class CodeOptimizerManager {
 
     public static OptimizedResult parseAiResponse(String aiResponse) {
         if (aiResponse == null || aiResponse.trim().isEmpty()) {
-            return new OptimizedResult("", "⚠️ ไม่ได้รับการตอบกลับจาก AI ครับน้า");
+            return new OptimizedResult("", "⚠️ ไม่ได้รับการตอบกลับจาก AI แล้ว ");
         }
 
         String updatedCode = "";

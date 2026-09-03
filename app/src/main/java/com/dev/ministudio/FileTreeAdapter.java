@@ -119,7 +119,7 @@ public class FileTreeAdapter extends BaseAdapter {
             } else if ("res".equalsIgnoreCase(name)) {
                 holder.imgFileIcon.setColorFilter(Color.parseColor("#4CAF50")); // สีเขียวเข้มสำหรับ Resource หลัก
             } else if (isInResourceFolder) {
-                // 🟢 ปรับปรุงใหม่: ชนะทุกเงื่อนไขชื่อไฟล์ ไม่ว่าจะสร้างโฟลเดอร์ชื่ออะไรภายใต้ res (รวมถึงใน xml) จะเป็นสีเขียวพาสเทลทั้งหมดครับน้า
+                // 🟢 ปรับปรุงใหม่: ชนะทุกเงื่อนไขชื่อไฟล์ ไม่ว่าจะสร้างโฟลเดอร์ชื่ออะไรภายใต้ res (รวมถึงใน xml) จะเป็นสีเขียวพาสเทลทั้งหมด
                 holder.imgFileIcon.setColorFilter(Color.parseColor("#81C784")); 
             } else if (name.startsWith(".")) {
                 holder.imgFileIcon.setColorFilter(Color.parseColor("#78909C")); // สีเทาสำหรับโฟลเดอร์ซ่อนระบบ (.git, .github)
@@ -192,7 +192,7 @@ public class FileTreeAdapter extends BaseAdapter {
                 if (isInJavaPackage) {
                     holder.tvFileName.setTextColor(Color.parseColor("#4FC3F7")); // อักษรสีฟ้าพาสเทลสำหรับแพ็กเกจโค้ด
                 } else if (isInResourceFolder || "res".equalsIgnoreCase(name)) {
-                    // 🟢 ปรับปรุงเพิ่มเติม: ทำให้ตัวอักษรของโฟลเดอร์ย่อยในระบบ res สว่างเด่นขึ้นตามสีไอคอนครับน้า
+                    // 🟢 ปรับปรุงเพิ่มเติม: ทำให้ตัวอักษรของโฟลเดอร์ย่อยในระบบ res สว่างเด่นขึ้นตามสีไอคอน
                     holder.tvFileName.setTextColor(Color.parseColor("#A5D6A7"));
                 } else if (name.startsWith(".")) {
                     // 📁 อัปเกรดใหม่: ดักจับโฟลเดอร์ซ่อน (เช่น .github) ให้ตัวอักษรเป็นสีเทาเข้มหลบสายตาอย่างเหมาะสม

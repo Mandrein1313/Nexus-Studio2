@@ -200,7 +200,7 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
 
         allLogLines.add(new LogLine(text, color, type));
 
-        // ถ้าข้อความที่เด้งเข้ามา ตรงกับหน้าแท็บปัจจุบันที่ผู้ใช้กำลังส่องดูอยู่ ให้ปริ้นสดออกจอเลยครับน้า
+        // ถ้าข้อความที่เด้งเข้ามา ตรงกับหน้าแท็บปัจจุบันที่ผู้ใช้กำลังส่องดูอยู่ ให้ปริ้นสดออกจอเลย
         if (currentFilterType == 0 || currentFilterType == type) {
             if (tvConsoleView != null) {
                 final int finalType = type;

@@ -2585,7 +2585,7 @@ protected void onActivityResult(int requestCode, int resultCode, android.content
                 android.content.ClipData clip = android.content.ClipData.newPlainText("MiniStudioCode", text);
                 if (clipboard != null) {
                     clipboard.setPrimaryClip(clip);
-                    showToast("📋 คัดลอกโค้ดลงคลิปบอร์ดแล้วครับน้า!");
+                    showToast("📋 คัดลอกโค้ดลงคลิปบอร์ดแล้ว!");
                 }
             });
         }
@@ -2604,7 +2604,7 @@ protected void onActivityResult(int requestCode, int resultCode, android.content
                     if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
                         fullPanelDialog.dismiss();
                     }
-                    showToast("✨ นำโค้ดเข้าสู่หน้าแก้ไขเรียบร้อยแล้วครับน้า!");
+                    showToast("✨ นำโค้ดเข้าสู่หน้าแก้ไขเรียบร้อยแล้ว!");
                 }
             });
         }
