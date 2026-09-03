@@ -450,8 +450,64 @@ private void setupLogic() {
             projectTreeManager = new ProjectTreeManager(this, treeView);
             projectTreeManager.initializeFileTree();
         }
-        setEditorActiveState(false);
+
+        // ✅ เปิด MainActivity อัตโนมัติ ถ้ามีในโปรเจกต์
+        File mainFile = findDefaultMainFile(rootPath);
+        if (mainFile != null && mainFile.exists()) {
+            openFile(mainFile);
+        } else {
+            setEditorActiveState(false);
+        }
     }
+}
+
+/** หา MainActivity.java / .kt ในโปรเจกต์ (优先 app/src/main) */
+private File findDefaultMainFile(String rootPath) {
+    if (rootPath == null) return null;
+
+    // path ที่พบบ่อย
+    String[] candidates = {
+            rootPath + "/app/src/main/java",
+            rootPath + "/app/src/main/kotlin",
+            rootPath + "/src/main/java",
+            rootPath + "/src/main/kotlin",
+            rootPath
+    };
+
+    for (String base : candidates) {
+        File found = findFileNamed(new File(base), "MainActivity.java");
+        if (found != null) return found;
+        found = findFileNamed(new File(base), "MainActivity.kt");
+        if (found != null) return found;
+    }
+    return null;
+}
+
+private File findFileNamed(File dir, String fileName) {
+    if (dir == null || !dir.exists() || !dir.isDirectory()) return null;
+    File[] children = dir.listFiles();
+    if (children == null) return null;
+
+    // ค้นหาไฟล์ในระดับเดียวกันก่อน
+    for (File f : children) {
+        if (f.isFile() && f.getName().equals(fileName)) {
+            return f;
+        }
+    }
+
+    // ค้นหาในโฟลเดอร์ย่อย (ข้ามโฟลเดอร์หนัก ๆ)
+    for (File f : children) {
+        if (f.isDirectory()) {
+            String n = f.getName();
+            if (n.equals("build") || n.equals(".git") || n.equals(".gradle") 
+                    || n.equals("node_modules") || n.equals(".idea")) {
+                continue;
+            }
+            File found = findFileNamed(f, fileName);
+            if (found != null) return found;
+        }
+    }
+    return null;
 }
 private void showColorPreviewIfNeeded() {
     if (codeEditor == null || codeEditor.getCursor() == null || tvSaveStatus == null) {
