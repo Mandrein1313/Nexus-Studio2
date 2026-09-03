@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isPreviewMode = false; 
     private String chatHistory = "";
     // Views ตัวใหม่เพิ่มเติม
-    
+    private View emptyStateView;
     private String pendingProjectName = "";
     private boolean isLightEditorTheme = false;
     private boolean isShortcutExpanded = false;
