@@ -10,4 +10,14 @@
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
     </style>
-</resources>
+
+    <!-- แถวในหน้า Welcome (สไตล์ Acode) -->
+    <style name="WelcomeRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textColor">#C0CAF5</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:background">?attr/selectableItemBackground</item>
+    </style>
+</resources> 

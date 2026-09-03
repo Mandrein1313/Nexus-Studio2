@@ -199,21 +199,19 @@
             android:layout_weight="1"
             android:background="#1A1B26">
 
-            <LinearLayout
+            <!-- ✅ เปลี่ยนจาก LinearLayout เป็น FrameLayout + include layout_welcome_nexus -->
+            <FrameLayout
                 android:id="@+id/emptyStateView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:gravity="center"
-                android:orientation="vertical"
                 android:visibility="visible">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Don't open files"
-                    android:textColor="#565F89"
-                    android:textSize="18sp" />
-            </LinearLayout>
+                <include
+                    android:id="@+id/editorWelcome"
+                    layout="@layout/layout_welcome_nexus"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+            </FrameLayout>
 
             <io.github.rosemoe.sora.widget.CodeEditor
                 android:id="@+id/codeEditor"
@@ -377,15 +375,15 @@
 
                 <!-- ขวาสุด: AI (ล็อคอยู่กับที่) -->
                 <ImageView
-                     android:id="@+id/btnMainAi"
-                     android:layout_width="40dp"
-                     android:layout_height="36dp"
-                     android:layout_marginStart="8dp"
-                     android:padding="6dp"
-                     android:src="@drawable/ic_ai_24"
-                     android:background="@drawable/bg_dialog_input"
-                     android:contentDescription="AI"
-                     android:scaleType="centerInside" />
+                    android:id="@+id/btnMainAi"
+                    android:layout_width="40dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:padding="6dp"
+                    android:src="@drawable/ic_ai_24"
+                    android:background="@drawable/bg_dialog_input"
+                    android:contentDescription="AI"
+                    android:scaleType="centerInside" />
             </LinearLayout>
         </LinearLayout>
 
