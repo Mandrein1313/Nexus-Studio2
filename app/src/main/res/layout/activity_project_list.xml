@@ -29,14 +29,28 @@
                 app:titleTextColor="#BB86FC"
                 app:contentInsetStartWithNavigation="0dp" />
 
-            <ListView
-                android:id="@+id/projectListView"
+            <!-- รายการโปรเจกต์ + Welcome เมื่อว่าง -->
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:divider="@android:color/transparent"
-                android:dividerHeight="12dp"
-                android:padding="8dp"
-                android:clipToPadding="false" />
+                android:layout_height="0dp"
+                android:layout_weight="1">
+
+                <ListView
+                    android:id="@+id/projectListView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:divider="@android:color/transparent"
+                    android:dividerHeight="12dp"
+                    android:padding="8dp"
+                    android:clipToPadding="false" />
+
+                <include
+                    android:id="@+id/projectWelcome"
+                    layout="@layout/layout_welcome_nexus"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone" />
+            </FrameLayout>
 
         </LinearLayout>
 
