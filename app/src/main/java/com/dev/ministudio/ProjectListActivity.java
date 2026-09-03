@@ -754,14 +754,6 @@ public boolean onCreateOptionsMenu(Menu menu) {
     // ลบการ inflate เมนูออก
     return false;
 }
-
-
-    @Override
-public boolean onCreateOptionsMenu(Menu menu) {
-    // ส่งกลับ false เพื่อไม่ให้แสดงเมนูใดๆ บน Toolbar ด้านขวา
-    return false; 
-}
-
 @Override
 public boolean onOptionsItemSelected(MenuItem item) {
     return super.onOptionsItemSelected(item);
