@@ -57,7 +57,7 @@
             android:background="#1F2335"
             android:scrollbars="none" />
 
-        <!-- searchBar ชุดใหม่ -->
+        <!-- searchBar -->
         <LinearLayout
             android:id="@+id/searchBar"
             android:layout_width="match_parent"
@@ -70,7 +70,6 @@
             android:paddingBottom="8dp"
             android:visibility="gone">
 
-            <!-- แถวค้นหา -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -129,7 +128,6 @@
                     app:tint="#A9B1D6" />
             </LinearLayout>
 
-            <!-- แถวแทนที่ -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -174,7 +172,6 @@
                     android:textSize="13sp" />
             </LinearLayout>
 
-            <!-- ตัวเลือก -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -199,18 +196,21 @@
             android:layout_weight="1"
             android:background="#1A1B26">
 
-            <!-- ✅ เปลี่ยนจาก LinearLayout เป็น FrameLayout + include layout_welcome_nexus -->
+            <!-- ไม่มี Welcome แล้ว — ข้อความสั้นเมื่อยังไม่เปิดไฟล์ -->
             <FrameLayout
                 android:id="@+id/emptyStateView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:visibility="visible">
+                android:visibility="visible"
+                android:background="#1A1B26">
 
-                <include
-                    android:id="@+id/editorWelcome"
-                    layout="@layout/layout_welcome_nexus"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:text="เปิดไฟล์จากเมนูซ้าย"
+                    android:textColor="#565F89"
+                    android:textSize="15sp" />
             </FrameLayout>
 
             <io.github.rosemoe.sora.widget.CodeEditor
@@ -227,14 +227,13 @@
                 android:visibility="gone" />
         </FrameLayout>
 
-        <!-- แถบล่างทั้งชุด (รวมปุ่มทางลัดและแถบปุ่มหลัก) -->
+        <!-- แถบล่าง -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:background="#1F2335">
 
-            <!-- แถวเครื่องมือเพิ่ม (ย่อ/ขยายได้) -->
             <LinearLayout
                 android:id="@+id/shortcutRow"
                 android:layout_width="match_parent"
@@ -269,7 +268,6 @@
                     android:paddingEnd="6dp" />
             </LinearLayout>
 
-            <!-- แถวปุ่มหลัก (ล็อคซ้าย: ปุ่มย่อ/ขยาย | กลาง: เลื่อนได้ | ล็อคขวา: AI) -->
             <LinearLayout
                 android:id="@+id/mainShortcutRow"
                 android:layout_width="match_parent"
@@ -280,7 +278,6 @@
                 android:paddingEnd="8dp"
                 android:background="#1A1B26">
 
-                <!-- ซ้ายสุด: ปุ่มย่อ/ขยาย (ล็อคอยู่กับที่ ไม่โดนเลื่อน) -->
                 <ImageView
                     android:id="@+id/btnToggleShortcut"
                     android:layout_width="40dp"
@@ -291,7 +288,6 @@
                     android:contentDescription="Toggle shortcuts"
                     android:scaleType="centerInside" />
 
-                <!-- ตรงกลาง: ปุ่มทางลัดอื่นๆ (เลื่อนซ้าย-ขวาได้) -->
                 <HorizontalScrollView
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -373,7 +369,6 @@
                     </LinearLayout>
                 </HorizontalScrollView>
 
-                <!-- ขวาสุด: AI (ล็อคอยู่กับที่) -->
                 <ImageView
                     android:id="@+id/btnMainAi"
                     android:layout_width="40dp"
