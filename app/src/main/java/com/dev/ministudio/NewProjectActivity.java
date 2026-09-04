@@ -86,9 +86,7 @@ public class NewProjectActivity extends AppCompatActivity {
         if (rvTemplates != null) rvTemplates.setVisibility(View.GONE);
         View exitBtn = findViewById(R.id.btnExit);
         if (exitBtn != null) exitBtn.setVisibility(View.GONE);
-        View tvTitle = findViewById(R.id.tvTitle);
-        if (tvTitle != null) tvTitle.setVisibility(View.GONE);
-
+        
         // สร้างหน้า config ทั้งจอ
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -336,7 +334,7 @@ public class NewProjectActivity extends AppCompatActivity {
         View exitBtn = findViewById(R.id.btnExit);
         if (exitBtn != null) exitBtn.setVisibility(View.VISIBLE);
         View tvTitle = findViewById(R.id.tvTitle);
-        if (tvTitle != null) tvTitle.setVisibility(View.VISIBLE);
+        
     }
 
     private void createAndOpen(String projectName, String packageName,
