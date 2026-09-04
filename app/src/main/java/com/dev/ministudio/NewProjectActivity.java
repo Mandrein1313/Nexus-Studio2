@@ -326,16 +326,14 @@ public class NewProjectActivity extends AppCompatActivity {
     }
 
     private void showGridScreen() {
-        if (configRoot != null && configRoot.getParent() != null) {
-            ((ViewGroup) configRoot.getParent()).removeView(configRoot);
-            configRoot = null;
-        }
-        if (rvTemplates != null) rvTemplates.setVisibility(View.VISIBLE);
-        View exitBtn = findViewById(R.id.btnExit);
-        if (exitBtn != null) exitBtn.setVisibility(View.VISIBLE);
-        View tvTitle = findViewById(R.id.tvTitle);
-        
+    if (configRoot != null && configRoot.getParent() != null) {
+        ((ViewGroup) configRoot.getParent()).removeView(configRoot);
+        configRoot = null;
     }
+    if (rvTemplates != null) rvTemplates.setVisibility(View.VISIBLE);
+    View exitBtn = findViewById(R.id.btnExit);
+    if (exitBtn != null) exitBtn.setVisibility(View.VISIBLE);
+}
 
     private void createAndOpen(String projectName, String packageName,
                                String templateId, String language, int minSdk) {
