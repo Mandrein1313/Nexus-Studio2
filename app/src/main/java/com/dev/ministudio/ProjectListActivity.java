@@ -83,7 +83,8 @@ public class ProjectListActivity extends AppCompatActivity {
 
         // ผูก Event Click รายการแถวเมนูการตั้งค่าแบบใหม่
         View rowNewProject = findViewById(R.id.rowNewProject);
-        if (rowNewProject != null) rowNewProject.setOnClickListener(v -> showCreateProjectDialog());
+        if (rowNewProject != null) rowNewProject.setOnClickListener(v ->
+        startActivity(new Intent(this, NewProjectActivity.class)));
 
         View rowImportGithub = findViewById(R.id.rowImportGithub);
         if (rowImportGithub != null) rowImportGithub.setOnClickListener(v -> importFromGitHub());
@@ -175,9 +176,9 @@ public class ProjectListActivity extends AppCompatActivity {
     private void setupFabButtons() {
         if (fabCreate != null) {
             fabCreate.setOnClickListener(v -> {
-                showCreateProjectDialog();
-                if (fabMenu != null) fabMenu.collapse();
-            });
+    startActivity(new Intent(this, NewProjectActivity.class));
+    if (fabMenu != null) fabMenu.collapse();
+});
         }
 
         if (fabGithub != null) {

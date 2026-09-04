@@ -24,6 +24,11 @@
         android:requestLegacyExternalStorage="true"> 
         
         <activity
+    android:name=".NewProjectActivity"
+    android:exported="false"
+    android:theme="@style/Theme.AppCompat.NoActionBar" />
+        
+        <activity
             android:name=".ProjectListActivity"
             android:exported="true">
             <intent-filter>
