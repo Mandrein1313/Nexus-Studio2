@@ -15,13 +15,17 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,6 +40,10 @@ public class NewProjectActivity extends AppCompatActivity {
     private ProjectTemplate selectedTemplate;
     private String selectedLanguage = "Java";
 
+    // เก็บค่า System Insets เพื่อนำไปใช้กับ View dynamic
+    private int statusBarHeight = 0;
+    private int navigationBarHeight = 0;
+
     private final List<ProjectTemplate> templates = Arrays.asList(
             new ProjectTemplate("no_activity", "No Activity", "โปรเจกต์ว่าง ไม่มี Activity", 0xFF546E7A),
             new ProjectTemplate("empty", "Empty project", "MainActivity + layout ว่าง", 0xFF00897B),
@@ -48,16 +56,32 @@ public class NewProjectActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        
+        // กำหนด Edge-to-Edge ให้รองรับ System Bars
+        WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(Color.parseColor("#0D0E14"));
         getWindow().setNavigationBarColor(Color.parseColor("#0D0E14"));
+        
         setContentView(R.layout.activity_new_project);
 
         rvTemplates = findViewById(R.id.rvTemplates);
         rvTemplates.setLayoutManager(new GridLayoutManager(this, 2));
         rvTemplates.setAdapter(new TemplateAdapter());
 
-        findViewById(R.id.btnExit).setOnClickListener(v -> finish());
+        View btnExit = findViewById(R.id.btnExit);
+        btnExit.setOnClickListener(v -> finish());
+
+        // จัดการ Insets สำหรับหน้าแรก (เพื่อไม่ให้ Status Bar และ Navigation Bar ทับ Content/ปุ่ม Exit)
+        View rootMain = findViewById(android.R.id.content);
+        ViewCompat.setOnApplyWindowInsetsListener(rootMain, (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            statusBarHeight = systemBars.top;
+            navigationBarHeight = systemBars.bottom;
+
+            // เว้นระยะขอบบนและขอบล่างให้กับหน้าหลัก
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return WindowInsetsCompat.CONSUMED;
+        });
     }
 
     /** จัดการการกดปุ่ม Back ของเครื่อง */
@@ -86,13 +110,24 @@ public class NewProjectActivity extends AppCompatActivity {
         if (rvTemplates != null) rvTemplates.setVisibility(View.GONE);
         View exitBtn = findViewById(R.id.btnExit);
         if (exitBtn != null) exitBtn.setVisibility(View.GONE);
-        
-        // สร้างหน้า config ทั้งจอ
+
+        // ===== ใช้ ScrollView เพื่อให้เลื่อนดูเนื้อหาได้เมื่อคีย์บอร์ดเด้งหรือจอเล็ก =====
+        ScrollView scrollView = new ScrollView(this);
+        scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(Color.parseColor("#0D0E14"));
+
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.parseColor("#0D0E14"));
-        root.setPadding((int) (20 * d), (int) (12 * d), (int) (20 * d), (int) (20 * d));
-        configRoot = root;
+        
+        // ใส่ Padding โดยบวกระยะ StatusBar (ด้านบน) และ NavigationBar (ด้านล่าง) เพิ่มเติม
+        root.setPadding(
+                (int) (20 * d),
+                (int) (12 * d) + statusBarHeight,
+                (int) (20 * d),
+                (int) (20 * d) + navigationBarHeight
+        );
+        configRoot = scrollView;
 
         // ===== ปุ่มกลับ =====
         TextView btnBack = new TextView(this);
@@ -131,7 +166,7 @@ public class NewProjectActivity extends AppCompatActivity {
         drawPreview(previewContent, selectedTemplate.id);
 
         LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
-                (int) (110 * d), (int) (130 * d));
+                (int) (100 * d), (int) (120 * d));
         headerRow.addView(previewCard, cardLp);
 
         // ข้อความด้านขวา
@@ -142,7 +177,7 @@ public class NewProjectActivity extends AppCompatActivity {
         TextView tvName = new TextView(this);
         tvName.setText(selectedTemplate.name);
         tvName.setTextColor(Color.parseColor("#C0CAF5"));
-        tvName.setTextSize(20);
+        tvName.setTextSize(18);
         tvName.setTypeface(null, Typeface.BOLD);
         infoCol.addView(tvName);
 
@@ -166,7 +201,7 @@ public class NewProjectActivity extends AppCompatActivity {
         // ระยะห่าง
         View spacer1 = new View(this);
         root.addView(spacer1, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, (int) (28 * d)));
+                ViewGroup.LayoutParams.MATCH_PARENT, (int) (20 * d)));
 
         // ===== Application name =====
         root.addView(makeLabel("Application name"));
@@ -266,12 +301,8 @@ public class NewProjectActivity extends AppCompatActivity {
         LinearLayout.LayoutParams sdkLp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         sdkLp.topMargin = (int) (6 * d);
+        sdkLp.bottomMargin = (int) (20 * d);
         root.addView(spinSdk, sdkLp);
-
-        // spacer ดันปุ่ม Create project ลงด้านล่างสุด
-        View flex = new View(this);
-        root.addView(flex, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
         // ===== ปุ่ม Create project =====
         TextView btnCreate = new TextView(this);
@@ -315,25 +346,27 @@ public class NewProjectActivity extends AppCompatActivity {
         root.addView(btnCreate, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+        scrollView.addView(root);
+
         // ใส่เข้า Window content
         ViewGroup parent = (ViewGroup) findViewById(android.R.id.content);
         if (configRoot != null && configRoot.getParent() != null) {
             ((ViewGroup) configRoot.getParent()).removeView(configRoot);
         }
-        parent.addView(root, new ViewGroup.LayoutParams(
+        parent.addView(scrollView, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
     }
 
     private void showGridScreen() {
-    if (configRoot != null && configRoot.getParent() != null) {
-        ((ViewGroup) configRoot.getParent()).removeView(configRoot);
-        configRoot = null;
+        if (configRoot != null && configRoot.getParent() != null) {
+            ((ViewGroup) configRoot.getParent()).removeView(configRoot);
+            configRoot = null;
+        }
+        if (rvTemplates != null) rvTemplates.setVisibility(View.VISIBLE);
+        View exitBtn = findViewById(R.id.btnExit);
+        if (exitBtn != null) exitBtn.setVisibility(View.VISIBLE);
     }
-    if (rvTemplates != null) rvTemplates.setVisibility(View.VISIBLE);
-    View exitBtn = findViewById(R.id.btnExit);
-    if (exitBtn != null) exitBtn.setVisibility(View.VISIBLE);
-}
 
     private void createAndOpen(String projectName, String packageName,
                                String templateId, String language, int minSdk) {
