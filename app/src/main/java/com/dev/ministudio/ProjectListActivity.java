@@ -2,7 +2,9 @@ package com.dev.ministudio;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -24,21 +26,10 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
-import java.util.ArrayList;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
-import android.graphics.Color;
-import android.graphics.Typeface;
-import android.text.Editable;
-import android.text.TextWatcher;
-import android.widget.Button;
-import android.widget.Spinner;
-import android.widget.ArrayAdapter;
-import android.graphics.drawable.GradientDrawable;
-import android.content.IntentFilter;
+import java.io.File;
+import java.util.ArrayList;
 
 public class ProjectListActivity extends AppCompatActivity {
     private ArrayList<String> projects = new ArrayList<>();
@@ -84,7 +75,7 @@ public class ProjectListActivity extends AppCompatActivity {
         // ผูก Event Click รายการแถวเมนูการตั้งค่าแบบใหม่
         View rowNewProject = findViewById(R.id.rowNewProject);
         if (rowNewProject != null) rowNewProject.setOnClickListener(v ->
-        startActivity(new Intent(this, NewProjectActivity.class)));
+                startActivity(new Intent(this, NewProjectActivity.class)));
 
         View rowImportGithub = findViewById(R.id.rowImportGithub);
         if (rowImportGithub != null) rowImportGithub.setOnClickListener(v -> importFromGitHub());
@@ -176,9 +167,9 @@ public class ProjectListActivity extends AppCompatActivity {
     private void setupFabButtons() {
         if (fabCreate != null) {
             fabCreate.setOnClickListener(v -> {
-    startActivity(new Intent(this, NewProjectActivity.class));
-    if (fabMenu != null) fabMenu.collapse();
-});
+                startActivity(new Intent(this, NewProjectActivity.class));
+                if (fabMenu != null) fabMenu.collapse();
+            });
         }
 
         if (fabGithub != null) {
@@ -349,391 +340,6 @@ public class ProjectListActivity extends AppCompatActivity {
         }
     }
 
-    // ========== Create Project Dialog ==========
-
-    private void showCreateProjectDialog() {
-        final float density = getResources().getDisplayMetrics().density;
-        int dp = (int) (1 * density);
-
-        GradientDrawable inputBg = new GradientDrawable();
-        inputBg.setColor(Color.parseColor("#1F2335"));
-        inputBg.setCornerRadius(12 * density);
-        inputBg.setStroke(dp, Color.parseColor("#3B4261"));
-
-        GradientDrawable cardBg = new GradientDrawable();
-        cardBg.setColor(Color.parseColor("#24283B"));
-        cardBg.setCornerRadius(16 * density);
-        cardBg.setStroke(dp, Color.parseColor("#3B4261"));
-
-        GradientDrawable createBtnBg = new GradientDrawable();
-        createBtnBg.setColor(Color.parseColor("#7AA2F7"));
-        createBtnBg.setCornerRadius(12 * density);
-
-        GradientDrawable dialogBg = new GradientDrawable();
-        dialogBg.setColor(Color.parseColor("#1A1B26"));
-        dialogBg.setCornerRadius(20 * density);
-
-        int pad = (int) (16 * density);
-        int fieldPad = (int) (14 * density);
-
-        android.widget.ScrollView scroll = new android.widget.ScrollView(this);
-        scroll.setFillViewport(true);
-
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setPadding(pad, pad, pad, pad);
-        root.setBackgroundColor(Color.parseColor("#1A1B26"));
-        scroll.addView(root, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText("✨ สร้างโปรเจกต์ใหม่");
-        tvTitle.setTextColor(Color.parseColor("#C0CAF5"));
-        tvTitle.setTextSize(20);
-        tvTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
-        root.addView(tvTitle);
-
-        TextView tvDesc = new TextView(this);
-        tvDesc.setText("กำหนดชื่อ แพ็กเกจ ภาษา และ Minimum SDK");
-        tvDesc.setTextColor(Color.parseColor("#565F89"));
-        tvDesc.setTextSize(13);
-        tvDesc.setPadding(0, (int) (4 * density), 0, (int) (18 * density));
-        root.addView(tvDesc);
-
-        LinearLayout cardInfo = new LinearLayout(this);
-        cardInfo.setOrientation(LinearLayout.VERTICAL);
-        cardInfo.setPadding(pad, pad, pad, pad);
-        cardInfo.setBackground(cardBg);
-
-        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        cardLp.bottomMargin = (int) (12 * density);
-
-        TextView lbName = sectionLabel("ชื่อโปรเจกต์");
-        cardInfo.addView(lbName);
-
-        final EditText etProjectName = styledEdit(inputBg, fieldPad, "เช่น MyGame");
-        cardInfo.addView(etProjectName, fieldParams(density));
-
-        TextView lbPkg = sectionLabel("Package Name");
-        lbPkg.setPadding(0, (int) (10 * density), 0, (int) (6 * density));
-        cardInfo.addView(lbPkg);
-
-        final EditText etPackageName = styledEdit(inputBg, fieldPad, "com.example.mygame");
-        cardInfo.addView(etPackageName, fieldParams(density));
-
-        etProjectName.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
-            @Override public void onTextChanged(CharSequence s, int st, int b, int c) {
-                String name = s.toString().trim().toLowerCase().replaceAll("[^a-z0-9]", "");
-                etPackageName.setText(name.isEmpty() ? "" : "com.example." + name);
-            }
-            @Override public void afterTextChanged(Editable s) {}
-        });
-
-        root.addView(cardInfo, cardLp);
-
-        LinearLayout cardEnv = new LinearLayout(this);
-        cardEnv.setOrientation(LinearLayout.VERTICAL);
-        cardEnv.setPadding(pad, pad, pad, pad);
-        cardEnv.setBackground(cardBg.getConstantState() != null
-                ? cardBg.getConstantState().newDrawable() : cardBg);
-
-        TextView lbLang = sectionLabel("ภาษา");
-        cardEnv.addView(lbLang);
-
-        final Spinner spinLanguage = styledSpinner(inputBg, fieldPad,
-                new String[]{"Java", "Kotlin"});
-        cardEnv.addView(spinLanguage, fieldParams(density));
-
-        TextView lbSdk = sectionLabel("Minimum SDK");
-        lbSdk.setPadding(0, (int) (10 * density), 0, (int) (6 * density));
-        cardEnv.addView(lbSdk);
-
-        final Spinner spinMinSdk = styledSpinner(inputBg, fieldPad, new String[]{
-                "API 21 · Android 5.0 (Lollipop)",
-                "API 23 · Android 6.0 (Marshmallow)",
-                "API 26 · Android 8.0 (Oreo)",
-                "API 29 · Android 10",
-                "API 33 · Android 13"
-        });
-        spinMinSdk.setSelection(1);
-        cardEnv.addView(spinMinSdk, fieldParams(density));
-
-        root.addView(cardEnv, cardLp);
-
-        LinearLayout buttons = new LinearLayout(this);
-        buttons.setOrientation(LinearLayout.HORIZONTAL);
-        buttons.setGravity(android.view.Gravity.END);
-        buttons.setPadding(0, (int) (8 * density), 0, 0);
-
-        Button btnCancel = new Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
-        btnCancel.setText("ยกเลิก");
-        btnCancel.setAllCaps(false);
-        btnCancel.setTextColor(Color.parseColor("#A9B1D6"));
-        btnCancel.setTextSize(14);
-        buttons.addView(btnCancel);
-
-        Button btnCreate = new Button(this);
-        btnCreate.setText("สร้างโปรเจกต์");
-        btnCreate.setAllCaps(false);
-        btnCreate.setTextColor(Color.parseColor("#1A1B26"));
-        btnCreate.setTextSize(14);
-        btnCreate.setTypeface(Typeface.DEFAULT_BOLD);
-        btnCreate.setBackground(createBtnBg);
-        btnCreate.setPadding((int) (20 * density), 0, (int) (20 * density), 0);
-        LinearLayout.LayoutParams createLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, (int) (44 * density));
-        createLp.leftMargin = (int) (8 * density);
-        buttons.addView(btnCreate, createLp);
-
-        root.addView(buttons);
-
-        final AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(scroll)
-                .create();
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(dialogBg);
-        }
-
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-        btnCreate.setOnClickListener(v -> {
-            String projectName = etProjectName.getText().toString().trim();
-            String packageName = etPackageName.getText().toString().trim();
-            String language = (String) spinLanguage.getSelectedItem();
-            String minSdk = (String) spinMinSdk.getSelectedItem();
-
-            if (projectName.isEmpty()) {
-                Toast.makeText(this, "กรุณาใส่ชื่อโปรเจกต์", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (packageName.isEmpty()) {
-                Toast.makeText(this, "กรุณาใส่ Package Name", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            if (new File("/sdcard/MiniStudio/" + projectName).exists()) {
-                Toast.makeText(this, "มีโปรเจกต์ชื่อนี้อยู่แล้ว", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            createNewProject(projectName, packageName,
-                    language != null ? language : "Java",
-                    minSdk != null ? minSdk : "API 23");
-            refreshProjectList();
-            updateProjectEmptyState();
-            Toast.makeText(this, "สร้างโปรเจกต์ " + projectName + " แล้ว", Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
-
-    private TextView sectionLabel(String text) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextColor(Color.parseColor("#A9B1D6"));
-        tv.setTextSize(12);
-        tv.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
-        return tv;
-    }
-
-    private EditText styledEdit(GradientDrawable bg, int pad, String hint) {
-        EditText et = new EditText(this);
-        et.setHint(hint);
-        et.setHintTextColor(Color.parseColor("#565F89"));
-        et.setTextColor(Color.parseColor("#C0CAF5"));
-        et.setTextSize(14);
-        et.setSingleLine(true);
-        et.setBackground(bg.getConstantState() != null
-                ? bg.getConstantState().newDrawable() : bg);
-        et.setPadding(pad, pad, pad, pad);
-        return et;
-    }
-
-    private Spinner styledSpinner(GradientDrawable bg, int pad, String[] items) {
-        Spinner sp = new Spinner(this);
-        sp.setBackground(bg.getConstantState() != null
-                ? bg.getConstantState().newDrawable() : bg);
-        sp.setPadding(pad, pad / 2, pad, pad / 2);
-
-        ArrayAdapter<String> ad = new ArrayAdapter<String>(
-                this, android.R.layout.simple_spinner_item, items) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getView(position, convertView, parent);
-                tv.setTextColor(Color.parseColor("#C0CAF5"));
-                tv.setTextSize(14);
-                return tv;
-            }
-
-            @Override
-            public View getDropDownView(int position, View convertView, ViewGroup parent) {
-                TextView tv = (TextView) super.getDropDownView(position, convertView, parent);
-                tv.setTextColor(Color.parseColor("#C0CAF5"));
-                tv.setBackgroundColor(Color.parseColor("#24283B"));
-                int p = (int) (14 * getResources().getDisplayMetrics().density);
-                tv.setPadding(p, p, p, p);
-                return tv;
-            }
-        };
-        ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        sp.setAdapter(ad);
-        return sp;
-    }
-
-    private LinearLayout.LayoutParams fieldParams(float density) {
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.bottomMargin = (int) (4 * density);
-        return lp;
-    }
-
-    // ========== Create Project ==========
-
-    private void createNewProject(String projectName, String packageName, String language, String minSdkVersionString) {
-        String rootPath = "/sdcard/MiniStudio/" + projectName;
-        
-        String langFolder = language.toLowerCase();
-        String sourceDirPath = rootPath + "/app/src/main/" + langFolder + "/" + packageName.replace(".", "/");
-        
-        String[] folders = {
-            sourceDirPath,
-            rootPath + "/app/src/main/res/layout",
-            rootPath + "/app/src/main/res/values",
-            rootPath + "/app/src/main/res/drawable",
-            rootPath + "/app/src/main/res/mipmap-hdpi",
-            rootPath + "/app/src/main/res/mipmap-mdpi",
-            rootPath + "/app/src/main/res/mipmap-xhdpi",
-            rootPath + "/app/src/main/res/mipmap-xxhdpi",
-            rootPath + "/app/src/main/res/mipmap-xxxhdpi"
-        };
-
-        for (String path : folders) {
-            File f = new File(path);
-            if (!f.exists()) f.mkdirs();
-        }
-
-        String minSdkDigits = minSdkVersionString.replaceAll("[^0-9]", "");
-        int minSdk = Integer.parseInt(minSdkDigits.length() > 2 ? minSdkDigits.substring(0, 2) : minSdkDigits);
-
-        String manifest = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\">\n" +
-            "    <application \n" +
-            "        android:label=\"" + projectName + "\"\n" +
-            "        android:theme=\"@style/AppTheme\">\n" + 
-            "        <activity android:name=\".MainActivity\" android:exported=\"true\">\n" +
-            "            <intent-filter>\n" +
-            "                <action android:name=\"android.intent.action.MAIN\" />\n" +
-            "                <category android:name=\"android.intent.category.LAUNCHER\" />\n" +
-            "            </intent-filter>\n" +
-            "        </activity>\n" +
-            "    </application>\n" +
-            "</manifest>";
-        writeFile(rootPath + "/app/src/main/AndroidManifest.xml", manifest);
-
-        String layout = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-            "<LinearLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"\n" +
-            "    android:layout_width=\"match_parent\"\n" +
-            "    android:layout_height=\"match_parent\"\n" +
-            "    android:gravity=\"center\" \n" +
-            "    android:orientation=\"vertical\">\n" +
-            "    <TextView\n" +
-            "        android:layout_width=\"wrap_content\"\n" +
-            "        android:layout_height=\"wrap_content\"\n" +
-            "        android:text=\"Hello MiniStudio (" + language + ")!\" />\n" +
-            "</LinearLayout>";
-        writeFile(rootPath + "/app/src/main/res/layout/activity_main.xml", layout);
-
-        String stringsXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n" +
-            "    <string name=\"app_name\">" + projectName + "</string>\n</resources>";
-        writeFile(rootPath + "/app/src/main/res/values/strings.xml", stringsXml);
-
-        String colorsXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n" +
-            "    <color name=\"purple_500\">#FF6200EE</color>\n" +
-            "    <color name=\"purple_700\">#FF3700B3</color>\n" +
-            "    <color name=\"teal_200\">#FF03DAC5</color>\n" +
-            "</resources>";
-        writeFile(rootPath + "/app/src/main/res/values/colors.xml", colorsXml);
-
-        String stylesXml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<resources>\n" +
-            "    <style name=\"AppTheme\" parent=\"Theme.MaterialComponents.DayNight.NoActionBar\">\n" +
-            "        <item name=\"colorPrimary\">@color/purple_500</item>\n" +
-            "    </style>\n</resources>";
-        writeFile(rootPath + "/app/src/main/res/values/styles.xml", stylesXml);
-        
-        if ("Kotlin".equals(language)) {
-            String kotlinCode = "package " + packageName + "\n\n" +
-                "import android.app.Activity\n" +
-                "import android.os.Bundle\n" +
-                "import " + packageName + ".R\n\n" + 
-                "class MainActivity : Activity() {\n" +
-                "    override fun onCreate(savedInstanceState: Bundle?) {\n" +
-                "        super.onCreate(savedInstanceState)\n\n" +
-                "        // --- CRASH HANDLER ---\n" +
-                "        Thread.setDefaultUncaughtExceptionHandler { _, throwable ->\n" +
-                "            try {\n" +
-                "                val logDir = getExternalFilesDir(null)\n" +
-                "                val crashLog = java.io.File(logDir, \"crash.log\")\n" +
-                "                val writer = java.io.FileWriter(crashLog, true)\n" +
-                "                writer.write(\"--- CRASH REPORT: \\${java.util.Date()} ---\\n\")\n" +
-                "                throwable.printStackTrace(java.io.PrintWriter(writer))\n" +
-                "                writer.write(\"\\n----------------------------------------\\n\")\n" +
-                "                writer.close()\n" +
-                "            } catch (ignored: Exception) {}\n" +
-                "            android.os.Process.killProcess(android.os.Process.myPid())\n" +
-                "        }\n\n" +
-                "        setContentView(R.layout.activity_main)\n" +
-                "    }\n" +
-                "}";
-            writeFile(sourceDirPath + "/MainActivity.kt", kotlinCode);
-        } else {
-            String javaCode = "package " + packageName + ";\n\n" +
-                "import android.app.Activity;\n" +
-                "import android.os.Bundle;\n" +
-                "import " + packageName + ".R;\n\n" + 
-                "public class MainActivity extends Activity {\n" +
-                "    @Override\n" +
-                "    protected void onCreate(Bundle savedInstanceState) { \n" +
-                "        super.onCreate(savedInstanceState);\n\n" +
-                "        // --- CRASH HANDLER ---\n" +
-                "        Thread.setDefaultUncaughtExceptionHandler((thread, throwable) -> {\n" +
-                "            try {\n" +
-                "                java.io.File logDir = getExternalFilesDir(null);\n" +
-                "                java.io.File crashLog = new java.io.File(logDir, \"crash.log\");\n" +
-                "                java.io.FileWriter writer = new java.io.FileWriter(crashLog, true);\n" +
-                "                writer.write(\"--- CRASH REPORT: \" + new java.util.Date() + \" ---\\n\");\n" +
-                "                throwable.printStackTrace(new java.io.PrintWriter(writer));\n" +
-                "                writer.write(\"\\n----------------------------------------\\n\");\n" +
-                "                writer.close();\n" +
-                "            } catch (Exception ignored) {}\n" +
-                "            android.os.Process.killProcess(android.os.Process.myPid());\n" +
-                "        });\n\n" +
-                "        setContentView(R.layout.activity_main);\n" +
-                "    }\n" +
-                "}";
-            writeFile(sourceDirPath + "/MainActivity.java", javaCode);
-        }
-
-        BuildEnvironmentManager envManager = new BuildEnvironmentManager(this);
-        envManager.prepareGitHubWorkflow(rootPath, projectName, packageName, language, minSdk);
-    }
-
-    private void writeFile(String path, String content) {
-        try {
-            File file = new File(path);
-            if (!file.getParentFile().exists()) file.getParentFile().mkdirs();
-            FileOutputStream fos = new FileOutputStream(file);
-            fos.write(content.getBytes("UTF-8"));
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
     private void deleteRecursive(File fileOrDirectory) {
         if (fileOrDirectory == null || !fileOrDirectory.exists()) return;
         if (isProjectIgnored(fileOrDirectory.getName())) {
@@ -751,14 +357,15 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     @Override
-public boolean onCreateOptionsMenu(Menu menu) {
-    // ลบการ inflate เมนูออก
-    return false;
-}
-@Override
-public boolean onOptionsItemSelected(MenuItem item) {
-    return super.onOptionsItemSelected(item);
-}
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // ลบการ inflate เมนูออก
+        return false;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return super.onOptionsItemSelected(item);
+    }
 
     private void toggleEditorThemePref() {
         SharedPreferences prefs = getSharedPreferences("AppSettings", MODE_PRIVATE);
