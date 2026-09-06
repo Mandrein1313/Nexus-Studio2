@@ -31,6 +31,7 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+import com.google.android.material.navigation.NavigationView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,7 +43,6 @@ public class ProjectListActivity extends AppCompatActivity {
     private FloatingActionButton fabCreate;
     private FloatingActionButton fabGithub;
 
-    // View สำหรับการแสดงรายการแบบแถวตามข้อกำหนดใหม่
     private LinearLayout projectRowsContainer;
     private TextView tvNoProjects;
 
@@ -59,39 +59,26 @@ public class ProjectListActivity extends AppCompatActivity {
         super.onDestroy();
         try {
             unregisterReceiver(cloneReceiver);
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // กันเนื้อหาไม่ให้ทับ status bar / navigation bar (Android 15+)
+        // ตั้งค่าขอบหน้าจอสำหรับ Android 15+
         androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
         getWindow().setStatusBarColor(Color.parseColor("#0D0E14"));
         getWindow().setNavigationBarColor(Color.parseColor("#0D0E14"));
         setContentView(R.layout.activity_project_list);
 
-        // ผูก View Container (ยึด id ที่มีจริงใน layout ใหม่)
+        // ผูก View Container สำหรับรายการโปรเจกต์
         projectRowsContainer = findViewById(R.id.projectRowsContainer);
-        tvNoProjects = null; // layout ใหม่ไม่มีแล้ว
+        tvNoProjects = null;
 
-        // ===== ปุ่ม UI ใหม่ =====
-        View btnNew = findViewById(R.id.btnNewProject);
-        if (btnNew != null) {
-            btnNew.setOnClickListener(v ->
-                    startActivity(new Intent(this, NewProjectActivity.class)));
-        }
-
-        View btnChoose = findViewById(R.id.btnChooseTemplate);
-        if (btnChoose != null) {
-            btnChoose.setOnClickListener(v ->
-                    startActivity(new Intent(this, NewProjectActivity.class)));
-        }
-
-        // Drawer & Toolbar (เช็ค null เพื่อความปลอดภัย)
-        drawerLayout = findViewById(R.id.drawer_layout);
+        // Toolbar + DrawerLayout Setup
         Toolbar toolbar = findViewById(R.id.toolbar);
+        drawerLayout = findViewById(R.id.drawer_layout);
 
         if (toolbar != null) {
             setSupportActionBar(toolbar);
@@ -104,8 +91,23 @@ public class ProjectListActivity extends AppCompatActivity {
             toggle.syncState();
         }
 
-        com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
+        // ปุ่ม New project & Choose template
+        View btnNew = findViewById(R.id.btnNewProject);
+        if (btnNew != null) {
+            btnNew.setOnClickListener(v ->
+                    startActivity(new Intent(this, NewProjectActivity.class)));
+        }
+
+        View btnChoose = findViewById(R.id.btnChooseTemplate);
+        if (btnChoose != null) {
+            btnChoose.setOnClickListener(v ->
+                    startActivity(new Intent(this, NewProjectActivity.class)));
+        }
+
+        // NavigationView เมนูซ้าย
+        NavigationView navView = findViewById(R.id.nav_view);
         if (navView != null) {
+            // คำนวณความสูง Status bar เพื่อตั้งค่า Padding ให้เมนู
             int statusBarHeight = 0;
             int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
             if (resId > 0) {
@@ -133,18 +135,20 @@ public class ProjectListActivity extends AppCompatActivity {
             });
         }
 
-        // ตั้งค่าปุ่มสิทธิ์และสถานะเริ่มต้น
+        // ตรวจสอบสิทธิ์การเข้าถึงไฟล์และแจ้งเตือน
         checkPermissions();
 
-        // โหลดรายการโปรเจกต์
+        // โหลดข้อมูลโปรเจกต์
         refreshProjectList();
         updateProjectEmptyState();
 
+        // ตรวจสอบการตั้งค่า GitHub ครั้งแรก
         SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
         if (!prefs.getBoolean("is_github_setup", false)) {
             new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
         }
 
+        // ลงทะเบียน BroadcastReceiver รับสถานะการ Clone
         IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
@@ -227,8 +231,6 @@ public class ProjectListActivity extends AppCompatActivity {
         }
     }
 
-    // ========== Project Management ==========
-
     private void refreshProjectList() {
         projects.clear();
         File root = new File("/sdcard/MiniStudio");
@@ -260,7 +262,6 @@ public class ProjectListActivity extends AppCompatActivity {
         for (int i = 0; i < projects.size(); i++) {
             final String name = projects.get(i);
 
-            // การ์ด
             LinearLayout card = new LinearLayout(this);
             card.setOrientation(LinearLayout.HORIZONTAL);
             card.setGravity(Gravity.CENTER_VERTICAL);
@@ -273,7 +274,6 @@ public class ProjectListActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.WRAP_CONTENT);
             cardLp.bottomMargin = (int) (10 * d);
 
-            // ข้อความซ้าย
             LinearLayout textCol = new LinearLayout(this);
             textCol.setOrientation(LinearLayout.VERTICAL);
 
@@ -294,7 +294,6 @@ public class ProjectListActivity extends AppCompatActivity {
             card.addView(textCol, new LinearLayout.LayoutParams(
                     0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
 
-            // ปุ่มลบ
             TextView btnDelete = new TextView(this);
             btnDelete.setText("🗑");
             btnDelete.setTextSize(18);
@@ -302,7 +301,6 @@ public class ProjectListActivity extends AppCompatActivity {
             btnDelete.setOnClickListener(v -> confirmDeleteProject(name));
             card.addView(btnDelete);
 
-            // กดการ์ด = เปิดโปรเจกต์
             card.setOnClickListener(v -> {
                 Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
                 intent.putExtra("projectName", name);
@@ -313,7 +311,6 @@ public class ProjectListActivity extends AppCompatActivity {
         }
     }
 
-    /** อ่าน meta ง่าย ๆ จากโฟลเดอร์โปรเจกต์ */
     private String readProjectMeta(String projectName) {
         try {
             File root = new File("/sdcard/MiniStudio/" + projectName);
