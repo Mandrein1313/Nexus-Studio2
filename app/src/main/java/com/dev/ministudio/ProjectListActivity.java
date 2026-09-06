@@ -59,110 +59,136 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-        // กันเนื้อหาไม่ให้ทับ status bar / navigation bar (Android 15+)
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(android.graphics.Color.parseColor("#1A1B26"));
-        getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
-        setContentView(R.layout.activity_project_list);
+    // กันเนื้อหาไม่ให้ทับ status bar / navigation bar (Android 15+)
+    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+    getWindow().setStatusBarColor(android.graphics.Color.parseColor("#0D0E14"));
+    getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#0D0E14"));
+    setContentView(R.layout.activity_project_list);
 
-        // ผูก View Container และ Views ใหม่
-        projectRowsContainer = findViewById(R.id.projectRowsContainer);
-        tvNoProjects = findViewById(R.id.tvNoProjects);
+    // ผูก View Container
+    projectRowsContainer = findViewById(R.id.projectRowsContainer);
+    tvNoProjects = findViewById(R.id.tvNoProjects);
 
-        // ผูก Event Click รายการแถวเมนูการตั้งค่าแบบใหม่
-        View rowNewProject = findViewById(R.id.rowNewProject);
-        if (rowNewProject != null) rowNewProject.setOnClickListener(v ->
+    // ===== ปุ่ม UI ใหม่ =====
+    View btnNew = findViewById(R.id.btnNewProject);
+    if (btnNew != null) {
+        btnNew.setOnClickListener(v ->
                 startActivity(new Intent(this, NewProjectActivity.class)));
+    }
 
-        View rowImportGithub = findViewById(R.id.rowImportGithub);
-        if (rowImportGithub != null) rowImportGithub.setOnClickListener(v -> importFromGitHub());
+    View btnChoose = findViewById(R.id.btnChooseTemplate);
+    if (btnChoose != null) {
+        btnChoose.setOnClickListener(v ->
+                startActivity(new Intent(this, NewProjectActivity.class)));
+    }
 
-        View rowAiSettings = findViewById(R.id.rowAiSettings);
-        if (rowAiSettings != null) rowAiSettings.setOnClickListener(v ->
+    // แถวเมนูเดิม (ถ้ายังมีใน layout)
+    View rowNewProject = findViewById(R.id.rowNewProject);
+    if (rowNewProject != null) {
+        rowNewProject.setOnClickListener(v ->
+                startActivity(new Intent(this, NewProjectActivity.class)));
+    }
+
+    View rowImportGithub = findViewById(R.id.rowImportGithub);
+    if (rowImportGithub != null) {
+        rowImportGithub.setOnClickListener(v -> importFromGitHub());
+    }
+
+    View rowAiSettings = findViewById(R.id.rowAiSettings);
+    if (rowAiSettings != null) {
+        rowAiSettings.setOnClickListener(v ->
                 startActivity(new Intent(this, AiSettingsActivity.class)));
+    }
 
-        View rowGithubSettings = findViewById(R.id.rowGithubSettings);
-        if (rowGithubSettings != null) rowGithubSettings.setOnClickListener(v -> showGitHubSettingsDialog());
+    View rowGithubSettings = findViewById(R.id.rowGithubSettings);
+    if (rowGithubSettings != null) {
+        rowGithubSettings.setOnClickListener(v -> showGitHubSettingsDialog());
+    }
 
-        View rowToggleTheme = findViewById(R.id.rowToggleTheme);
-        if (rowToggleTheme != null) rowToggleTheme.setOnClickListener(v -> toggleEditorThemePref());
+    View rowToggleTheme = findViewById(R.id.rowToggleTheme);
+    if (rowToggleTheme != null) {
+        rowToggleTheme.setOnClickListener(v -> toggleEditorThemePref());
+    }
 
-        View rowAbout = findViewById(R.id.rowAbout);
-        if (rowAbout != null) rowAbout.setOnClickListener(v ->
+    View rowAbout = findViewById(R.id.rowAbout);
+    if (rowAbout != null) {
+        rowAbout.setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle("Nexus Studio")
                         .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
                         .setPositiveButton("ตกลง", null)
                         .show());
-
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        drawerLayout = findViewById(R.id.drawer_layout);
-
-        fabMenu = findViewById(R.id.multiple_actions);
-        fabCreate = findViewById(R.id.action_create);
-        fabGithub = findViewById(R.id.action_github);
-
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
-        }
-        if (drawerLayout != null && toolbar != null) {
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                    this, drawerLayout, toolbar, android.R.string.ok, android.R.string.cancel);
-            drawerLayout.addDrawerListener(toggle);
-            toggle.syncState();
-        }
-
-        com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
-        if (navView != null) {
-            int statusBarHeight = 0;
-            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-            if (resId > 0) {
-                statusBarHeight = getResources().getDimensionPixelSize(resId);
-            }
-            navView.setPadding(0, statusBarHeight, 0, 0);
-
-            navView.setNavigationItemSelectedListener(item -> {
-                int id = item.getItemId();
-                if (id == R.id.nav_github_settings) {
-                    showGitHubSettingsDialog();
-                } else if (id == R.id.nav_ai_settings) {
-                    startActivity(new Intent(this, AiSettingsActivity.class));
-                } else if (id == R.id.nav_toggle_theme) {
-                    toggleEditorThemePref();
-                } else if (id == R.id.nav_about) {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Nexus Studio")
-                            .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                            .setPositiveButton("ตกลง", null)
-                            .show();
-                }
-                if (drawerLayout != null) drawerLayout.closeDrawers();
-                return true;
-            });
-        }
-
-        setupFabButtons();
-        checkPermissions();
-
-        // โหลดข้อมูลและแสดงผลแถวโปรเจกต์
-        refreshProjectList();
-        updateProjectEmptyState();
-
-        SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
-        if (!prefs.getBoolean("is_github_setup", false)) {
-            new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
-        }
-
-        IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(cloneReceiver, filter);
-        }
     }
+
+    Toolbar toolbar = findViewById(R.id.toolbar);
+    drawerLayout = findViewById(R.id.drawer_layout);
+
+    fabMenu = findViewById(R.id.multiple_actions);
+    fabCreate = findViewById(R.id.action_create);
+    fabGithub = findViewById(R.id.action_github);
+
+    if (toolbar != null) {
+        setSupportActionBar(toolbar);
+    }
+    if (drawerLayout != null && toolbar != null) {
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                android.R.string.ok, android.R.string.cancel);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+    }
+
+    com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
+    if (navView != null) {
+        int statusBarHeight = 0;
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resId > 0) {
+            statusBarHeight = getResources().getDimensionPixelSize(resId);
+        }
+        navView.setPadding(0, statusBarHeight, 0, 0);
+
+        navView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_github_settings) {
+                showGitHubSettingsDialog();
+            } else if (id == R.id.nav_ai_settings) {
+                startActivity(new Intent(this, AiSettingsActivity.class));
+            } else if (id == R.id.nav_toggle_theme) {
+                toggleEditorThemePref();
+            } else if (id == R.id.nav_about) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Nexus Studio")
+                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
+                        .setPositiveButton("ตกลง", null)
+                        .show();
+            }
+            if (drawerLayout != null) drawerLayout.closeDrawers();
+            return true;
+        });
+    }
+
+    setupFabButtons();
+    checkPermissions();
+
+    // โหลดรายการโปรเจกต์
+    refreshProjectList();
+    updateProjectEmptyState();
+
+    SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
+    if (!prefs.getBoolean("is_github_setup", false)) {
+        new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
+    }
+
+    IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+        registerReceiver(cloneReceiver, filter);
+    }
+}
 
     private void setupFabButtons() {
         if (fabCreate != null) {
@@ -224,15 +250,19 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     private void updateProjectEmptyState() {
-        boolean empty = projects == null || projects.isEmpty();
-        if (projectRowsContainer != null) {
-            projectRowsContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
-        }
-        if (tvNoProjects != null) {
-            tvNoProjects.setVisibility(empty ? View.VISIBLE : View.GONE);
-        }
-    }
+    boolean empty = projects == null || projects.isEmpty();
 
+    View emptyState = findViewById(R.id.emptyState);
+    if (projectRowsContainer != null) {
+        projectRowsContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
+    }
+    if (emptyState != null) {
+        emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+    }
+    if (tvNoProjects != null) {
+        tvNoProjects.setVisibility(View.GONE);
+    }
+}
     // ========== Project Management ==========
 
     private void refreshProjectList() {
@@ -251,44 +281,92 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     private void renderProjectRows() {
-        if (projectRowsContainer == null) return;
-        projectRowsContainer.removeAllViews();
+    if (projectRowsContainer == null) return;
+    projectRowsContainer.removeAllViews();
 
-        if (projects.isEmpty()) {
-            if (tvNoProjects != null) tvNoProjects.setVisibility(View.VISIBLE);
-            return;
-        }
-        if (tvNoProjects != null) tvNoProjects.setVisibility(View.GONE);
-
-        float d = getResources().getDisplayMetrics().density;
-        for (int i = 0; i < projects.size(); i++) {
-            final String name = projects.get(i);
-
-            TextView row = new TextView(this);
-            row.setText("📁    " + name);
-            row.setTextColor(Color.parseColor("#C0CAF5"));
-            row.setTextSize(15);
-            row.setGravity(Gravity.CENTER_VERTICAL);
-            row.setPadding(0, (int) (14 * d), 0, (int) (14 * d));
-
-            TypedValue out = new TypedValue();
-            getTheme().resolveAttribute(android.R.attr.selectableItemBackground, out, true);
-            row.setBackgroundResource(out.resourceId);
-
-            row.setOnClickListener(v -> {
-                Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
-                intent.putExtra("projectName", name);
-                startActivity(intent);
-            });
-
-            row.setOnLongClickListener(v -> {
-                confirmDeleteProject(name);
-                return true;
-            });
-
-            projectRowsContainer.addView(row);
-        }
+    View emptyState = findViewById(R.id.emptyState);
+    if (projects.isEmpty()) {
+        if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+        return;
     }
+    if (emptyState != null) emptyState.setVisibility(View.GONE);
+
+    float d = getResources().getDisplayMetrics().density;
+
+    for (int i = 0; i < projects.size(); i++) {
+        final String name = projects.get(i);
+
+        // การ์ด
+        LinearLayout card = new LinearLayout(this);
+        card.setOrientation(LinearLayout.HORIZONTAL);
+        card.setGravity(Gravity.CENTER_VERTICAL);
+        card.setBackgroundResource(R.drawable.bg_project_card);
+        int pad = (int) (16 * d);
+        card.setPadding(pad, pad, pad, pad);
+
+        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT);
+        cardLp.bottomMargin = (int) (10 * d);
+
+        // ข้อความซ้าย
+        LinearLayout textCol = new LinearLayout(this);
+        textCol.setOrientation(LinearLayout.VERTICAL);
+
+        TextView tvName = new TextView(this);
+        tvName.setText(name);
+        tvName.setTextColor(Color.parseColor("#C0CAF5"));
+        tvName.setTextSize(16);
+        tvName.setTypeface(null, Typeface.BOLD);
+        textCol.addView(tvName);
+
+        TextView tvMeta = new TextView(this);
+        tvMeta.setText(readProjectMeta(name)); // ดูเมธอดด้านล่าง
+        tvMeta.setTextColor(Color.parseColor("#565F89"));
+        tvMeta.setTextSize(12);
+        tvMeta.setPadding(0, (int) (4 * d), 0, 0);
+        textCol.addView(tvMeta);
+
+        card.addView(textCol, new LinearLayout.LayoutParams(
+                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+        // ปุ่มลบ
+        TextView btnDelete = new TextView(this);
+        btnDelete.setText("🗑");
+        btnDelete.setTextSize(18);
+        btnDelete.setPadding((int) (12 * d), (int) (8 * d), (int) (4 * d), (int) (8 * d));
+        btnDelete.setOnClickListener(v -> confirmDeleteProject(name));
+        card.addView(btnDelete);
+
+        // กดการ์ด = เปิดโปรเจกต์
+        card.setOnClickListener(v -> {
+            Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
+            intent.putExtra("projectName", name);
+            startActivity(intent);
+        });
+
+        projectRowsContainer.addView(card, cardLp);
+    }
+}
+
+/** อ่าน meta ง่าย ๆ จากโฟลเดอร์โปรเจกต์ */
+private String readProjectMeta(String projectName) {
+    try {
+        File root = new File("/sdcard/MiniStudio/" + projectName);
+        // หา package จาก build.gradle
+        File gradle = new File(root, "app/build.gradle");
+        if (gradle.exists()) {
+            String text = new String(java.nio.file.Files.readAllBytes(gradle.toPath()), "UTF-8");
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile("applicationId\\s*[\"']([^\"']+)[\"']")
+                    .matcher(text);
+            if (m.find()) {
+                return m.group(1);
+            }
+        }
+    } catch (Exception ignored) {}
+    return "Android project";
+}
 
     private void confirmDeleteProject(String projectName) {
         File projectDir = new File("/sdcard/MiniStudio/" + projectName);
