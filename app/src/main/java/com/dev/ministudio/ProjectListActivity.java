@@ -5,13 +5,14 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.Settings;
 import android.text.InputType;
-import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,13 +22,16 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.drawerlayout.widget.DrawerLayout;
+
 import com.getbase.floatingactionbutton.FloatingActionButton;
 import com.getbase.floatingactionbutton.FloatingActionsMenu;
+
 import java.io.File;
 import java.util.ArrayList;
 
@@ -59,136 +63,95 @@ public class ProjectListActivity extends AppCompatActivity {
     }
 
     @Override
-protected void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-    // กันเนื้อหาไม่ให้ทับ status bar / navigation bar (Android 15+)
-    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-    getWindow().setStatusBarColor(android.graphics.Color.parseColor("#0D0E14"));
-    getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#0D0E14"));
-    setContentView(R.layout.activity_project_list);
+        // กันเนื้อหาไม่ให้ทับ status bar / navigation bar (Android 15+)
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+        getWindow().setStatusBarColor(Color.parseColor("#0D0E14"));
+        getWindow().setNavigationBarColor(Color.parseColor("#0D0E14"));
+        setContentView(R.layout.activity_project_list);
 
-    // ผูก View Container
-    projectRowsContainer = findViewById(R.id.projectRowsContainer);
-    tvNoProjects = findViewById(R.id.tvNoProjects);
+        // ผูก View Container (ยึด id ที่มีจริงใน layout ใหม่)
+        projectRowsContainer = findViewById(R.id.projectRowsContainer);
+        tvNoProjects = null; // layout ใหม่ไม่มีแล้ว
 
-    // ===== ปุ่ม UI ใหม่ =====
-    View btnNew = findViewById(R.id.btnNewProject);
-    if (btnNew != null) {
-        btnNew.setOnClickListener(v ->
-                startActivity(new Intent(this, NewProjectActivity.class)));
-    }
-
-    View btnChoose = findViewById(R.id.btnChooseTemplate);
-    if (btnChoose != null) {
-        btnChoose.setOnClickListener(v ->
-                startActivity(new Intent(this, NewProjectActivity.class)));
-    }
-
-    // แถวเมนูเดิม (ถ้ายังมีใน layout)
-    View rowNewProject = findViewById(R.id.rowNewProject);
-    if (rowNewProject != null) {
-        rowNewProject.setOnClickListener(v ->
-                startActivity(new Intent(this, NewProjectActivity.class)));
-    }
-
-    View rowImportGithub = findViewById(R.id.rowImportGithub);
-    if (rowImportGithub != null) {
-        rowImportGithub.setOnClickListener(v -> importFromGitHub());
-    }
-
-    View rowAiSettings = findViewById(R.id.rowAiSettings);
-    if (rowAiSettings != null) {
-        rowAiSettings.setOnClickListener(v ->
-                startActivity(new Intent(this, AiSettingsActivity.class)));
-    }
-
-    View rowGithubSettings = findViewById(R.id.rowGithubSettings);
-    if (rowGithubSettings != null) {
-        rowGithubSettings.setOnClickListener(v -> showGitHubSettingsDialog());
-    }
-
-    View rowToggleTheme = findViewById(R.id.rowToggleTheme);
-    if (rowToggleTheme != null) {
-        rowToggleTheme.setOnClickListener(v -> toggleEditorThemePref());
-    }
-
-    View rowAbout = findViewById(R.id.rowAbout);
-    if (rowAbout != null) {
-        rowAbout.setOnClickListener(v ->
-                new AlertDialog.Builder(this)
-                        .setTitle("Nexus Studio")
-                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                        .setPositiveButton("ตกลง", null)
-                        .show());
-    }
-
-    Toolbar toolbar = findViewById(R.id.toolbar);
-    drawerLayout = findViewById(R.id.drawer_layout);
-
-    fabMenu = findViewById(R.id.multiple_actions);
-    fabCreate = findViewById(R.id.action_create);
-    fabGithub = findViewById(R.id.action_github);
-
-    if (toolbar != null) {
-        setSupportActionBar(toolbar);
-    }
-    if (drawerLayout != null && toolbar != null) {
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawerLayout, toolbar,
-                android.R.string.ok, android.R.string.cancel);
-        drawerLayout.addDrawerListener(toggle);
-        toggle.syncState();
-    }
-
-    com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
-    if (navView != null) {
-        int statusBarHeight = 0;
-        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resId > 0) {
-            statusBarHeight = getResources().getDimensionPixelSize(resId);
+        // ===== ปุ่ม UI ใหม่ =====
+        View btnNew = findViewById(R.id.btnNewProject);
+        if (btnNew != null) {
+            btnNew.setOnClickListener(v ->
+                    startActivity(new Intent(this, NewProjectActivity.class)));
         }
-        navView.setPadding(0, statusBarHeight, 0, 0);
 
-        navView.setNavigationItemSelectedListener(item -> {
-            int id = item.getItemId();
-            if (id == R.id.nav_github_settings) {
-                showGitHubSettingsDialog();
-            } else if (id == R.id.nav_ai_settings) {
-                startActivity(new Intent(this, AiSettingsActivity.class));
-            } else if (id == R.id.nav_toggle_theme) {
-                toggleEditorThemePref();
-            } else if (id == R.id.nav_about) {
-                new AlertDialog.Builder(this)
-                        .setTitle("Nexus Studio")
-                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                        .setPositiveButton("ตกลง", null)
-                        .show();
+        View btnChoose = findViewById(R.id.btnChooseTemplate);
+        if (btnChoose != null) {
+            btnChoose.setOnClickListener(v ->
+                    startActivity(new Intent(this, NewProjectActivity.class)));
+        }
+
+        // Drawer & Toolbar (เช็ค null เพื่อความปลอดภัย)
+        drawerLayout = findViewById(R.id.drawer_layout);
+        Toolbar toolbar = findViewById(R.id.toolbar);
+
+        if (toolbar != null) {
+            setSupportActionBar(toolbar);
+        }
+        if (drawerLayout != null && toolbar != null) {
+            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                    this, drawerLayout, toolbar,
+                    android.R.string.ok, android.R.string.cancel);
+            drawerLayout.addDrawerListener(toggle);
+            toggle.syncState();
+        }
+
+        com.google.android.material.navigation.NavigationView navView = findViewById(R.id.nav_view);
+        if (navView != null) {
+            int statusBarHeight = 0;
+            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+            if (resId > 0) {
+                statusBarHeight = getResources().getDimensionPixelSize(resId);
             }
-            if (drawerLayout != null) drawerLayout.closeDrawers();
-            return true;
-        });
+            navView.setPadding(0, statusBarHeight, 0, 0);
+
+            navView.setNavigationItemSelectedListener(item -> {
+                int id = item.getItemId();
+                if (id == R.id.nav_github_settings) {
+                    showGitHubSettingsDialog();
+                } else if (id == R.id.nav_ai_settings) {
+                    startActivity(new Intent(this, AiSettingsActivity.class));
+                } else if (id == R.id.nav_toggle_theme) {
+                    toggleEditorThemePref();
+                } else if (id == R.id.nav_about) {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Nexus Studio")
+                            .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
+                            .setPositiveButton("ตกลง", null)
+                            .show();
+                }
+                if (drawerLayout != null) drawerLayout.closeDrawers();
+                return true;
+            });
+        }
+
+        // ตั้งค่าปุ่มสิทธิ์และสถานะเริ่มต้น
+        checkPermissions();
+
+        // โหลดรายการโปรเจกต์
+        refreshProjectList();
+        updateProjectEmptyState();
+
+        SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
+        if (!prefs.getBoolean("is_github_setup", false)) {
+            new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
+        }
+
+        IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(cloneReceiver, filter);
+        }
     }
-
-    setupFabButtons();
-    checkPermissions();
-
-    // โหลดรายการโปรเจกต์
-    refreshProjectList();
-    updateProjectEmptyState();
-
-    SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
-    if (!prefs.getBoolean("is_github_setup", false)) {
-        new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
-    }
-
-    IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-    } else {
-        registerReceiver(cloneReceiver, filter);
-    }
-}
 
     private void setupFabButtons() {
         if (fabCreate != null) {
@@ -210,7 +173,7 @@ protected void onCreate(Bundle savedInstanceState) {
         final EditText etUrl = new EditText(this);
         etUrl.setHint("https://github.com/user/repository.git");
         etUrl.setPadding(40, 40, 40, 40);
-        etUrl.setTextColor(android.graphics.Color.WHITE);
+        etUrl.setTextColor(Color.WHITE);
 
         new AlertDialog.Builder(this)
             .setTitle("นำเข้าโปรเจกต์จาก GitHub")
@@ -250,19 +213,20 @@ protected void onCreate(Bundle savedInstanceState) {
     }
 
     private void updateProjectEmptyState() {
-    boolean empty = projects == null || projects.isEmpty();
+        boolean empty = projects == null || projects.isEmpty();
 
-    View emptyState = findViewById(R.id.emptyState);
-    if (projectRowsContainer != null) {
-        projectRowsContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
+        View emptyState = findViewById(R.id.emptyState);
+        if (projectRowsContainer != null) {
+            projectRowsContainer.setVisibility(empty ? View.GONE : View.VISIBLE);
+        }
+        if (emptyState != null) {
+            emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
+        }
+        if (tvNoProjects != null) {
+            tvNoProjects.setVisibility(View.GONE);
+        }
     }
-    if (emptyState != null) {
-        emptyState.setVisibility(empty ? View.VISIBLE : View.GONE);
-    }
-    if (tvNoProjects != null) {
-        tvNoProjects.setVisibility(View.GONE);
-    }
-}
+
     // ========== Project Management ==========
 
     private void refreshProjectList() {
@@ -281,92 +245,91 @@ protected void onCreate(Bundle savedInstanceState) {
     }
 
     private void renderProjectRows() {
-    if (projectRowsContainer == null) return;
-    projectRowsContainer.removeAllViews();
+        if (projectRowsContainer == null) return;
+        projectRowsContainer.removeAllViews();
 
-    View emptyState = findViewById(R.id.emptyState);
-    if (projects.isEmpty()) {
-        if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
-        return;
-    }
-    if (emptyState != null) emptyState.setVisibility(View.GONE);
-
-    float d = getResources().getDisplayMetrics().density;
-
-    for (int i = 0; i < projects.size(); i++) {
-        final String name = projects.get(i);
-
-        // การ์ด
-        LinearLayout card = new LinearLayout(this);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        card.setBackgroundResource(R.drawable.bg_project_card);
-        int pad = (int) (16 * d);
-        card.setPadding(pad, pad, pad, pad);
-
-        LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT);
-        cardLp.bottomMargin = (int) (10 * d);
-
-        // ข้อความซ้าย
-        LinearLayout textCol = new LinearLayout(this);
-        textCol.setOrientation(LinearLayout.VERTICAL);
-
-        TextView tvName = new TextView(this);
-        tvName.setText(name);
-        tvName.setTextColor(Color.parseColor("#C0CAF5"));
-        tvName.setTextSize(16);
-        tvName.setTypeface(null, Typeface.BOLD);
-        textCol.addView(tvName);
-
-        TextView tvMeta = new TextView(this);
-        tvMeta.setText(readProjectMeta(name)); // ดูเมธอดด้านล่าง
-        tvMeta.setTextColor(Color.parseColor("#565F89"));
-        tvMeta.setTextSize(12);
-        tvMeta.setPadding(0, (int) (4 * d), 0, 0);
-        textCol.addView(tvMeta);
-
-        card.addView(textCol, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        // ปุ่มลบ
-        TextView btnDelete = new TextView(this);
-        btnDelete.setText("🗑");
-        btnDelete.setTextSize(18);
-        btnDelete.setPadding((int) (12 * d), (int) (8 * d), (int) (4 * d), (int) (8 * d));
-        btnDelete.setOnClickListener(v -> confirmDeleteProject(name));
-        card.addView(btnDelete);
-
-        // กดการ์ด = เปิดโปรเจกต์
-        card.setOnClickListener(v -> {
-            Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
-            intent.putExtra("projectName", name);
-            startActivity(intent);
-        });
-
-        projectRowsContainer.addView(card, cardLp);
-    }
-}
-
-/** อ่าน meta ง่าย ๆ จากโฟลเดอร์โปรเจกต์ */
-private String readProjectMeta(String projectName) {
-    try {
-        File root = new File("/sdcard/MiniStudio/" + projectName);
-        // หา package จาก build.gradle
-        File gradle = new File(root, "app/build.gradle");
-        if (gradle.exists()) {
-            String text = new String(java.nio.file.Files.readAllBytes(gradle.toPath()), "UTF-8");
-            java.util.regex.Matcher m = java.util.regex.Pattern
-                    .compile("applicationId\\s*[\"']([^\"']+)[\"']")
-                    .matcher(text);
-            if (m.find()) {
-                return m.group(1);
-            }
+        View emptyState = findViewById(R.id.emptyState);
+        if (projects.isEmpty()) {
+            if (emptyState != null) emptyState.setVisibility(View.VISIBLE);
+            return;
         }
-    } catch (Exception ignored) {}
-    return "Android project";
-}
+        if (emptyState != null) emptyState.setVisibility(View.GONE);
+
+        float d = getResources().getDisplayMetrics().density;
+
+        for (int i = 0; i < projects.size(); i++) {
+            final String name = projects.get(i);
+
+            // การ์ด
+            LinearLayout card = new LinearLayout(this);
+            card.setOrientation(LinearLayout.HORIZONTAL);
+            card.setGravity(Gravity.CENTER_VERTICAL);
+            card.setBackgroundResource(R.drawable.bg_project_card);
+            int pad = (int) (16 * d);
+            card.setPadding(pad, pad, pad, pad);
+
+            LinearLayout.LayoutParams cardLp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            cardLp.bottomMargin = (int) (10 * d);
+
+            // ข้อความซ้าย
+            LinearLayout textCol = new LinearLayout(this);
+            textCol.setOrientation(LinearLayout.VERTICAL);
+
+            TextView tvName = new TextView(this);
+            tvName.setText(name);
+            tvName.setTextColor(Color.parseColor("#C0CAF5"));
+            tvName.setTextSize(16);
+            tvName.setTypeface(null, Typeface.BOLD);
+            textCol.addView(tvName);
+
+            TextView tvMeta = new TextView(this);
+            tvMeta.setText(readProjectMeta(name));
+            tvMeta.setTextColor(Color.parseColor("#565F89"));
+            tvMeta.setTextSize(12);
+            tvMeta.setPadding(0, (int) (4 * d), 0, 0);
+            textCol.addView(tvMeta);
+
+            card.addView(textCol, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            // ปุ่มลบ
+            TextView btnDelete = new TextView(this);
+            btnDelete.setText("🗑");
+            btnDelete.setTextSize(18);
+            btnDelete.setPadding((int) (12 * d), (int) (8 * d), (int) (4 * d), (int) (8 * d));
+            btnDelete.setOnClickListener(v -> confirmDeleteProject(name));
+            card.addView(btnDelete);
+
+            // กดการ์ด = เปิดโปรเจกต์
+            card.setOnClickListener(v -> {
+                Intent intent = new Intent(ProjectListActivity.this, MainActivity.class);
+                intent.putExtra("projectName", name);
+                startActivity(intent);
+            });
+
+            projectRowsContainer.addView(card, cardLp);
+        }
+    }
+
+    /** อ่าน meta ง่าย ๆ จากโฟลเดอร์โปรเจกต์ */
+    private String readProjectMeta(String projectName) {
+        try {
+            File root = new File("/sdcard/MiniStudio/" + projectName);
+            File gradle = new File(root, "app/build.gradle");
+            if (gradle.exists()) {
+                String text = new String(java.nio.file.Files.readAllBytes(gradle.toPath()), "UTF-8");
+                java.util.regex.Matcher m = java.util.regex.Pattern
+                        .compile("applicationId\\s*[\"']([^\"']+)[\"']")
+                        .matcher(text);
+                if (m.find()) {
+                    return m.group(1);
+                }
+            }
+        } catch (Exception ignored) {}
+        return "Android project";
+    }
 
     private void confirmDeleteProject(String projectName) {
         File projectDir = new File("/sdcard/MiniStudio/" + projectName);
@@ -436,7 +399,6 @@ private String readProjectMeta(String projectName) {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // ลบการ inflate เมนูออก
         return false;
     }
 
@@ -462,30 +424,30 @@ private String readProjectMeta(String projectName) {
         String savedEmail = prefs.getString("email", "");
         String savedToken = prefs.getString("token", "");
 
-        androidx.appcompat.app.AlertDialog.Builder builder = new androidx.appcompat.app.AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         
         LinearLayout mainLayout = new LinearLayout(this);
         mainLayout.setOrientation(LinearLayout.VERTICAL);
         int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
         mainLayout.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
-        mainLayout.setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"));
+        mainLayout.setBackgroundColor(Color.parseColor("#1E1E1E"));
 
         LinearLayout titleLayout = new LinearLayout(this);
         titleLayout.setOrientation(LinearLayout.HORIZONTAL);
-        titleLayout.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        titleLayout.setGravity(Gravity.CENTER_VERTICAL);
         titleLayout.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
 
         TextView tvTitle = new TextView(this);
         tvTitle.setText("⚙️ ตั้งค่าบัญชี GitHub Sync");
-        tvTitle.setTextColor(android.graphics.Color.WHITE);
+        tvTitle.setTextColor(Color.WHITE);
         tvTitle.setTextSize(18);
-        tvTitle.setTypeface(android.graphics.Typeface.create("sans-serif-medium", android.graphics.Typeface.BOLD));
+        tvTitle.setTypeface(Typeface.create("sans-serif-medium", Typeface.BOLD));
         titleLayout.addView(tvTitle);
         mainLayout.addView(titleLayout);
 
         TextView tvDesc = new TextView(this);
         tvDesc.setText("ข้อมูลนี้จะถูกบันทึกเพื่อใช้ส่งซอร์สโค้ดโปรเจกต์ขึ้นไปบิวด์บนคลาวด์อัตโนมัติ");
-        tvDesc.setTextColor(android.graphics.Color.parseColor("#8E8E93"));
+        tvDesc.setTextColor(Color.parseColor("#8E8E93"));
         tvDesc.setTextSize(13);
         tvDesc.setLineSpacing(0, 1.2f);
         tvDesc.setPadding(0, 0, 0, (int) (20 * getResources().getDisplayMetrics().density));
@@ -495,25 +457,25 @@ private String readProjectMeta(String projectName) {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         boxParams.bottomMargin = (int) (14 * getResources().getDisplayMetrics().density);
 
-        android.graphics.drawable.GradientDrawable inputStyle = new android.graphics.drawable.GradientDrawable();
-        inputStyle.setColor(android.graphics.Color.parseColor("#252526"));
+        GradientDrawable inputStyle = new GradientDrawable();
+        inputStyle.setColor(Color.parseColor("#252526"));
         inputStyle.setCornerRadius((int) (8 * getResources().getDisplayMetrics().density));
-        inputStyle.setStroke((int) (1 * getResources().getDisplayMetrics().density), android.graphics.Color.parseColor("#3F3F46"));
+        inputStyle.setStroke((int) (1 * getResources().getDisplayMetrics().density), Color.parseColor("#3F3F46"));
 
         int inputPadding = (int) (12 * getResources().getDisplayMetrics().density);
 
         TextView labelUsername = new TextView(this);
         labelUsername.setText("GitHub Username");
-        labelUsername.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
+        labelUsername.setTextColor(Color.parseColor("#D4D4D8"));
         labelUsername.setTextSize(13);
         labelUsername.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
         mainLayout.addView(labelUsername);
 
         final EditText etUsername = new EditText(this);
         etUsername.setHint("ระบุชื่อผู้ใช้ GitHub");
-        etUsername.setHintTextColor(android.graphics.Color.parseColor("#52525B"));
+        etUsername.setHintTextColor(Color.parseColor("#52525B"));
         etUsername.setText(savedUsername);
-        etUsername.setTextColor(android.graphics.Color.WHITE);
+        etUsername.setTextColor(Color.WHITE);
         etUsername.setTextSize(14);
         etUsername.setBackground(inputStyle.getConstantState().newDrawable());
         etUsername.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
@@ -521,16 +483,16 @@ private String readProjectMeta(String projectName) {
 
         TextView labelEmail = new TextView(this);
         labelEmail.setText("GitHub Email");
-        labelEmail.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
+        labelEmail.setTextColor(Color.parseColor("#D4D4D8"));
         labelEmail.setTextSize(13);
         labelEmail.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
         mainLayout.addView(labelEmail);
 
         final EditText etEmail = new EditText(this);
         etEmail.setHint("ระบุอีเมลที่ผูกกับ GitHub");
-        etEmail.setHintTextColor(android.graphics.Color.parseColor("#52525B"));
+        etEmail.setHintTextColor(Color.parseColor("#52525B"));
         etEmail.setText(savedEmail);
-        etEmail.setTextColor(android.graphics.Color.WHITE);
+        etEmail.setTextColor(Color.WHITE);
         etEmail.setTextSize(14);
         etEmail.setBackground(inputStyle.getConstantState().newDrawable());
         etEmail.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
@@ -538,27 +500,27 @@ private String readProjectMeta(String projectName) {
 
         TextView labelToken = new TextView(this);
         labelToken.setText("Personal Access Token (Classic)");
-        labelToken.setTextColor(android.graphics.Color.parseColor("#D4D4D8"));
+        labelToken.setTextColor(Color.parseColor("#D4D4D8"));
         labelToken.setTextSize(13);
         labelToken.setPadding(0, 0, 0, (int) (6 * getResources().getDisplayMetrics().density));
         mainLayout.addView(labelToken);
 
         final EditText etToken = new EditText(this);
         etToken.setHint("วางโทเค็นสิทธิ์เข้าถึง (ghp_...)");
-        etToken.setHintTextColor(android.graphics.Color.parseColor("#52525B"));
+        etToken.setHintTextColor(Color.parseColor("#52525B"));
         etToken.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         etToken.setText(savedToken);
-        etToken.setTextColor(android.graphics.Color.WHITE);
+        etToken.setTextColor(Color.WHITE);
         etToken.setTextSize(14);
         etToken.setBackground(inputStyle.getConstantState().newDrawable());
         etToken.setPadding(inputPadding, inputPadding, inputPadding, inputPadding);
         mainLayout.addView(etToken, boxParams);
 
-        final androidx.appcompat.app.AlertDialog dialog = builder.setView(mainLayout).create();
+        final AlertDialog dialog = builder.setView(mainLayout).create();
 
         LinearLayout buttonLayout = new LinearLayout(this);
         buttonLayout.setOrientation(LinearLayout.HORIZONTAL);
-        buttonLayout.setGravity(android.view.Gravity.END);
+        buttonLayout.setGravity(Gravity.END);
         LinearLayout.LayoutParams btnLayoutParams = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         btnLayoutParams.topMargin = (int) (16 * getResources().getDisplayMetrics().density);
@@ -566,7 +528,7 @@ private String readProjectMeta(String projectName) {
 
         android.widget.Button btnCancel = new android.widget.Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
         btnCancel.setText("ยกเลิก");
-        btnCancel.setTextColor(android.graphics.Color.parseColor("#A1A1AA"));
+        btnCancel.setTextColor(Color.parseColor("#A1A1AA"));
         btnCancel.setTextSize(14);
         btnCancel.setAllCaps(false);
         btnCancel.setOnClickListener(v -> dialog.dismiss());
@@ -574,12 +536,12 @@ private String readProjectMeta(String projectName) {
 
         android.widget.Button btnSave = new android.widget.Button(this, null, 0, android.R.style.Widget_Material_Button_Borderless);
         btnSave.setText("บันทึกข้อมูล");
-        btnSave.setTextColor(android.graphics.Color.WHITE);
+        btnSave.setTextColor(Color.WHITE);
         btnSave.setTextSize(14);
         btnSave.setAllCaps(false);
         
-        android.graphics.drawable.GradientDrawable saveBtnBg = new android.graphics.drawable.GradientDrawable();
-        saveBtnBg.setColor(android.graphics.Color.parseColor("#248A3D"));
+        GradientDrawable saveBtnBg = new GradientDrawable();
+        saveBtnBg.setColor(Color.parseColor("#248A3D"));
         saveBtnBg.setCornerRadius((int) (6 * getResources().getDisplayMetrics().density));
         btnSave.setBackground(saveBtnBg);
         
@@ -588,7 +550,7 @@ private String readProjectMeta(String projectName) {
         saveBtnParams.leftMargin = (int) (12 * getResources().getDisplayMetrics().density);
         btnSave.setLayoutParams(saveBtnParams);
         btnSave.setPadding((int) (16 * getResources().getDisplayMetrics().density), 0, (int) (16 * getResources().getDisplayMetrics().density), 0);    
-		
+
         btnSave.setOnClickListener(v -> {
             String username = etUsername.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
@@ -614,8 +576,8 @@ private String readProjectMeta(String projectName) {
         mainLayout.addView(buttonLayout);
 
         if (dialog.getWindow() != null) {
-            android.graphics.drawable.GradientDrawable dialogBg = new android.graphics.drawable.GradientDrawable();
-            dialogBg.setColor(android.graphics.Color.parseColor("#1E1E1E"));
+            GradientDrawable dialogBg = new GradientDrawable();
+            dialogBg.setColor(Color.parseColor("#1E1E1E"));
             dialogBg.setCornerRadius((int) (14 * getResources().getDisplayMetrics().density));
             dialog.getWindow().setBackgroundDrawable(dialogBg);
         }
