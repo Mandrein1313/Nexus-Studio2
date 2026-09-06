@@ -142,6 +142,6 @@
         android:background="#1A1B26"
         app:itemTextColor="#A9B1D6"
         app:itemIconTint="#7AA2F7"
-        app:menu="@menu/menu_drawer" />
+        app:menu="@menu/menu_drawer_project" />
 
 </androidx.drawerlayout.widget.DrawerLayout>
