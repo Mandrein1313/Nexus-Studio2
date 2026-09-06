@@ -111,63 +111,32 @@ public class NewProjectActivity extends AppCompatActivity {
         View exitBtn = findViewById(R.id.btnExit);
         if (exitBtn != null) exitBtn.setVisibility(View.GONE);
 
-        // Layout หลักของหน้า Config
-        LinearLayout mainConfigLayout = new LinearLayout(this);
-        mainConfigLayout.setOrientation(LinearLayout.VERTICAL);
-        mainConfigLayout.setBackgroundColor(Color.parseColor("#0D0E14"));
-        mainConfigLayout.setPadding(0, statusBarHeight, 0, 0);
-
-        // ===== แถบบน (Top Bar) =====
-        LinearLayout topBar = new LinearLayout(this);
-        topBar.setOrientation(LinearLayout.HORIZONTAL);
-        topBar.setGravity(Gravity.CENTER_VERTICAL);
-        topBar.setPadding((int) (4 * d), (int) (8 * d), (int) (12 * d), (int) (8 * d));
-        GradientDrawable topBarBg = new GradientDrawable();
-        topBarBg.setColor(Color.parseColor("#1A1B26"));
-        topBar.setBackground(topBarBg);
-
-        // ปุ่มกลับ
-        TextView btnBack = new TextView(this);
-        btnBack.setText("←");
-        btnBack.setTextColor(Color.parseColor("#C0CAF5"));
-        btnBack.setTextSize(22);
-        btnBack.setPadding((int) (12 * d), (int) (6 * d), (int) (12 * d), (int) (6 * d));
-        btnBack.setOnClickListener(v -> showGridScreen());
-        topBar.addView(btnBack);
-
-        // ชื่อหน้า Top Bar
-        TextView tvTopTitle = new TextView(this);
-        tvTopTitle.setText("New project");
-        tvTopTitle.setTextColor(Color.parseColor("#C0CAF5"));
-        tvTopTitle.setTextSize(17);
-        tvTopTitle.setTypeface(null, Typeface.BOLD);
-        tvTopTitle.setPadding((int) (4 * d), 0, 0, 0);
-        topBar.addView(tvTopTitle, new LinearLayout.LayoutParams(
-                0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        mainConfigLayout.addView(topBar, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        // เส้นคั่นใต้ Top Bar
-        View divider = new View(this);
-        divider.setBackgroundColor(Color.parseColor("#292E42"));
-        mainConfigLayout.addView(divider, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, (int) (1 * d)));
-
-        // ===== ScrollView สำหรับเนื้อหาฟอร์ม =====
+        // ===== ใช้ ScrollView เพื่อให้เลื่อนดูเนื้อหาได้เมื่อคีย์บอร์ดเด้งหรือจอเล็ก =====
         ScrollView scrollView = new ScrollView(this);
         scrollView.setFillViewport(true);
+        scrollView.setBackgroundColor(Color.parseColor("#0D0E14"));
 
-        LinearLayout contentContainer = new LinearLayout(this);
-        contentContainer.setOrientation(LinearLayout.VERTICAL);
-        contentContainer.setPadding(
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.parseColor("#0D0E14"));
+        
+        // ใส่ Padding โดยบวกระยะ StatusBar (ด้านบน) และ NavigationBar (ด้านล่าง) เพิ่มเติม
+        root.setPadding(
                 (int) (20 * d),
-                (int) (16 * d),
+                (int) (12 * d) + statusBarHeight,
                 (int) (20 * d),
                 (int) (20 * d) + navigationBarHeight
         );
+        configRoot = scrollView;
 
-        configRoot = mainConfigLayout;
+        // ===== ปุ่มกลับ =====
+        TextView btnBack = new TextView(this);
+        btnBack.setText("←  Templates");
+        btnBack.setTextColor(Color.parseColor("#A9B1D6"));
+        btnBack.setTextSize(15);
+        btnBack.setPadding(0, (int) (8 * d), 0, (int) (16 * d));
+        btnBack.setOnClickListener(v -> showGridScreen());
+        root.addView(btnBack);
 
         // ===== แถว Preview + ข้อมูล Template =====
         LinearLayout headerRow = new LinearLayout(this);
@@ -182,9 +151,9 @@ public class NewProjectActivity extends AppCompatActivity {
         cardBg.setStroke((int) d, Color.parseColor("#292E42"));
         previewCard.setBackground(cardBg);
 
-        View topBarPreview = new View(this);
-        topBarPreview.setBackgroundColor(selectedTemplate.previewColor);
-        previewCard.addView(topBarPreview, new FrameLayout.LayoutParams(
+        View topBar = new View(this);
+        topBar.setBackgroundColor(selectedTemplate.previewColor);
+        previewCard.addView(topBar, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, (int) (26 * d)));
 
         LinearLayout previewContent = new LinearLayout(this);
@@ -227,24 +196,24 @@ public class NewProjectActivity extends AppCompatActivity {
 
         headerRow.addView(infoCol, new LinearLayout.LayoutParams(
                 0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        contentContainer.addView(headerRow);
+        root.addView(headerRow);
 
         // ระยะห่าง
         View spacer1 = new View(this);
-        contentContainer.addView(spacer1, new LinearLayout.LayoutParams(
+        root.addView(spacer1, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, (int) (20 * d)));
 
         // ===== Application name =====
-        contentContainer.addView(makeLabel("Application name"));
+        root.addView(makeLabel("Application name"));
         final EditText etAppName = makeInput("MyApplication");
         etAppName.setText("MyApplication");
-        contentContainer.addView(etAppName, fieldLp(d));
+        root.addView(etAppName, fieldLp(d));
 
         // ===== Package name =====
-        contentContainer.addView(makeLabel("Package name"));
+        root.addView(makeLabel("Package name"));
         final EditText etPackage = makeInput("com.example.myapplication");
         etPackage.setText("com.example.myapplication");
-        contentContainer.addView(etPackage, fieldLp(d));
+        root.addView(etPackage, fieldLp(d));
 
         // Auto change package name on app name edit
         etAppName.addTextChangedListener(new TextWatcher() {
@@ -257,7 +226,7 @@ public class NewProjectActivity extends AppCompatActivity {
         });
 
         // ===== Language =====
-        contentContainer.addView(makeLabel("Language"));
+        root.addView(makeLabel("Language"));
         LinearLayout langRow = new LinearLayout(this);
         langRow.setOrientation(LinearLayout.HORIZONTAL);
         langRow.setPadding(0, (int) (6 * d), 0, (int) (4 * d));
@@ -283,14 +252,14 @@ public class NewProjectActivity extends AppCompatActivity {
         LinearLayout.LayoutParams half2 = new LinearLayout.LayoutParams(
                 0, (int) (42 * d), 1f);
         langRow.addView(btnKotlin, half2);
-        contentContainer.addView(langRow);
+        root.addView(langRow);
 
         // ===== Minimum SDK =====
         View spacer2 = new View(this);
-        contentContainer.addView(spacer2, new LinearLayout.LayoutParams(
+        root.addView(spacer2, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, (int) (16 * d)));
 
-        contentContainer.addView(makeLabel("Minimum SDK"));
+        root.addView(makeLabel("Minimum SDK"));
         final Spinner spinSdk = new Spinner(this);
         GradientDrawable sdkBg = new GradientDrawable();
         sdkBg.setColor(Color.parseColor("#1A1B26"));
@@ -333,7 +302,7 @@ public class NewProjectActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         sdkLp.topMargin = (int) (6 * d);
         sdkLp.bottomMargin = (int) (20 * d);
-        contentContainer.addView(spinSdk, sdkLp);
+        root.addView(spinSdk, sdkLp);
 
         // ===== ปุ่ม Create project =====
         TextView btnCreate = new TextView(this);
@@ -374,19 +343,17 @@ public class NewProjectActivity extends AppCompatActivity {
             createAndOpen(appName, pkg, selectedTemplate.id, selectedLanguage, minSdk);
         });
 
-        contentContainer.addView(btnCreate, new LinearLayout.LayoutParams(
+        root.addView(btnCreate, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        scrollView.addView(contentContainer);
-        mainConfigLayout.addView(scrollView, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        scrollView.addView(root);
 
         // ใส่เข้า Window content
         ViewGroup parent = (ViewGroup) findViewById(android.R.id.content);
         if (configRoot != null && configRoot.getParent() != null) {
             ((ViewGroup) configRoot.getParent()).removeView(configRoot);
         }
-        parent.addView(mainConfigLayout, new ViewGroup.LayoutParams(
+        parent.addView(scrollView, new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
     }
