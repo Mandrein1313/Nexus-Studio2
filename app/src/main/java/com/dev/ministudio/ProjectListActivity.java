@@ -116,23 +116,25 @@ public class ProjectListActivity extends AppCompatActivity {
             navView.setPadding(0, statusBarHeight, 0, 0);
 
             navView.setNavigationItemSelectedListener(item -> {
-                int id = item.getItemId();
-                if (id == R.id.nav_github_settings) {
-                    showGitHubSettingsDialog();
-                } else if (id == R.id.nav_ai_settings) {
-                    startActivity(new Intent(this, AiSettingsActivity.class));
-                } else if (id == R.id.nav_toggle_theme) {
-                    toggleEditorThemePref();
-                } else if (id == R.id.nav_about) {
-                    new AlertDialog.Builder(this)
-                            .setTitle("Nexus Studio")
-                            .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                            .setPositiveButton("ตกลง", null)
-                            .show();
-                }
-                if (drawerLayout != null) drawerLayout.closeDrawers();
-                return true;
-            });
+    int id = item.getItemId();
+    if (id == R.id.nav_import_github) {
+        importFromGitHub();
+    } else if (id == R.id.nav_github_settings) {
+        showGitHubSettingsDialog();
+    } else if (id == R.id.nav_ai_settings) {
+        startActivity(new Intent(this, AiSettingsActivity.class));
+    } else if (id == R.id.nav_toggle_theme) {
+        toggleEditorThemePref();
+    } else if (id == R.id.nav_about) {
+        new AlertDialog.Builder(this)
+                .setTitle("Nexus Studio")
+                .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
+                .setPositiveButton("ตกลง", null)
+                .show();
+    }
+    if (drawerLayout != null) drawerLayout.closeDrawers();
+    return true;
+});
         }
 
         // ตรวจสอบสิทธิ์การเข้าถึงไฟล์และแจ้งเตือน

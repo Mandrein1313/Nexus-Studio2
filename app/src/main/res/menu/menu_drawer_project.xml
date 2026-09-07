@@ -3,15 +3,17 @@
 
     <group android:checkableBehavior="none">
         <item
+            android:id="@+id/nav_import_github"
+            android:icon="@android:drawable/ic_menu_upload"
+            android:title="นำเข้าจาก GitHub" />
+        <item
             android:id="@+id/nav_github_settings"
             android:icon="@android:drawable/ic_menu_manage"
             android:title="GitHub Settings" />
-
         <item
             android:id="@+id/nav_ai_settings"
             android:icon="@android:drawable/ic_menu_edit"
             android:title="AI Settings" />
-
         <item
             android:id="@+id/nav_toggle_theme"
             android:icon="@android:drawable/ic_menu_view"
@@ -26,5 +28,4 @@
                 android:title="เกี่ยวกับ Nexus Studio" />
         </menu>
     </item>
-
 </menu>
