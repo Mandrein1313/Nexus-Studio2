@@ -62,102 +62,95 @@ public class ProjectListActivity extends AppCompatActivity {
         } catch (Exception ignored) {}
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
 
-        // ตั้งค่าขอบหน้าจอสำหรับ Android 15+
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
-        getWindow().setStatusBarColor(Color.parseColor("#0D0E14"));
-        getWindow().setNavigationBarColor(Color.parseColor("#0D0E14"));
-        setContentView(R.layout.activity_project_list);
+    // ตั้งค่าขอบหน้าจอสำหรับ Android 15+
+    androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+    getWindow().setStatusBarColor(Color.parseColor("#1A1B26"));
+    getWindow().setNavigationBarColor(Color.parseColor("#0D0E14"));
+    setContentView(R.layout.activity_project_list);
 
-        // ผูก View Container สำหรับรายการโปรเจกต์
-        projectRowsContainer = findViewById(R.id.projectRowsContainer);
-        tvNoProjects = null;
+    // ผูก View Container สำหรับรายการโปรเจกต์
+    projectRowsContainer = findViewById(R.id.projectRowsContainer);
+    tvNoProjects = null;
 
-        // Toolbar + DrawerLayout Setup
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        drawerLayout = findViewById(R.id.drawer_layout);
+    // Toolbar + DrawerLayout Setup
+    Toolbar toolbar = findViewById(R.id.toolbar);
+    drawerLayout = findViewById(R.id.drawer_layout);
 
-        if (toolbar != null) {
-            setSupportActionBar(toolbar);
+    if (toolbar != null) {
+        setSupportActionBar(toolbar);
+    }
+    if (drawerLayout != null && toolbar != null) {
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                this, drawerLayout, toolbar,
+                android.R.string.ok, android.R.string.cancel);
+        drawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+    }
+
+    // ปุ่ม New project & Choose template
+    View btnNew = findViewById(R.id.btnNewProject);
+    if (btnNew != null) {
+        btnNew.setOnClickListener(v ->
+                startActivity(new Intent(this, NewProjectActivity.class)));
+    }
+
+    View btnChoose = findViewById(R.id.btnChooseTemplate);
+    if (btnChoose != null) {
+        btnChoose.setOnClickListener(v ->
+                startActivity(new Intent(this, NewProjectActivity.class)));
+    }
+
+    // NavigationView เมนูซ้าย
+    NavigationView navView = findViewById(R.id.nav_view);
+    if (navView != null) {
+        int statusBarHeight = 0;
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resId > 0) {
+            statusBarHeight = getResources().getDimensionPixelSize(resId);
         }
-        if (drawerLayout != null && toolbar != null) {
-            ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                    this, drawerLayout, toolbar,
-                    android.R.string.ok, android.R.string.cancel);
-            drawerLayout.addDrawerListener(toggle);
-            toggle.syncState();
-        }
+        navView.setPadding(0, statusBarHeight, 0, 0);
 
-        // ปุ่ม New project & Choose template
-        View btnNew = findViewById(R.id.btnNewProject);
-        if (btnNew != null) {
-            btnNew.setOnClickListener(v ->
-                    startActivity(new Intent(this, NewProjectActivity.class)));
-        }
-
-        View btnChoose = findViewById(R.id.btnChooseTemplate);
-        if (btnChoose != null) {
-            btnChoose.setOnClickListener(v ->
-                    startActivity(new Intent(this, NewProjectActivity.class)));
-        }
-
-        // NavigationView เมนูซ้าย
-        NavigationView navView = findViewById(R.id.nav_view);
-        if (navView != null) {
-            // คำนวณความสูง Status bar เพื่อตั้งค่า Padding ให้เมนู
-            int statusBarHeight = 0;
-            int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-            if (resId > 0) {
-                statusBarHeight = getResources().getDimensionPixelSize(resId);
+        navView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_import_github) {
+                importFromGitHub();
+            } else if (id == R.id.nav_github_settings) {
+                showGitHubSettingsDialog();
+            } else if (id == R.id.nav_ai_settings) {
+                startActivity(new Intent(this, AiSettingsActivity.class));
+            } else if (id == R.id.nav_toggle_theme) {
+                toggleEditorThemePref();
+            } else if (id == R.id.nav_about) {
+                new AlertDialog.Builder(this)
+                        .setTitle("Nexus Studio")
+                        .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
+                        .setPositiveButton("ตกลง", null)
+                        .show();
             }
-            navView.setPadding(0, statusBarHeight, 0, 0);
-
-            navView.setNavigationItemSelectedListener(item -> {
-    int id = item.getItemId();
-    if (id == R.id.nav_import_github) {
-        importFromGitHub();
-    } else if (id == R.id.nav_github_settings) {
-        showGitHubSettingsDialog();
-    } else if (id == R.id.nav_ai_settings) {
-        startActivity(new Intent(this, AiSettingsActivity.class));
-    } else if (id == R.id.nav_toggle_theme) {
-        toggleEditorThemePref();
-    } else if (id == R.id.nav_about) {
-        new AlertDialog.Builder(this)
-                .setTitle("Nexus Studio")
-                .setMessage("Mobile Android IDE\nเขียน แก้ บิลด์แอปได้จากมือถือ")
-                .setPositiveButton("ตกลง", null)
-                .show();
+            if (drawerLayout != null) drawerLayout.closeDrawers();
+            return true;
+        });
     }
-    if (drawerLayout != null) drawerLayout.closeDrawers();
-    return true;
-});
-        }
 
-        // ตรวจสอบสิทธิ์การเข้าถึงไฟล์และแจ้งเตือน
-        checkPermissions();
+    // ตรวจสอบสิทธิ์
+    checkPermissions();
 
-        // โหลดข้อมูลโปรเจกต์
-        refreshProjectList();
-        updateProjectEmptyState();
+    // โหลดข้อมูลโปรเจกต์
+    refreshProjectList();
+    updateProjectEmptyState();
 
-        // ตรวจสอบการตั้งค่า GitHub ครั้งแรก
-        SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
-        if (!prefs.getBoolean("is_github_setup", false)) {
-            new android.os.Handler().postDelayed(this::showGitHubSettingsDialog, 600);
-        }
-
-        // ลงทะเบียน BroadcastReceiver รับสถานะการ Clone
-        IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
-        } else {
-            registerReceiver(cloneReceiver, filter);
-        }
+    // ลงทะเบียน BroadcastReceiver รับสถานะการ Clone
+    IntentFilter filter = new IntentFilter(GitHubCloneService.ACTION_CLONE_COMPLETE);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        registerReceiver(cloneReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+    } else {
+        registerReceiver(cloneReceiver, filter);
     }
+}
 
     private void setupFabButtons() {
         if (fabCreate != null) {
