@@ -2,10 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="none">
-        <item
-            android:id="@+id/nav_import_github"
-            android:icon="@android:drawable/ic_menu_upload"
-            android:title="นำเข้าจาก GitHub" />
+        
         <item
             android:id="@+id/nav_github_settings"
             android:icon="@android:drawable/ic_menu_manage"
@@ -14,6 +11,10 @@
             android:id="@+id/nav_ai_settings"
             android:icon="@android:drawable/ic_menu_edit"
             android:title="AI Settings" />
+        <item
+            android:id="@+id/nav_import_github"
+            android:icon="@android:drawable/ic_menu_upload"
+            android:title="นำเข้าจาก GitHub" />
         <item
             android:id="@+id/nav_toggle_theme"
             android:icon="@android:drawable/ic_menu_view"
