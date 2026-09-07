@@ -35,7 +35,7 @@ public final class ExitConfirmDialog {
         root.setBackground(dialogBg);
 
         TextView icon = new TextView(activity);
-        icon.setText("🚪");
+        icon.setText("⬅️");
         icon.setTextSize(28);
         icon.setGravity(Gravity.CENTER);
         icon.setPadding(0, 0, 0, (int) (8 * d));
@@ -81,7 +81,7 @@ public final class ExitConfirmDialog {
         btnExit.setTextColor(Color.parseColor("#1A1B26"));
         btnExit.setTextSize(14);
         GradientDrawable exitBg = new GradientDrawable();
-        exitBg.setColor(Color.parseColor("#F7768E"));
+        exitBg.setColor(Color.parseColor("#FF00BEF7"));
         exitBg.setCornerRadius(10 * d);
         btnExit.setBackground(exitBg);
         LinearLayout.LayoutParams exitLp = new LinearLayout.LayoutParams(0, (int) (44 * d), 1f);
