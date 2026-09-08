@@ -25,7 +25,7 @@ public class FileTreeAdapter extends BaseAdapter {
 
     private Context context;
     private List<FileNode> fileList;
-    private int selectedPosition = -1; 
+    private int selectedPosition = -1;
 
     public FileTreeAdapter(Context context, List<FileNode> fileList) {
         this.context = context;
@@ -65,13 +65,13 @@ public class FileTreeAdapter extends BaseAdapter {
 
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.list_item_file, parent, false);
-            
+
             holder = new ViewHolder();
             holder.itemRoot = convertView.findViewById(R.id.item_root_layout);
             holder.imgArrow = convertView.findViewById(R.id.img_arrow);
             holder.imgFileIcon = convertView.findViewById(R.id.img_file_icon);
             holder.tvFileName = convertView.findViewById(R.id.tv_file_name);
-            
+
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -82,26 +82,26 @@ public class FileTreeAdapter extends BaseAdapter {
         String name = file.getName();
         holder.tvFileName.setText(name);
 
-        // 🌟 1. ระบบกิ่งไม้แตกแขนง (True Tree Indentation)
-        int baseIndentDp = 16; 
+        int baseIndentDp = 16;
         int indentPx = (int) (node.depth * baseIndentDp * context.getResources().getDisplayMetrics().density);
         int paddingRight = (int) (16 * context.getResources().getDisplayMetrics().density);
         holder.itemRoot.setPadding(indentPx, 0, paddingRight, 0);
 
         holder.imgArrow.setPadding(0, 0, 0, 0);
         holder.imgFileIcon.clearColorFilter();
-        
+
         int defaultSizePx = (int) (24 * context.getResources().getDisplayMetrics().density);
         holder.imgFileIcon.getLayoutParams().width = defaultSizePx;
         holder.imgFileIcon.getLayoutParams().height = defaultSizePx;
 
-        // ตรวจสอบความสัมพันธ์ของเส้นทาง (Path) เพื่อใช้จัดกลุ่มสีให้แม่นยำขึ้น
         String absolutePath = file.getAbsolutePath();
-        boolean isInJavaPackage = absolutePath.contains("/src/main/java/") || absolutePath.endsWith("/java");
-        // เช็กว่าไฟล์หรือโฟลเดอร์นี้สิงอยู่ในอาณาเขตของ /res/ หรือไม่
-        boolean isInResourceFolder = absolutePath.contains("/src/main/res/") || absolutePath.contains("/app/src/main/res/");
+        boolean isInJavaPackage = absolutePath.contains("/src/main/java/")
+                || absolutePath.contains("/src/main/kotlin/")
+                || absolutePath.endsWith("/java")
+                || absolutePath.endsWith("/kotlin");
+        boolean isInResourceFolder = absolutePath.contains("/src/main/res/")
+                || absolutePath.contains("/app/src/main/res/");
 
-        // 🌟 2. ลоจิกคัดแยกประเภทไอคอนและโทนสีขั้นสูง
         if (node.isDirectory) {
             holder.imgArrow.setVisibility(View.VISIBLE);
             if (node.isExpanded) {
@@ -109,108 +109,100 @@ public class FileTreeAdapter extends BaseAdapter {
             } else {
                 holder.imgArrow.setImageResource(R.drawable.ic_arrow_right);
             }
-            holder.imgArrow.setColorFilter(Color.parseColor("#90A4AE")); 
+            holder.imgArrow.setColorFilter(Color.parseColor("#565F89"));
 
             holder.imgFileIcon.setImageResource(R.drawable.ic_myicon08);
-            
-            // สั่งเปลี่ยนสีโฟลเดอร์ตามกลุ่มโครงสร้างโปรเจกต์
-            if (isInJavaPackage) {
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#2196F3")); // สีฟ้าสำหรับทุกโฟลเดอร์ในสาย Java Code (com, example, mygame)
-            } else if ("res".equalsIgnoreCase(name)) {
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#4CAF50")); // สีเขียวเข้มสำหรับ Resource หลัก
-            } else if (isInResourceFolder) {
-                // 🟢 ปรับปรุงใหม่: ชนะทุกเงื่อนไขชื่อไฟล์ ไม่ว่าจะสร้างโฟลเดอร์ชื่ออะไรภายใต้ res (รวมถึงใน xml) จะเป็นสีเขียวพาสเทลทั้งหมด
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#81C784")); 
-            } else if (name.startsWith(".")) {
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#78909C")); // สีเทาสำหรับโฟลเดอร์ซ่อนระบบ (.git, .github)
+
+            // โฟลเดอร์โทน teal แบบเว็บ
+            if (name.startsWith(".")) {
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#565F89"));
+            } else if (isInResourceFolder || "res".equalsIgnoreCase(name)) {
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#4DB6AC"));
             } else {
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#FFA726")); // สีส้มสำหรับโครงสร้างทั่วไป (app, src, main, gradle)
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#26A69A"));
             }
 
         } else {
             holder.imgArrow.setVisibility(View.GONE);
             String fileNameLower = name.toLowerCase();
 
-            // 🖼️ ตรวจสอบไฟล์รูปภาพเพื่อดึงพรีวิวภาพจริงมาโชว์
-            if (fileNameLower.endsWith(".png") || fileNameLower.endsWith(".jpg") || 
-                fileNameLower.endsWith(".jpeg") || fileNameLower.endsWith(".webp") || fileNameLower.endsWith(".gif")) {
-                
+            if (fileNameLower.endsWith(".png") || fileNameLower.endsWith(".jpg")
+                    || fileNameLower.endsWith(".jpeg") || fileNameLower.endsWith(".webp")
+                    || fileNameLower.endsWith(".gif")) {
+
                 holder.imgFileIcon.setImageURI(android.net.Uri.fromFile(file));
                 holder.imgFileIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                
+
             } else if ("androidmanifest.xml".equalsIgnoreCase(name)) {
-                holder.imgFileIcon.setImageResource(R.drawable.ic_myicon06); 
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#E91E63")); // ไอคอนระบบสีชมพูเข้มสำหรับ Manifest
-                
-            } else if (fileNameLower.endsWith(".java")) {
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("C", Color.parseColor("#00E5FF"), true));
+                holder.imgFileIcon.setImageResource(R.drawable.ic_myicon06);
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#7AA2F7"));
+
+            } else if (fileNameLower.endsWith(".java") || fileNameLower.endsWith(".kt")) {
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("J", Color.parseColor("#7AA2F7"), true));
 
             } else if (fileNameLower.endsWith(".xml")) {
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("X³", Color.parseColor("#FF6D00"), false));
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("X", Color.parseColor("#26A69A"), true));
 
-            } else if (fileNameLower.endsWith(".gradle")) {
-                // 🛠️ เพิ่มไอคอนเฉพาะตัวให้ไฟล์สคริปต์บิวด์ Gradle
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("GR", Color.parseColor("#607D8B"), false));
+            } else if (fileNameLower.endsWith(".gradle") || fileNameLower.endsWith(".kts")) {
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("G", Color.parseColor("#9ECE6A"), true));
 
             } else if (fileNameLower.endsWith(".properties")) {
-                // ⚙️ เพิ่มไอคอนเฉพาะตัวให้ไฟล์ตั้งค่าคอนฟิกโปรเจกต์
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("PR", Color.parseColor("#455A64"), false));
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("P", Color.parseColor("#BB9AF7"), true));
 
             } else if (fileNameLower.endsWith(".yml") || fileNameLower.endsWith(".yaml")) {
-                // ⚙️ เพิ่มไอคอนสี Indigo/น้ำเงินเข้ม พร้อมตัวย่อ YM สำหรับไฟล์จำพวก YAML คอนฟิกโครงสร้าง
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("YM", Color.parseColor("#3F51B5"), false));
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("Y", Color.parseColor("#E0AF68"), true));
 
             } else if ("gradlew".equalsIgnoreCase(name) || "gradlew.bat".equalsIgnoreCase(name)) {
-                // 🚀 อัปเกรดใหม่: เพิ่มไอคอนสีเทาอมฟ้าส้ม พร้อมตัวย่อ SH คล้ายไฟล์ Script รันคำสั่งสำหรับ gradlew
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("SH", Color.parseColor("#546E7A"), false));
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("S", Color.parseColor("#565F89"), true));
+
+            } else if (fileNameLower.endsWith(".md")) {
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("M", Color.parseColor("#7AA2F7"), true));
 
             } else if (fileNameLower.endsWith(".jar")) {
-                // 📦 เพิ่มไอคอนวงกลมสีน้ำตาลแดงให้ไฟล์ Library สำเร็จรูป (.jar)
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("J", Color.parseColor("#FF5722"), true));
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("J", Color.parseColor("#FF9E64"), true));
 
-            } else if (fileNameLower.endsWith(".zip") || fileNameLower.endsWith(".rar") || fileNameLower.endsWith(".7z")) {
-                holder.imgFileIcon.setImageDrawable(new TextIconDrawable("ZIP", Color.parseColor("#7C4DFF"), false));
+            } else if (fileNameLower.endsWith(".zip") || fileNameLower.endsWith(".rar")
+                    || fileNameLower.endsWith(".7z")) {
+                holder.imgFileIcon.setImageDrawable(
+                        new TextIconDrawable("Z", Color.parseColor("#BB9AF7"), true));
 
             } else if (name.startsWith(".")) {
                 holder.imgFileIcon.setImageResource(R.drawable.ic_myicon06);
-                holder.imgFileIcon.setColorFilter(Color.parseColor("#90A4AE")); // สีเทาอ่อนสำหรับไฟล์ซ่อนอย่าง .gitignore
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#565F89"));
             } else {
                 holder.imgFileIcon.setImageResource(R.drawable.ic_myicon06);
+                holder.imgFileIcon.setColorFilter(Color.parseColor("#A9B1D6"));
             }
         }
 
-        // 🌟 3. ระบบไฮไลต์และสีของชื่อไฟล์เนื้อหา (Selection State)
+        // ชื่อไฟล์ + selection
         if (position == selectedPosition) {
-            holder.itemRoot.setBackgroundColor(Color.parseColor("#243144")); 
-            holder.tvFileName.setTypeface(null, Typeface.BOLD); 
-            holder.tvFileName.setTextColor(Color.parseColor("#00E5FF")); 
+            holder.itemRoot.setBackgroundColor(Color.parseColor("#1F2335"));
+            holder.tvFileName.setTypeface(null, Typeface.BOLD);
+            holder.tvFileName.setTextColor(Color.parseColor("#7DCFFF"));
         } else {
-            holder.itemRoot.setBackgroundColor(Color.TRANSPARENT); 
-            holder.tvFileName.setTypeface(null, Typeface.NORMAL); 
-            
+            holder.itemRoot.setBackgroundColor(Color.TRANSPARENT);
+            holder.tvFileName.setTypeface(null, Typeface.NORMAL);
+
             if (node.isDirectory) {
-                if (isInJavaPackage) {
-                    holder.tvFileName.setTextColor(Color.parseColor("#4FC3F7")); // อักษรสีฟ้าพาสเทลสำหรับแพ็กเกจโค้ด
-                } else if (isInResourceFolder || "res".equalsIgnoreCase(name)) {
-                    // 🟢 ปรับปรุงเพิ่มเติม: ทำให้ตัวอักษรของโฟลเดอร์ย่อยในระบบ res สว่างเด่นขึ้นตามสีไอคอน
-                    holder.tvFileName.setTextColor(Color.parseColor("#A5D6A7"));
-                } else if (name.startsWith(".")) {
-                    // 📁 อัปเกรดใหม่: ดักจับโฟลเดอร์ซ่อน (เช่น .github) ให้ตัวอักษรเป็นสีเทาเข้มหลบสายตาอย่างเหมาะสม
-                    holder.tvFileName.setTextColor(Color.parseColor("#78909C"));
+                if (name.startsWith(".")) {
+                    holder.tvFileName.setTextColor(Color.parseColor("#565F89"));
                 } else {
-                    holder.tvFileName.setTextColor(Color.parseColor("#ECEFF1")); // อักษรสีขาวสว่างสำหรับโฟลเดอร์อื่น
+                    holder.tvFileName.setTextColor(Color.parseColor("#C0CAF5"));
                 }
             } else {
-                String fileNameLower = name.toLowerCase();
                 if (name.startsWith(".")) {
-                    holder.tvFileName.setTextColor(Color.parseColor("#78909C")); // ไฟล์ซ่อนระบบ (เช่น .gitignore) ปรับสีเทาเข้มเพื่อหลบสายตา
-                } else if (fileNameLower.endsWith(".java") || fileNameLower.endsWith(".xml") || 
-                    fileNameLower.endsWith(".gradle") || fileNameLower.endsWith(".properties") ||
-                    fileNameLower.endsWith(".yml") || fileNameLower.endsWith(".yaml") ||
-                    "gradlew".equalsIgnoreCase(name)) { // ไฮไลต์ชื่อตัวอักษรของไฟล์รันระบบ gradlew ให้เด่นขึ้นมาด้วย
-                    holder.tvFileName.setTextColor(Color.parseColor("#FFFFFF")); // ไฟล์ทำงานหลักและคอนฟิกหลักให้ออกสีขาวชัดเจน
+                    holder.tvFileName.setTextColor(Color.parseColor("#565F89"));
                 } else {
-                    holder.tvFileName.setTextColor(Color.parseColor("#90A4AE")); // ไฟล์ย่อยอื่นๆ ให้ออกสีเทาจางลงมา
+                    holder.tvFileName.setTextColor(Color.parseColor("#A9B1D6"));
                 }
             }
         }
@@ -238,7 +230,7 @@ public class FileTreeAdapter extends BaseAdapter {
             int height = getBounds().height();
 
             if (width <= 0 || height <= 0) {
-                width = height = 48; 
+                width = height = 48;
             }
 
             paint.setColor(backgroundColor);
@@ -246,12 +238,11 @@ public class FileTreeAdapter extends BaseAdapter {
                 canvas.drawCircle(width / 2f, height / 2f, Math.min(width, height) / 2f, paint);
             } else {
                 RectF rect = new RectF(0, 0, width, height);
-                float cornerRadius = 6f * width / 24f; 
+                float cornerRadius = 6f * width / 24f;
                 canvas.drawRoundRect(rect, cornerRadius, cornerRadius, paint);
             }
 
             paint.setColor(Color.WHITE);
-            // ปรับขนาดฟอนต์อัตโนมัติตามความยาวตัวอักษรเพื่อไม่ให้ล้นกรอบไอคอน
             if (text.length() > 2) {
                 paint.setTextSize(height * 0.38f);
             } else if (text.length() == 2) {
@@ -259,9 +250,9 @@ public class FileTreeAdapter extends BaseAdapter {
             } else {
                 paint.setTextSize(height * 0.50f);
             }
-            
+
             paint.setTextAlign(Paint.Align.CENTER);
-            paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD)); 
+            paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
             paint.setFakeBoldText(true);
 
             float yPos = (height / 2f) - ((paint.descent() + paint.ascent()) / 2f);
