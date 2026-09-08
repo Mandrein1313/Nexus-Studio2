@@ -138,11 +138,11 @@ protected void onCreate(Bundle savedInstanceState) {
     getWindow().setStatusBarColor(barColor);
     getWindow().setNavigationBarColor(barColor);
 
-    // ไอคอน status bar สีอ่อน (เหมาะพื้นมืด)
+    // ไอคอน status bar สีขาว (เหมาะพื้นมืด)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         View decor = getWindow().getDecorView();
         int flags = decor.getSystemUiVisibility();
-        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; // เอา light ออก = ไอคอนสีขาว
+        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
         decor.setSystemUiVisibility(flags);
     }
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -171,7 +171,7 @@ protected void onCreate(Bundle savedInstanceState) {
         );
     }
 
-    // ถ้ามี Toolbar ในหน้านี้ ให้สูงรวม status bar ด้วย (กันทับ)
+    // Toolbar สูงรวม status bar (กันทับ)
     View toolbar = findViewById(R.id.toolbar);
     if (toolbar != null) {
         int statusBarHeight = 0;
