@@ -140,16 +140,7 @@ protected void onCreate(Bundle savedInstanceState) {
 
     // ไอคอน status bar สีขาว (เหมาะพื้นมืด)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-        View decor = getWindow().getDecorView();
-        int flags = decor.getSystemUiVisibility();
-        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        decor.setSystemUiVisibility(flags);
-    }
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        View decor = getWindow().getDecorView();
-        int flags = decor.getSystemUiVisibility();
-        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
-        decor.setSystemUiVisibility(flags);
+        getWindow().getDecorView().setSystemUiVisibility(0);
     }
 
     setContentView(R.layout.activity_main);
