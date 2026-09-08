@@ -162,28 +162,6 @@ protected void onCreate(Bundle savedInstanceState) {
         );
     }
 
-    // Toolbar สูงรวม status bar (กันทับ)
-    View toolbar = findViewById(R.id.toolbar);
-    if (toolbar != null) {
-        int statusBarHeight = 0;
-        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resId > 0) {
-            statusBarHeight = getResources().getDimensionPixelSize(resId);
-        }
-        toolbar.setPadding(
-                toolbar.getPaddingLeft(),
-                statusBarHeight,
-                toolbar.getPaddingRight(),
-                toolbar.getPaddingBottom()
-        );
-        ViewGroup.LayoutParams lp = toolbar.getLayoutParams();
-        if (lp != null) {
-            int actionBarH = (int) (56 * getResources().getDisplayMetrics().density);
-            lp.height = actionBarH + statusBarHeight;
-            toolbar.setLayoutParams(lp);
-        }
-    }
-
     buildEnvManager = new BuildEnvironmentManager(this);
 
     initViews();
