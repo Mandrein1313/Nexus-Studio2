@@ -1332,7 +1332,7 @@ private void toggleXmlPreview() {
     }
 }
 
-    private void startCloudBuildPipeline() {
+    public void startCloudBuildPipeline() {
         if (currentProject == null) {
             showToast("กรุณาเปิดโปรเจกต์ก่อนทำการรัน");
             return;

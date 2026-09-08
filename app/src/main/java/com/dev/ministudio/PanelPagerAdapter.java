@@ -20,7 +20,6 @@ import java.util.regex.Pattern;
 
 public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.ViewHolder> {
 
-    // โครงสร้างคลาสสำหรับจำลองเก็บข้อความ Log แต่ละบรรทัดแยกตามกลุ่มประเภท
     public static class LogLine {
         public String text;
         public int color;
@@ -34,15 +33,14 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
     }
 
     private final Context context;
-    private View tvConsoleView; 
-    private WebView webAiOutput; 
+    private View tvConsoleView;
+    private WebView webAiOutput;
     private EditText etAiInput;
     private ImageView btnSendAi;
-    private ImageView btnStopAiVoice; 
+    private ImageView btnStopAiVoice;
 
-    // ตัวแปรเพิ่มใหม่สำหรับคุมแผงควบคุมและคัดกรอง Log
     private final List<LogLine> allLogLines = new ArrayList<>();
-    private int currentFilterType = 0; // 0=All, 1=Errors, 2=Warnings
+    private int currentFilterType = 0;
     private boolean isAutoScroll = true;
     private ScrollView consoleScrollView;
 
@@ -65,37 +63,43 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         if (getItemViewType(position) == 0) {
-            // 🛠️ ผูกตำแหน่งหน้าแผงคอนโซลเวอร์ชันอัจฉริยะชุดใหม่
             tvConsoleView = holder.itemView.findViewById(R.id.tvConsole);
             consoleScrollView = holder.itemView.findViewById(R.id.consoleScrollView);
-            
+
+            View btnRun = holder.itemView.findViewById(R.id.btnConsoleRun);
+            View btnStop = holder.itemView.findViewById(R.id.btnConsoleStop);
+            View btnClear = holder.itemView.findViewById(R.id.btnConsoleClear);
+            TextView tvMeta = holder.itemView.findViewById(R.id.tvConsoleMeta);
+
+            // ของเก่า (ถ้า layout ไม่มี จะได้ null — ไม่พัง)
             TabLayout filterTabs = holder.itemView.findViewById(R.id.consoleFilterTabs);
-            ImageView btnClear = holder.itemView.findViewById(R.id.btnConsoleClear);
             ImageView btnScroll = holder.itemView.findViewById(R.id.btnConsoleScrollDown);
 
-            // อนุญาตให้ TextView ในคอนโซลตรวจจับและกดคลิกลิงก์ Error ได้
             if (tvConsoleView != null) {
-                ((TextView) tvConsoleView).setMovementMethod(android.text.method.LinkMovementMethod.getInstance());
+                ((TextView) tvConsoleView).setMovementMethod(
+                        android.text.method.LinkMovementMethod.getInstance());
             }
 
-            // ตั้งค่าหัวแท็บสลับดูตามสถานะล็อก
-            if (filterTabs != null && filterTabs.getTabCount() == 0) {
-                filterTabs.addTab(filterTabs.newTab().setText("All Logs"));
-                filterTabs.addTab(filterTabs.newTab().setText("Errors"));
-                filterTabs.addTab(filterTabs.newTab().setText("Warnings"));
-                
-                filterTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                    @Override
-                    public void onTabSelected(TabLayout.Tab tab) {
-                        currentFilterType = tab.getPosition();
-                        renderFilteredLogs(); // รีเฟรชวาดกระดานใหม่เมื่อเปลี่ยนแท็บ
+            // ===== Run =====
+            if (btnRun != null) {
+                btnRun.setOnClickListener(v -> {
+                    if (context instanceof MainActivity) {
+                        ((MainActivity) context).startCloudBuildPipeline();
                     }
-                    @Override public void onTabUnselected(TabLayout.Tab tab) {}
-                    @Override public void onTabReselected(TabLayout.Tab tab) {}
                 });
             }
 
-            // ปุ่มล้าง Log ในถังเก็บทั้งหมด
+            // ===== Stop =====
+            if (btnStop != null) {
+                btnStop.setOnClickListener(v -> {
+                    if (tvConsoleView != null) {
+                        ((TextView) tvConsoleView).append("\n⏹ Stopped by user\n");
+                    }
+                    Toast.makeText(context, "หยุดแล้ว", Toast.LENGTH_SHORT).show();
+                });
+            }
+
+            // ===== Clear =====
             if (btnClear != null) {
                 btnClear.setOnClickListener(v -> {
                     allLogLines.clear();
@@ -105,35 +109,68 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
                 });
             }
 
-            // ปุ่มสลับโหมดล็อกหน้าจอเลื่อนลงล่างอัตโนมัติ (Auto Scroll)
+            // ===== Meta =====
+            if (tvMeta != null) {
+                String meta = "minSdk 24 · java";
+                if (context instanceof MainActivity) {
+                    MainActivity act = (MainActivity) context;
+                    if (act.getCurrentProject() != null) {
+                        meta = act.getCurrentProject().getProjectName() + " · " + meta;
+                    }
+                }
+                tvMeta.setText(meta);
+            }
+
+            // filter tabs (ถ้ามีใน layout)
+            if (filterTabs != null && filterTabs.getTabCount() == 0) {
+                filterTabs.addTab(filterTabs.newTab().setText("All Logs"));
+                filterTabs.addTab(filterTabs.newTab().setText("Errors"));
+                filterTabs.addTab(filterTabs.newTab().setText("Warnings"));
+
+                filterTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
+                    @Override
+                    public void onTabSelected(TabLayout.Tab tab) {
+                        currentFilterType = tab.getPosition();
+                        renderFilteredLogs();
+                    }
+                    @Override public void onTabUnselected(TabLayout.Tab tab) {}
+                    @Override public void onTabReselected(TabLayout.Tab tab) {}
+                });
+            }
+
+            // auto-scroll button (ถ้ามี)
             if (btnScroll != null) {
-                // เซ็ตสีปุ่มเริ่มต้นตามสถานะจริง
-                btnScroll.setColorFilter(isAutoScroll ? android.graphics.Color.parseColor("#007ACC") : android.graphics.Color.parseColor("#8C8C8C"));
+                btnScroll.setColorFilter(isAutoScroll
+                        ? android.graphics.Color.parseColor("#007ACC")
+                        : android.graphics.Color.parseColor("#8C8C8C"));
                 btnScroll.setOnClickListener(v -> {
                     isAutoScroll = !isAutoScroll;
-                    btnScroll.setColorFilter(isAutoScroll ? android.graphics.Color.parseColor("#007ACC") : android.graphics.Color.parseColor("#8C8C8C"));
+                    btnScroll.setColorFilter(isAutoScroll
+                            ? android.graphics.Color.parseColor("#007ACC")
+                            : android.graphics.Color.parseColor("#8C8C8C"));
                     if (isAutoScroll && consoleScrollView != null) {
-                        consoleScrollView.post(() -> consoleScrollView.fullScroll(View.FOCUS_DOWN));
+                        consoleScrollView.post(() ->
+                                consoleScrollView.fullScroll(View.FOCUS_DOWN));
                     }
                 });
             }
 
         } else {
-            // 🤖 ส่วนควบคุมหน้าต่างถาม-ตอบบอท AI ตัวเดิมของน้าทั้งหมด (คงเดิมไว้ 100%)
-            webAiOutput = holder.itemView.findViewById(R.id.webAiOutput); 
+            webAiOutput = holder.itemView.findViewById(R.id.webAiOutput);
             etAiInput = holder.itemView.findViewById(R.id.etAiInput);
             btnSendAi = holder.itemView.findViewById(R.id.btnSendAi);
-            btnStopAiVoice = holder.itemView.findViewById(R.id.btnStopAiVoice); 
-            
+            btnStopAiVoice = holder.itemView.findViewById(R.id.btnStopAiVoice);
+
             if (webAiOutput != null) {
                 webAiOutput.getSettings().setJavaScriptEnabled(true);
                 webAiOutput.getSettings().setDomStorageEnabled(true);
                 webAiOutput.setBackgroundColor(android.graphics.Color.parseColor("#1E1E1E"));
-                
+
                 if (context instanceof MainActivity) {
                     MainActivity mainActivity = (MainActivity) context;
                     webAiOutput.removeJavascriptInterface("AndroidBridge");
-                    webAiOutput.addJavascriptInterface(mainActivity.new WebAppInterface(context), "AndroidBridge");
+                    webAiOutput.addJavascriptInterface(
+                            mainActivity.new WebAppInterface(context), "AndroidBridge");
                 }
             }
 
@@ -163,95 +200,82 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
         }
     }
 
-    /**
-     * ➕ [เพิ่มใหม่]: ฟังก์ชันพ่นประวัติ Log ทั้งถังออกทางหน้าจอตามแท็บกรองที่กดเลือกไว้
-     */
     private void renderFilteredLogs() {
         if (tvConsoleView == null) return;
         TextView tv = (TextView) tvConsoleView;
-        tv.setText(""); // ล้างจอเพื่อพ่นเรียงบรรทัดใหม่
-        
+        tv.setText("");
+
         for (LogLine line : allLogLines) {
-            if (currentFilterType == 0 || 
-               (currentFilterType == 1 && line.type == 1) || 
-               (currentFilterType == 2 && line.type == 2)) {
-                
-                // ใช้ตัวแปลงเพื่อทำลิงก์ให้โค้ดส่วนที่ Error สามารถกดคลิกได้
+            if (currentFilterType == 0
+                    || (currentFilterType == 1 && line.type == 1)
+                    || (currentFilterType == 2 && line.type == 2)) {
                 tv.append(makeErrorClickable(line.text, line.color));
             }
         }
-        
+
         if (isAutoScroll && consoleScrollView != null) {
             consoleScrollView.post(() -> consoleScrollView.fullScroll(View.FOCUS_DOWN));
         }
     }
 
-    /**
-     * ➕ [เพิ่มใหม่]: ฟังก์ชันปลายทางรับสัญญาณยิงพ่น Log สดๆ ผ่านระบบคัดกรอง
-     */
     public void postNewLog(String text, int color) {
         String lower = text.toLowerCase();
-        int type = 0; // ทั่วไป
+        int type = 0;
         if (lower.contains("error:") || lower.contains("failed")) {
-            type = 1; // แยกเข้าถังกลุ่ม Error
+            type = 1;
         } else if (lower.contains("warning:") || lower.contains("deprecated")) {
-            type = 2; // แยกเข้าถังกลุ่ม Warning
+            type = 2;
         }
 
         allLogLines.add(new LogLine(text, color, type));
 
-        // ถ้าข้อความที่เด้งเข้ามา ตรงกับหน้าแท็บปัจจุบันที่ผู้ใช้กำลังส่องดูอยู่ ให้ปริ้นสดออกจอเลย
         if (currentFilterType == 0 || currentFilterType == type) {
-            if (tvConsoleView != null) {
-                final int finalType = type;
-                if (context instanceof MainActivity) {
-                    ((MainActivity) context).runOnUiThread(() -> {
-                        TextView tv = (TextView) tvConsoleView;
-                        tv.append(makeErrorClickable(text, color));
-                        
-                        if (isAutoScroll && consoleScrollView != null) {
-                            consoleScrollView.post(() -> consoleScrollView.fullScroll(View.FOCUS_DOWN));
-                        }
-                    });
-                }
+            if (tvConsoleView != null && context instanceof MainActivity) {
+                ((MainActivity) context).runOnUiThread(() -> {
+                    TextView tv = (TextView) tvConsoleView;
+                    tv.append(makeErrorClickable(text, color));
+                    if (isAutoScroll && consoleScrollView != null) {
+                        consoleScrollView.post(() ->
+                                consoleScrollView.fullScroll(View.FOCUS_DOWN));
+                    }
+                });
             }
         }
     }
 
-    /**
-     * ➕ [เพิ่มใหม่]: ฟังก์ชัน Regex คัดกรองตรวจจับท่อนรหัสพังเพื่อทำเป็นลิงก์วาร์ปกลับไปหน้าบอร์ดเขียนโค้ด
-     */
     private android.text.SpannableString makeErrorClickable(String text, int defaultColor) {
         android.text.SpannableString spannable = new android.text.SpannableString(text);
-        spannable.setSpan(new android.text.style.ForegroundColorSpan(defaultColor), 0, text.length(), android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannable.setSpan(
+                new android.text.style.ForegroundColorSpan(defaultColor),
+                0, text.length(),
+                android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
 
-        // ดักจับรูปแบบพวก ชื่อไฟล์.java:เลขบรรทัด (เช่น MainActivity.java:45)
         Pattern pattern = Pattern.compile("([a-zA-Z0-9_]+\\.java):(\\d+)");
         Matcher matcher = pattern.matcher(text);
 
         while (matcher.find()) {
             final String fileName = matcher.group(1);
             final int lineNumber = Integer.parseInt(matcher.group(2));
-
             int start = matcher.start();
             int end = matcher.end();
-            
-            // ปรับสีท่อนลิงก์เป็นสีฟ้าสะดุดตาพร้อมขีดเส้นใต้
-            spannable.setSpan(new android.text.style.UnderlineSpan(), start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            spannable.setSpan(new android.text.style.ForegroundColorSpan(android.graphics.Color.parseColor("#4FC3F7")), start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-            
-            // ลอจิกการกดคลิกเมื่อผู้ใช้นิ้วจิ้มตรงข้อความ Error ลิงก์
+
+            spannable.setSpan(new android.text.style.UnderlineSpan(),
+                    start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            spannable.setSpan(
+                    new android.text.style.ForegroundColorSpan(
+                            android.graphics.Color.parseColor("#4FC3F7")),
+                    start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
             spannable.setSpan(new android.text.style.ClickableSpan() {
                 @Override
                 public void onClick(@NonNull View widget) {
                     if (context instanceof MainActivity) {
-                        // สะกิดฟังก์ชันหลักใน MainActivity ให้สั่งทำงานวาร์ปหน้าแก้ไขไปหาจุดพังทันที!
                         ((MainActivity) context).jumpToErrorLocation(fileName, lineNumber);
                     }
                 }
+
                 @Override
                 public void updateDrawState(@NonNull android.text.TextPaint ds) {
-                    // ป้องกันไม่ให้แอนดรอยด์บังคับลิงก์เปลี่ยนเป็นสีน้ำเงินของระบบ
                     ds.setUnderlineText(true);
                 }
             }, start, end, android.text.Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
@@ -259,18 +283,35 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
         return spannable;
     }
 
-        @Override
-      public int getItemCount() { return 1; } // เฉพาะ Console // เฉพาะ Console() { return 2; }
+    @Override
+    public int getItemCount() {
+        return 1; // เฉพาะ Console (ถ้ามี AI tab ด้วย ใช้ return 2;)
+    }
 
     @Override
-    public int getItemViewType(int position) { return position; }
+    public int getItemViewType(int position) {
+        return position;
+    }
 
-    public android.widget.TextView getTvConsole() { return (android.widget.TextView) tvConsoleView; }
-    public WebView getWebAiOutput() { return webAiOutput; }
-    public android.widget.TextView getTvAiOutput() { return null; }
-    public EditText getEtAiInput() { return etAiInput; }
+    public android.widget.TextView getTvConsole() {
+        return (android.widget.TextView) tvConsoleView;
+    }
+
+    public WebView getWebAiOutput() {
+        return webAiOutput;
+    }
+
+    public android.widget.TextView getTvAiOutput() {
+        return null;
+    }
+
+    public EditText getEtAiInput() {
+        return etAiInput;
+    }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        public ViewHolder(@NonNull View itemView, int viewType) { super(itemView); }
+        public ViewHolder(@NonNull View itemView, int viewType) {
+            super(itemView);
+        }
     }
 }
