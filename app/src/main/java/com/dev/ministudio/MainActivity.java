@@ -129,22 +129,32 @@ public class MainActivity extends AppCompatActivity {
 protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
+    // ===== สี status bar / nav bar ให้ตรง Toolbar =====
+    final int barColor = Color.parseColor("#1A1B26");
 
+    WindowCompat.setDecorFitsSystemWindows(getWindow(), true);
     getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
     getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
-
-    int barColor = android.graphics.Color.parseColor("#1A1B26");
     getWindow().setStatusBarColor(barColor);
     getWindow().setNavigationBarColor(barColor);
 
-    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+    // ไอคอน status bar สีอ่อน (เหมาะพื้นมืด)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
         View decor = getWindow().getDecorView();
-        decor.setSystemUiVisibility(0);
+        int flags = decor.getSystemUiVisibility();
+        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR; // เอา light ออก = ไอคอนสีขาว
+        decor.setSystemUiVisibility(flags);
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        View decor = getWindow().getDecorView();
+        int flags = decor.getSystemUiVisibility();
+        flags &= \~View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+        decor.setSystemUiVisibility(flags);
     }
 
     setContentView(R.layout.activity_main);
 
+    // ดันเนื้อหา drawer ไม่ให้ทับ status bar
     View drawerContent = findViewById(R.id.drawer_content);
     if (drawerContent != null) {
         int statusBarHeight = 0;
@@ -159,6 +169,28 @@ protected void onCreate(Bundle savedInstanceState) {
                 drawerContent.getPaddingRight(),
                 drawerContent.getPaddingBottom()
         );
+    }
+
+    // ถ้ามี Toolbar ในหน้านี้ ให้สูงรวม status bar ด้วย (กันทับ)
+    View toolbar = findViewById(R.id.toolbar);
+    if (toolbar != null) {
+        int statusBarHeight = 0;
+        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resId > 0) {
+            statusBarHeight = getResources().getDimensionPixelSize(resId);
+        }
+        toolbar.setPadding(
+                toolbar.getPaddingLeft(),
+                statusBarHeight,
+                toolbar.getPaddingRight(),
+                toolbar.getPaddingBottom()
+        );
+        ViewGroup.LayoutParams lp = toolbar.getLayoutParams();
+        if (lp != null) {
+            int actionBarH = (int) (56 * getResources().getDisplayMetrics().density);
+            lp.height = actionBarH + statusBarHeight;
+            toolbar.setLayoutParams(lp);
+        }
     }
 
     buildEnvManager = new BuildEnvironmentManager(this);
