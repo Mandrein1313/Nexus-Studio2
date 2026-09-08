@@ -81,7 +81,7 @@ public final class ExitConfirmDialog {
         btnExit.setTextColor(Color.parseColor("#1A1B26"));
         btnExit.setTextSize(14);
         GradientDrawable exitBg = new GradientDrawable();
-        exitBg.setColor(Color.parseColor("#FF00BEF7"));
+        exitBg.setColor(Color.parseColor("#FF00897B"));
         exitBg.setCornerRadius(10 * d);
         btnExit.setBackground(exitBg);
         LinearLayout.LayoutParams exitLp = new LinearLayout.LayoutParams(0, (int) (44 * d), 1f);
