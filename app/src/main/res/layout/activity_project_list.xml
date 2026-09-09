@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0D0E14"
+    android:fitsSystemWindows="false">
+
+    <!-- ===== เนื้อหาหลัก ===== -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#0D0E14">
+
+        <!-- Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#1A1B26"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:title="Projects"
+            app:titleTextColor="#C0CAF5"
+            app:navigationIcon="@drawable/ic_menu_24"
+            app:contentInsetStartWithNavigation="0dp" />
+
+        <!-- เนื้อหา -->
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:fillViewport="true"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="28dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="MOBILE ANDROID IDE"
+                    android:textColor="#565F89"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.12" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Nexus Studio"
+                    android:textColor="#C0CAF5"
+                    android:textSize="26sp"
+                    android:textStyle="bold"
+                    android:paddingTop="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="เลือก Template สร้างโปรเจกต์ Gradle แล้วแก้โค้ด Java/Kotlin และ XML ได้จากมือถือ"
+                    android:textColor="#565F89"
+                    android:textSize="13sp"
+                    android:lineSpacingExtra="2dp"
+                    android:paddingTop="6dp"
+                    android:paddingBottom="14dp" />
+
+                <TextView
+                    android:id="@+id/btnNewProject"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+  New project"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:paddingStart="18dp"
+                    android:paddingEnd="18dp"
+                    android:paddingTop="11dp"
+                    android:paddingBottom="11dp"
+                    android:background="@drawable/bg_btn_new_project" />
+
+                <!-- รายการโปรเจกต์ -->
+                <LinearLayout
+                    android:id="@+id/projectRowsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp" />
+
+                <!-- Empty state -->
+                <LinearLayout
+                    android:id="@+id/emptyState"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:padding="24dp"
+                    android:background="@drawable/bg_empty_card"
+                    android:layout_marginTop="16dp"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="No projects yet"
+                        android:textColor="#C0CAF5"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="เริ่มจาก No Activity, Empty, Basic, Drawer, Bottom navigation หรือ Tabbed"
+                        android:textColor="#565F89"
+                        android:textSize="13sp"
+                        android:gravity="center"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="16dp" />
+
+                    <TextView
+                        android:id="@+id/btnChooseTemplate"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Choose a template"
+                        android:textColor="#FFFFFF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:paddingStart="18dp"
+                        android:paddingEnd="18dp"
+                        android:paddingTop="10dp"
+                        android:paddingBottom="10dp"
+                        android:background="@drawable/bg_btn_new_project" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+    </LinearLayout>
+
+    <!-- ===== Drawer เมนูซ้าย ===== -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#1A1B26"
+        android:fitsSystemWindows="true"
+        app:itemTextColor="#A9B1D6"
+        app:itemIconTint="#7AA2F7"
+        app:itemRippleColor="#292E42"
+        app:menu="@menu/menu_drawer_project" />
+
+</androidx.drawerlayout.widget.DrawerLayout>

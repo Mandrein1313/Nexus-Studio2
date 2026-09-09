@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:gravity="center_horizontal">
+
+    <!-- Preview card -->
+    <FrameLayout
+        android:id="@+id/previewCard"
+        android:layout_width="140dp"
+        android:layout_height="160dp"
+        android:background="@drawable/bg_template_card">
+
+        <!-- แถบสีด้านบนจำลอง status bar -->
+        <View
+            android:id="@+id/previewTopBar"
+            android:layout_width="match_parent"
+            android:layout_height="28dp"
+            android:background="#00897B" />
+
+        <!-- เนื้อหา preview (จะเปลี่ยนตาม template) -->
+        <LinearLayout
+            android:id="@+id/previewContent"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="28dp"
+            android:orientation="vertical"
+            android:padding="10dp"
+            android:background="#FFFFFF" />
+
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/tvTemplateName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:textColor="#A9B1D6"
+        android:textSize="13sp"
+        android:gravity="center" />
+</LinearLayout>
