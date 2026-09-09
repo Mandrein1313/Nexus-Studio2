@@ -27,9 +27,9 @@ public class BuildTaskManager {
         void onBuildFinished(boolean success, String apkPath);
     }
 
-    private final Context context; 
+    private final Context context;
     private final String projectPath;
-    private final BuildEnvironmentManager envManager; 
+    private final BuildEnvironmentManager envManager;
     private final BuildListener listener;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
 
@@ -37,6 +37,7 @@ public class BuildTaskManager {
     private final int COLOR_SUCCESS = Color.parseColor("#81C784");
     private final int COLOR_ERROR = Color.parseColor("#FF8A80");
     private final int COLOR_WARNING = Color.parseColor("#FFB74D");
+    private final int COLOR_TASK = Color.parseColor("#A9B1D6");
 
     private BuildSummaryAnalyzer externalAnalyzer;
 
@@ -51,19 +52,23 @@ public class BuildTaskManager {
         this.externalAnalyzer = analyzer;
     }
 
-    public void startCloudBuild(final String githubToken, final String repoUrl, final String projectName, final String packageName) {
+    public void startCloudBuild(final String githubToken, final String repoUrl,
+                                final String projectName, final String packageName) {
         postUiEvent(BuildListener::onBuildStarted);
-        
+
         new Thread(() -> {
             try {
-                sendProgress("🚀 เริ่มต้นกระบวนการเชื่อมต่อและเตรียมซอร์สโค้ด...\n", COLOR_INFO);
+                sendProgress("$ ./gradlew :app:assembleDebug\n", COLOR_INFO);
+                sendProgress("Starting Gradle Daemon...\n", COLOR_INFO);
+
                 File projectDir = new File(projectPath);
-                
+
                 createGitIgnore(projectDir);
                 envManager.prepareGitHubWorkflow(projectPath, projectName, packageName, "Java", 21);
 
-                sendProgress("📦 กำลังทำการส่งซอร์สโค้ดขึ้นสู่ GitHub Remote...\n", COLOR_INFO);
-                
+                sendProgress("> Configure project :app\n", COLOR_TASK);
+                sendProgress("Uploading sources to GitHub remote...\n", COLOR_INFO);
+
                 Git git;
                 File gitDir = new File(projectDir, ".git");
                 if (!gitDir.exists()) {
@@ -73,13 +78,15 @@ public class BuildTaskManager {
                 }
 
                 git.add().addFilepattern(".").call();
-                git.commit().setMessage("Cloud Build Request - " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).call();
+                git.commit().setMessage("Cloud Build Request - "
+                        + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())).call();
 
                 StoredConfig config = git.getRepository().getConfig();
                 config.setString("remote", "origin", "url", repoUrl);
                 config.save();
 
-                UsernamePasswordCredentialsProvider credentials = new UsernamePasswordCredentialsProvider(githubToken, "");
+                UsernamePasswordCredentialsProvider credentials =
+                        new UsernamePasswordCredentialsProvider(githubToken, "");
                 PushCommand push = git.push();
                 push.setCredentialsProvider(credentials);
                 push.setForce(true);
@@ -87,13 +94,16 @@ public class BuildTaskManager {
                 push.add("master").add("main");
                 push.call();
 
-                sendProgress("✅ อัปโหลดซอร์สโค้ดสำเร็จเรียบร้อย! กำลังปลุกระบบคลาวด์บิวด์...\n", COLOR_SUCCESS);
-                
+                sendProgress("> Task :app:preBuild\n", COLOR_TASK);
+                sendProgress("> Task :app:preDebugBuild\n", COLOR_TASK);
+                sendProgress("Sources uploaded. Waiting for cloud build...\n", COLOR_SUCCESS);
+
                 String repoPath = repoUrl.replace("https://github.com/", "").replace(".git", "");
                 monitorWorkflowRuns(githubToken, repoPath, projectName);
 
             } catch (Exception e) {
-                sendProgress("❌ เกิดข้อผิดพลาดในระบบการนำส่งข้อมูล: " + e.getMessage() + "\n", COLOR_ERROR);
+                sendProgress("\nBUILD FAILED\n", COLOR_ERROR);
+                sendProgress("Execution failed: " + e.getMessage() + "\n", COLOR_ERROR);
                 postUiEvent(l -> l.onBuildFinished(false, null));
             }
         }).start();
@@ -102,7 +112,8 @@ public class BuildTaskManager {
     private void monitorWorkflowRuns(String token, String repoPath, String projectName) {
         try {
             String urlStr = "https://api.github.com/repos/" + repoPath + "/actions/runs?per_page=1";
-            sendProgress("⏳ กำลังรอคิวและจัดเตรียมตู้คอนเทนเนอร์บิวด์บนคลาวด์...\n", COLOR_INFO);
+            sendProgress("> Task :app:mergeDebugResources\n", COLOR_TASK);
+            sendProgress("Waiting for GitHub Actions runner...\n", COLOR_INFO);
 
             long startTime = System.currentTimeMillis();
             long runId = -1;
@@ -126,29 +137,45 @@ public class BuildTaskManager {
                         JSONObject latestRun = runs.getJSONObject(0);
                         runId = latestRun.getLong("id");
                         String status = latestRun.getString("status");
-                        
-                        sendProgress("⚡ สถานะไปป์ไลน์ล่าสุด: [" + status.toUpperCase() + "]\n", COLOR_WARNING);
-                        
+
+                        sendProgress("Pipeline status: [" + status.toUpperCase() + "]\n", COLOR_WARNING);
+
                         if ("completed".equals(status)) {
                             String conclusion = latestRun.getString("conclusion");
                             if ("success".equals(conclusion)) {
-                                sendProgress("🎉 บิวด์สำเร็จสมบูรณ์! กำลังนำเข้าไฟล์ APK ลงสู่ตัวเครื่อง...\n", COLOR_SUCCESS);
-                                
-                                DownloadTaskManager downloadTask = new DownloadTaskManager(context, projectName, new DownloadTaskManager.DownloadListener() {
-                                    @Override
-                                    public void onDownloadLog(String text, int color) {
-                                        sendProgress(text + "\n", color);
-                                    }
+                                sendProgress("> Task :app:processDebugManifest\n", COLOR_TASK);
+                                sendProgress("> Task :app:compileDebugJavaWithJavac\n", COLOR_TASK);
+                                sendProgress("> Task :app:dexBuilderDebug\n", COLOR_TASK);
+                                sendProgress("> Task :app:packageDebug\n", COLOR_TASK);
+                                sendProgress("> Task :app:assembleDebug\n", COLOR_TASK);
+                                sendProgress("\nBUILD SUCCESSFUL\n", COLOR_SUCCESS);
+                                sendProgress("Fetching APK artifact...\n", COLOR_SUCCESS);
 
-                                    @Override
-                                    public void onDownloadFinished(boolean success, File apkFile) {
-                                        postUiEvent(l -> l.onBuildFinished(success, apkFile != null ? apkFile.getAbsolutePath() : null));
-                                    }
-                                });
+                                DownloadTaskManager downloadTask = new DownloadTaskManager(
+                                        context, projectName,
+                                        new DownloadTaskManager.DownloadListener() {
+                                            @Override
+                                            public void onDownloadLog(String text, int color) {
+                                                sendProgress(text + "\n", color);
+                                            }
+
+                                            @Override
+                                            public void onDownloadFinished(boolean success, File apkFile) {
+                                                if (success && apkFile != null) {
+                                                    sendProgress(
+                                                            "APK → " + apkFile.getAbsolutePath() + "\n",
+                                                            COLOR_INFO);
+                                                }
+                                                postUiEvent(l -> l.onBuildFinished(
+                                                        success,
+                                                        apkFile != null ? apkFile.getAbsolutePath() : null));
+                                            }
+                                        });
                                 downloadTask.startFetchAndInstall();
-                                
+
                             } else {
-                                sendProgress("❌ บิวด์ล้มเหลว! กำลังสืบค้นพิกัดข้อผิดพลาดจาก Log บนเซิร์ฟเวอร์...\n", COLOR_ERROR);
+                                sendProgress("\nBUILD FAILED\n", COLOR_ERROR);
+                                sendProgress("Fetching error logs from server...\n", COLOR_ERROR);
                                 fetchAndParseBuildLogs(token, repoPath, runId);
                                 postUiEvent(l -> l.onBuildFinished(false, null));
                             }
@@ -157,10 +184,12 @@ public class BuildTaskManager {
                     }
                 }
             }
-            sendProgress("⏳ หมดเวลาเชื่อมต่อเซิร์ฟเวอร์ (Timeout)\n", COLOR_ERROR);
+            sendProgress("\nBUILD FAILED\n", COLOR_ERROR);
+            sendProgress("Timeout waiting for GitHub Actions (3 min)\n", COLOR_ERROR);
             postUiEvent(l -> l.onBuildFinished(false, null));
         } catch (Exception e) {
-            sendProgress("❌ มีปัญหาในการเชื่อมต่อระบบตรวจสอบสถานะ: " + e.getMessage() + "\n", COLOR_ERROR);
+            sendProgress("\nBUILD FAILED\n", COLOR_ERROR);
+            sendProgress("Status check error: " + e.getMessage() + "\n", COLOR_ERROR);
             postUiEvent(l -> l.onBuildFinished(false, null));
         }
     }
@@ -170,7 +199,7 @@ public class BuildTaskManager {
             String jobsUrl = "https://api.github.com/repos/" + repoPath + "/actions/runs/" + runId + "/jobs";
             HttpURLConnection conn = (HttpURLConnection) new URL(jobsUrl).openConnection();
             conn.setRequestProperty("Authorization", "Bearer " + token);
-            
+
             if (conn.getResponseCode() == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
@@ -189,30 +218,27 @@ public class BuildTaskManager {
                     logConn.setRequestProperty("Authorization", "Bearer " + token);
 
                     if (logConn.getResponseCode() == 200) {
-                        BufferedReader logReader = new BufferedReader(new InputStreamReader(logConn.getInputStream()));
-                        final BuildSummaryAnalyzer analyzer = (externalAnalyzer != null) ? externalAnalyzer : new BuildSummaryAnalyzer();
-                        
+                        BufferedReader logReader =
+                                new BufferedReader(new InputStreamReader(logConn.getInputStream()));
+                        final BuildSummaryAnalyzer analyzer =
+                                (externalAnalyzer != null) ? externalAnalyzer : new BuildSummaryAnalyzer();
+
                         while ((line = logReader.readLine()) != null) {
                             boolean shouldStop = analyzer.analyzeLine(line, COLOR_WARNING, (txt, col) -> {
-                                // เก็บบันทึกข้อมูลภายในเงียบ ๆ
+                                // keep internal only
                             });
-                            if (shouldStop) {
-                                break;
-                            }
+                            if (shouldStop) break;
                         }
                         logReader.close();
 
-                        // พ่นรายงานสรุปผลการวิเคราะห์สีสวยงามรอบเดียว
                         analyzer.printSummary((txt, col) -> sendProgress(txt, col));
-                        
-                        // 🛑 ยกเลิกการเรียก triggerAiErrorFixerPipeline() อัตโนมัติที่จุดนี้
                         return;
                     }
                 }
             }
-            sendProgress("❌ ไม่สามารถดึงประวัติการทำงานจากเซิร์ฟเวอร์ GitHub มาประมวลผลได้\n", COLOR_ERROR);
+            sendProgress("Could not fetch build logs from GitHub\n", COLOR_ERROR);
         } catch (Exception e) {
-            sendProgress("❌ เกิดปัญหาการแปลงโครงสร้าง Log: " + e.getMessage() + "\n", COLOR_ERROR);
+            sendProgress("Log parse error: " + e.getMessage() + "\n", COLOR_ERROR);
         }
     }
 
@@ -223,7 +249,8 @@ public class BuildTaskManager {
             try (FileOutputStream fos = new FileOutputStream(gitIgnoreFile)) {
                 fos.write(content.getBytes("UTF-8"));
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void sendProgress(final String text, final int color) {
@@ -233,7 +260,7 @@ public class BuildTaskManager {
     private interface UiEventAction {
         void run(BuildListener listener);
     }
-    
+
     private void postUiEvent(final UiEventAction action) {
         uiHandler.post(() -> action.run(listener));
     }

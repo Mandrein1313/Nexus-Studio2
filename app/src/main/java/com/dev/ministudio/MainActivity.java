@@ -1316,137 +1316,158 @@ private void toggleXmlPreview() {
     }
 }
 
-    public void startCloudBuildPipeline() {
-        if (currentProject == null) {
-            showToast("กรุณาเปิดโปรเจกต์ก่อนทำการรัน");
-            return;
+   public void startCloudBuildPipeline() {
+    if (currentProject == null) {
+        showToast("Please open a project first");
+        return;
+    }
+
+    SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
+    String username = prefs.getString("username", "");
+    String savedToken = prefs.getString("token", "");
+
+    if (username.isEmpty() || savedToken.isEmpty()) {
+        showToast("GitHub account not set. Configure it in settings first.");
+        return;
+    }
+
+    saveFile();
+    showFullPanelDialog(0); // หรือ showConsolePanel() ถ้าใช้แผงล่างแล้ว
+
+    final BuildSummaryAnalyzer analyzer = new BuildSummaryAnalyzer();
+    analyzer.clearErrors();
+
+    final boolean[] isPipelineStopped = {false};
+    final String projectName = currentProject.getProjectName();
+
+    new Handler(Looper.getMainLooper()).postDelayed(() -> {
+        // ผูก tvConsole จากแผงล่าง (หรือ dialog ถ้ายังใช้)
+        if (tvConsole == null && consolePanel != null) {
+            tvConsole = consolePanel.findViewById(R.id.tvConsole);
         }
-
-        SharedPreferences prefs = getSharedPreferences("GitHubPrefs", Context.MODE_PRIVATE);
-        String username = prefs.getString("username", "");
-        String savedToken = prefs.getString("token", "");
-
-        if (username.isEmpty() || savedToken.isEmpty()) {
-            showToast("❌ ยังไม่ได้ตั้งค่าบัญชี GitHub กรุณาตั้งค่าที่ปุ่มฟันเพืองหน้าแรกก่อนครับ");
-            return;
+        if (dialogPanelAdapter != null) {
+            TextView fromAdapter = dialogPanelAdapter.getTvConsole();
+            if (fromAdapter != null) tvConsole = fromAdapter;
         }
+        if (tvConsole != null) tvConsole.setText("");
 
-        saveFile(); 
-        showFullPanelDialog(0);
+        // Header สไตล์ IDE
+        appendLog("Nexus Studio  ·  Gradle 8.2  ·  " + projectName + "\n", TerminalColor.LOG_GRAY);
+        appendLog("Ready. Press Run to assembleDebug.\n\n", TerminalColor.TEXT_WHITE);
 
-        final BuildSummaryAnalyzer analyzer = new BuildSummaryAnalyzer();
-        analyzer.clearErrors(); 
-        
-        final boolean[] isPipelineStopped = {false};
-
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (dialogPanelAdapter != null) {
-                tvConsole = dialogPanelAdapter.getTvConsole();
-            }
-            if (tvConsole != null) tvConsole.setText("");
-
-            appendLog("##[group]เริ่มขั้นตอนการตั้งค่า & ตรวจสอบโปรเจกต์เบื้องต้น", TerminalColor.LOG_GRAY); 
-            appendLog("🔔 [กำลังจัดเตรียมสภาพแวดล้อม...] เริ่มทำงานระบบ Workflow สำเร็จ", TerminalColor.LOG_WHITE);
-            appendLog("📂 ที่อยู่โปรเจกต์ (Root Path): " + currentProject.getRootPath(), TerminalColor.BORDER_BLUE); 
-            appendLog("##[endgroup]", TerminalColor.LOG_GRAY);
-
-            BuildTaskManager buildTask = new BuildTaskManager(
-                MainActivity.this, 
+        BuildTaskManager buildTask = new BuildTaskManager(
+                MainActivity.this,
                 currentProject.getRootPath(),
                 new BuildTaskManager.BuildListener() {
-                    
-                    @Override 
-                    public void onLogAppend(final String text, final int color) { 
+
+                    @Override
+                    public void onLogAppend(final String text, final int color) {
                         if (isPipelineStopped[0]) return;
 
                         String lowerText = text != null ? text.toLowerCase() : "";
-                        boolean isErrorLine = lowerText.contains("error:") || lowerText.contains("failed:") || color == Color.RED;
+                        boolean isErrorLine = lowerText.contains("error:")
+                                || lowerText.contains("failed:")
+                                || lowerText.contains("build failed")
+                                || color == Color.RED;
 
-                        boolean hasFailed = analyzer.analyzeLine(text, color, new BuildSummaryAnalyzer.LogOutputListener() {
-                            @Override
-                            public void onAppendLog(String logText, int logColor) {
-                                appendLog(logText, logColor); 
-                            }
-                        });
+                        boolean hasFailed = analyzer.analyzeLine(text, color,
+                                new BuildSummaryAnalyzer.LogOutputListener() {
+                                    @Override
+                                    public void onAppendLog(String logText, int logColor) {
+                                        appendLog(logText, logColor);
+                                    }
+                                });
 
                         if (hasFailed) {
                             isPipelineStopped[0] = true;
-                            showToast("💥 บิวด์ล้มเหลว! (Exit Code 1)");
+                            showToast("Build failed (Exit Code 1)");
                             return;
                         }
 
+                        // ข้ามข้อความภายในบางแบบ
                         if (text != null && (text.startsWith("📍") || text.startsWith("💬"))) {
                             return;
                         }
 
-                        if (color == Color.GREEN || lowerText.contains("success")) {
-                            appendLog(text, TerminalColor.SUGGEST_GREEN); 
+                        if (color == Color.GREEN
+                                || lowerText.contains("success")
+                                || lowerText.contains("build successful")) {
+                            appendLog(text, TerminalColor.SUGGEST_GREEN);
                         } else if (color == Color.YELLOW) {
-                            appendLog(text, TerminalColor.TARGET_YELLOW); 
+                            appendLog(text, TerminalColor.TARGET_YELLOW);
                         } else if (color == Color.CYAN) {
-                            appendLog(text, TerminalColor.LOG_CYAN); 
+                            appendLog(text, TerminalColor.LOG_CYAN);
                         } else if (isErrorLine) {
-                            appendLog(text, TerminalColor.DETAIL_RED); 
+                            appendLog(text, TerminalColor.DETAIL_RED);
                         } else {
-                            appendLog(text, TerminalColor.TEXT_WHITE); 
+                            appendLog(text, TerminalColor.TEXT_WHITE);
                         }
                     }
 
-                    @Override 
-                    public void onBuildStarted() { 
-                        showToast("กำลังเริ่มระบบ Cloud Workflow... 🐙"); 
-                        appendLog("\n##[group]🚀 เรียกทำงานคำสั่ง: compileJava", TerminalColor.LOG_GRAY);
-                        appendLog("🔄 กำลังเชื่อมต่อไปยังเซิร์ฟเวอร์คอมไพล์บนคลาวด์...", TerminalColor.LOG_WHITE);
+                    @Override
+                    public void onBuildStarted() {
+                        showToast("Cloud build started...");
+                        // ข้อความหลักมาจาก BuildTaskManager แล้ว ไม่ต้องซ้ำ
                     }
 
                     @Override
                     public void onBuildFinished(boolean success, String apkPath) {
                         if (isPipelineStopped[0]) return;
 
-                        appendLog("##[endgroup]", TerminalColor.LOG_GRAY);
-
                         if (success) {
-                            showToast("บิวด์แอปสำเร็จ! 🎉");
-                            appendLog("\n##[group]🎉 งานหลังบิวด์: จัดเก็บไฟล์ระบบแอปพลิเคชัน", TerminalColor.SUGGEST_GREEN);
-                            appendLog("✅ สำเร็จ: กระบวนการทำงานทั้งหมดเสร็จสิ้นโดยไม่มีข้อผิดพลาด", TerminalColor.SUGGEST_GREEN);
-                            appendLog("📦 ไฟล์แอปที่ได้ (APK): " + (apkPath != null ? apkPath : "outputs/apk/debug/app-debug.apk"), TerminalColor.LOG_CYAN);
-                            appendLog("##[endgroup]", TerminalColor.SUGGEST_GREEN);
-                            
-                            runOnUiThread(() -> { if (rvErrorPanel != null) rvErrorPanel.setVisibility(View.GONE); });
-                        } else {
-                            showToast("กระบวนการทำงานล้มเหลว");
-                            appendLog("\n##[error] การทำงานหยุดช้าลงเนื่องจากการปิดตัวของระบบบิวด์อย่างกะทันหัน", TerminalColor.ERROR_RED);
-                            
-                            if (analyzer != null) {
-                                analyzer.printSummary(new BuildSummaryAnalyzer.LogOutputListener() {
-                                    @Override
-                                    public void onAppendLog(String text, int color) {
-                                        if (dialogPanelAdapter != null) tvConsole = dialogPanelAdapter.getTvConsole();
-                                        appendColoredText(tvConsole, text, color);
-                                    }
-                                });
+                            showToast("Build successful");
+                            appendLog("12 actionable tasks: executed on cloud\n",
+                                    TerminalColor.TEXT_WHITE);
+                            if (apkPath != null && !apkPath.isEmpty()) {
+                                appendLog("APK → " + apkPath + "\n", TerminalColor.LOG_CYAN);
+                            } else {
+                                appendLog("APK → app/build/outputs/apk/debug/"
+                                                + projectName + "-debug.apk\n",
+                                        TerminalColor.LOG_CYAN);
                             }
-                            
+                            runOnUiThread(() -> {
+                                if (rvErrorPanel != null) {
+                                    rvErrorPanel.setVisibility(View.GONE);
+                                }
+                            });
+                        } else {
+                            showToast("Build failed");
+                            appendLog("\nBUILD FAILED\n", TerminalColor.ERROR_RED);
+
+                            if (analyzer != null) {
+                                analyzer.printSummary(
+                                        new BuildSummaryAnalyzer.LogOutputListener() {
+                                            @Override
+                                            public void onAppendLog(String text, int color) {
+                                                if (tvConsole == null && consolePanel != null) {
+                                                    tvConsole = consolePanel.findViewById(R.id.tvConsole);
+                                                }
+                                                if (dialogPanelAdapter != null) {
+                                                    TextView t = dialogPanelAdapter.getTvConsole();
+                                                    if (t != null) tvConsole = t;
+                                                }
+                                                appendColoredText(tvConsole, text, color);
+                                            }
+                                        });
+                            }
+
                             final ParsedError err = analyzer.getLastError();
                             if (err != null) {
-                                runOnUiThread(() -> {
-                                    executeJumpToError(err);
-                                });
+                                runOnUiThread(() -> executeJumpToError(err));
                             }
                         }
                     }
                 }
-            );
+        );
 
-            String githubToken = savedToken; 
-            String projectName = currentProject.getProjectName();
-            String repoUrl = "https://github.com/" + username + "/" + projectName + ".git";
-            String packageName = "com.dev.ministudio"; 
+        String githubToken = savedToken;
+        String repoUrl = "https://github.com/" + username + "/" + projectName + ".git";
+        String packageName = "com.dev.ministudio";
 
-            buildTask.startCloudBuild(githubToken, repoUrl, projectName, packageName); 
-            buildTask.setAnalyzer(analyzer);
-        }, 300);
-    }
+        buildTask.startCloudBuild(githubToken, repoUrl, projectName, packageName);
+        buildTask.setAnalyzer(analyzer);
+    }, 300);
+}
 
     private void executeJumpToError(final ParsedError errorItem) {
         if (errorItem == null || currentProject == null) return;
