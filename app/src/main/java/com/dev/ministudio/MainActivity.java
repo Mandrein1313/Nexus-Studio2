@@ -123,8 +123,8 @@ public class MainActivity extends AppCompatActivity {
    // เพิ่มตัวแปรนี้ในส่วนขอบเขตของคลาส MainActivity
     private LogcatReader logcatReader;
     private View consolePanel;
-    private TextView tvConsole;
-    private ScrollView consoleScrollView;
+private ScrollView consoleScrollView;
+// tvConsole มีอยู่แล้วก็ใช้ตัวเดิมได้
     
 
    
