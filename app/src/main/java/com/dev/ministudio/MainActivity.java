@@ -124,8 +124,7 @@ public class MainActivity extends AppCompatActivity {
     private LogcatReader logcatReader;
     private View consolePanel;
 private ScrollView consoleScrollView;
-private XmlPreviewManager.DeviceMode currentPreviewDevice =
-        XmlPreviewManager.DeviceMode.PHONE;
+private XmlPreviewManager.DeviceMode currentPreviewDevice = XmlPreviewManager.DeviceMode.PHONE;
 
 // tvConsole มีอยู่แล้วก็ใช้ตัวเดิมได้
     
@@ -1319,15 +1318,15 @@ private void showLayoutPreview(String xml) {
             0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
     title.setLayoutParams(titleLp);
 
-    TextView btnPhone = makeDeviceChip("Phone", currentPreviewDevice == DeviceMode.PHONE);
-    TextView btnTablet = makeDeviceChip("Tablet", currentPreviewDevice == DeviceMode.TABLET);
+    TextView btnPhone = makeDeviceChip("Phone", currentPreviewDevice == XmlPreviewManager.DeviceMode.PHONE);
+    TextView btnTablet = makeDeviceChip("Tablet", currentPreviewDevice == XmlPreviewManager.DeviceMode.TABLET);
 
     btnPhone.setOnClickListener(v -> {
-        currentPreviewDevice = DeviceMode.PHONE;
+        currentPreviewDevice = XmlPreviewManager.DeviceMode.PHONE;
         showLayoutPreview(xml); // refresh
     });
     btnTablet.setOnClickListener(v -> {
-        currentPreviewDevice = DeviceMode.TABLET;
+        currentPreviewDevice = XmlPreviewManager.DeviceMode.TABLET;
         showLayoutPreview(xml);
     });
 
@@ -1341,7 +1340,7 @@ private void showLayoutPreview(String xml) {
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
 
     XmlPreviewManager mgr = new XmlPreviewManager(this);
-    mgr.setDeviceMode(currentPreviewDevice == DeviceMode.TABLET
+    mgr.setDeviceMode(currentPreviewDevice == XmlPreviewManager.DeviceMode.TABLET
             ? XmlPreviewManager.DeviceMode.TABLET
             : XmlPreviewManager.DeviceMode.PHONE);
     View generated = mgr.inflateXml(xml);
