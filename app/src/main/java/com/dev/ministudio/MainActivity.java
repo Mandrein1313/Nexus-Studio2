@@ -124,6 +124,9 @@ public class MainActivity extends AppCompatActivity {
     private LogcatReader logcatReader;
     private View consolePanel;
 private ScrollView consoleScrollView;
+private XmlPreviewManager.DeviceMode currentPreviewDevice =
+        XmlPreviewManager.DeviceMode.PHONE;
+
 // tvConsole มีอยู่แล้วก็ใช้ตัวเดิมได้
     
 
@@ -355,17 +358,12 @@ private void setupLogic() {
         };
         autoSaveHandler.postDelayed(saveRunnable, 1500);
 
-        // รีเฟรช Preview อัตโนมัติตอนแก้ XML
+        // รีเฟรช Preview อัตโนมัติตอนแก้ XML (เรียกใช้ showLayoutPreview เพื่อไม่ให้ปุ่ม Phone/Tablet หาย)
         if (isPreviewMode && previewContainer != null && codeEditor != null) {
             previewContainer.postDelayed(() -> {
                 if (!isPreviewMode || previewContainer == null || codeEditor == null) return;
                 try {
-                    View v = new XmlPreviewManager(MainActivity.this)
-                            .inflateXml(codeEditor.getText().toString());
-                    previewContainer.removeAllViews();
-                    previewContainer.addView(v, new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT));
+                    showLayoutPreview(codeEditor.getText().toString());
                 } catch (Exception ignored) {
                 }
             }, 600);
@@ -1268,53 +1266,129 @@ private void toggleXmlPreview() {
         return;
     }
 
-    // เข้าโหมด Preview
     if (!isPreviewMode) {
         File current = currentProject != null ? currentProject.getCurrentOpenFile() : null;
         String name = current != null ? current.getName().toLowerCase() : "";
 
-        // แนะนำเฉพาะ layout XML
         if (!name.endsWith(".xml")) {
             showToast("⚠️ Preview รองรับไฟล์ .xml (layout)");
-            // ยังอนุญาตต่อได้ถ้าอยาก — หรือ return;
-        }
-        if (name.equals("colors.xml") || name.equals("strings.xml")
-                || name.equals("styles.xml") || name.equals("themes.xml")
-                || name.contains("AndroidManifest")) {
-            showToast("⚠️ ไฟล์นี้ไม่ใช่ layout — ผลพรีวิวอาจว่าง");
         }
 
         try {
             String xml = codeEditor.getText().toString();
-            XmlPreviewManager previewManager = new XmlPreviewManager(this);
-            View generated = previewManager.inflateXml(xml);
-
-            previewContainer.removeAllViews();
-            previewContainer.addView(generated,
-                    new FrameLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.MATCH_PARENT));
-
-            codeEditor.setVisibility(View.GONE);
-            if (emptyStateView != null) emptyStateView.setVisibility(View.GONE);
-            previewContainer.setVisibility(View.VISIBLE);
-
+            showLayoutPreview(xml);
             isPreviewMode = true;
-            showToast("✨ Preview layout");
+            showToast("✨ Layout Preview");
             invalidateOptionsMenu();
         } catch (Exception e) {
             showToast("❌ " + e.getMessage());
         }
     } else {
-        // กลับไปแก้โค้ด
         previewContainer.setVisibility(View.GONE);
         previewContainer.removeAllViews();
         codeEditor.setVisibility(View.VISIBLE);
         isPreviewMode = false;
-        invalidateOptionsMenu();
         showToast("✏️ กลับสู่โหมดแก้ไข");
+        invalidateOptionsMenu();
     }
 }
+
+private void showLayoutPreview(String xml) {
+    previewContainer.removeAllViews();
+
+    // ===== แถบหัว Preview + สลับ Phone/Tablet =====
+    LinearLayout root = new LinearLayout(this);
+    root.setOrientation(LinearLayout.VERTICAL);
+    root.setLayoutParams(new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT));
+    root.setBackgroundColor(Color.parseColor("#12131A"));
+
+    LinearLayout header = new LinearLayout(this);
+    header.setOrientation(LinearLayout.HORIZONTAL);
+    header.setGravity(Gravity.CENTER_VERTICAL);
+    header.setPadding(dp(12), dp(10), dp(12), dp(10));
+    header.setBackgroundColor(Color.parseColor("#1A1B26"));
+
+    TextView title = new TextView(this);
+    title.setText("Layout Preview");
+    title.setTextColor(Color.parseColor("#C0CAF5"));
+    title.setTextSize(14);
+    title.setTypeface(null, Typeface.BOLD);
+    LinearLayout.LayoutParams titleLp = new LinearLayout.LayoutParams(
+            0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+    title.setLayoutParams(titleLp);
+
+    TextView btnPhone = makeDeviceChip("Phone", currentPreviewDevice == DeviceMode.PHONE);
+    TextView btnTablet = makeDeviceChip("Tablet", currentPreviewDevice == DeviceMode.TABLET);
+
+    btnPhone.setOnClickListener(v -> {
+        currentPreviewDevice = DeviceMode.PHONE;
+        showLayoutPreview(xml); // refresh
+    });
+    btnTablet.setOnClickListener(v -> {
+        currentPreviewDevice = DeviceMode.TABLET;
+        showLayoutPreview(xml);
+    });
+
+    header.addView(title);
+    header.addView(btnPhone);
+    header.addView(btnTablet);
+
+    // ===== เนื้อหา Preview =====
+    FrameLayout body = new FrameLayout(this);
+    body.setLayoutParams(new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
+    XmlPreviewManager mgr = new XmlPreviewManager(this);
+    mgr.setDeviceMode(currentPreviewDevice == DeviceMode.TABLET
+            ? XmlPreviewManager.DeviceMode.TABLET
+            : XmlPreviewManager.DeviceMode.PHONE);
+    View generated = mgr.inflateXml(xml);
+    body.addView(generated, new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT));
+
+    root.addView(header);
+    root.addView(body);
+
+    previewContainer.addView(root);
+    codeEditor.setVisibility(View.GONE);
+    if (emptyStateView != null) emptyStateView.setVisibility(View.GONE);
+    previewContainer.setVisibility(View.VISIBLE);
+}
+
+private TextView makeDeviceChip(String label, boolean selected) {
+    TextView tv = new TextView(this);
+    tv.setText(label);
+    tv.setTextSize(12);
+    tv.setPadding(dp(14), dp(6), dp(14), dp(6));
+    tv.setGravity(Gravity.CENTER);
+
+    GradientDrawable bg = new GradientDrawable();
+    bg.setCornerRadius(dp(16));
+    if (selected) {
+        bg.setColor(Color.parseColor("#7AA2F7"));
+        tv.setTextColor(Color.WHITE);
+    } else {
+        bg.setColor(Color.parseColor("#24283B"));
+        tv.setTextColor(Color.parseColor("#A9B1D6"));
+    }
+    tv.setBackground(bg);
+
+    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT);
+    lp.setMarginStart(dp(6));
+    tv.setLayoutParams(lp);
+    return tv;
+}
+
+private int dp(int v) {
+    return Math.round(v * getResources().getDisplayMetrics().density);
+}
+
+//
 
     public void startCloudBuildPipeline() {
         if (currentProject == null) {
@@ -2815,5 +2889,7 @@ private void appendConsoleLine(String text, int color) {
             appendColoredText(tvConsole, text, color);
         }
     });
-}
  }
+
+
+  }

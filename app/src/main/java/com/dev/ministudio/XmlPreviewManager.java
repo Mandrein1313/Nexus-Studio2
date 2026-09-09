@@ -42,18 +42,24 @@ import java.util.Stack;
 
 /**
  * XML Layout Preview สำหรับ Nexus Studio
- * - แก้ stack pop ให้ถูกต้อง
- * - รองรับ widget / attribute ที่ใช้บ่อย
- * - ห่อด้วย ScrollView + พื้นหลังพรีวิว
+ * - รองรับ Device Frame (Phone/Tablet)
+ * - รองรับ Widget พื้นฐานรวมถึง Material Components
  */
 public class XmlPreviewManager {
 
+    public enum DeviceMode { PHONE, TABLET }
+
     private final Context context;
     private final float density;
+    private DeviceMode deviceMode = DeviceMode.PHONE;
 
     public XmlPreviewManager(Context context) {
         this.context = context;
         this.density = context.getResources().getDisplayMetrics().density;
+    }
+
+    public void setDeviceMode(DeviceMode mode) {
+        this.deviceMode = mode != null ? mode : DeviceMode.PHONE;
     }
 
     public View inflateXml(String xmlContent) {
@@ -62,7 +68,6 @@ public class XmlPreviewManager {
         }
 
         try {
-            // ตัด declaration / comments ง่าย ๆ
             String cleaned = xmlContent
                     .replaceAll("(?s)<!--.*?-->", "")
                     .trim();
@@ -74,7 +79,6 @@ public class XmlPreviewManager {
 
             View rootView = null;
             Stack<ViewGroup> parentStack = new Stack<>();
-            // จำว่า start tag นี้เป็น ViewGroup หรือไม่ (ใช้ตอน END_TAG)
             Stack<Boolean> isGroupStack = new Stack<>();
 
             int eventType = parser.getEventType();
@@ -82,7 +86,6 @@ public class XmlPreviewManager {
                 if (eventType == XmlPullParser.START_TAG) {
                     String tagName = getCleanTagName(parser.getName());
 
-                    // ข้าม include / merge แบบง่าย
                     if ("include".equals(tagName) || "merge".equals(tagName)
                             || "resources".equals(tagName) || "color".equals(tagName)
                             || "string".equals(tagName) || "dimen".equals(tagName)
@@ -101,15 +104,14 @@ public class XmlPreviewManager {
                         } else if (!parentStack.isEmpty()) {
                             try {
                                 parentStack.peek().addView(view);
-                            } catch (Exception e) {
-                                // parent รับลูกไม่ได้ — ข้าม
+                            } catch (Exception ignored) {
                             }
                         }
 
                         boolean isGroup = view instanceof ViewGroup
                                 && !(view instanceof AdapterViewSafe)
                                 && !(view instanceof Toolbar);
-                        // ListView/RecyclerView ไม่ควรเป็น parent ของ XML children แบบปกติ
+
                         if (view instanceof ListView || view instanceof RecyclerView
                                 || view instanceof Spinner || view instanceof SeekBar) {
                             isGroup = false;
@@ -136,7 +138,7 @@ public class XmlPreviewManager {
                 return createErrorView("ไม่พบ Root View\n(รองรับเฉพาะ layout XML)");
             }
 
-            return wrapPreview(rootView);
+            return wrapInDeviceFrame(rootView);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -144,50 +146,70 @@ public class XmlPreviewManager {
         }
     }
 
-    /** ห่อด้วยพื้นหลัง + scroll กันล้นจอ */
-    private View wrapPreview(View content) {
-        FrameLayout frame = new FrameLayout(context);
-        frame.setLayoutParams(new ViewGroup.LayoutParams(
+    /** กรอบเครื่อง + ขนาดตาม Phone / Tablet */
+    private View wrapInDeviceFrame(View content) {
+        FrameLayout outer = new FrameLayout(context);
+        outer.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
-        frame.setBackgroundColor(Color.parseColor("#2A2B3D"));
-        frame.setPadding(dp(12), dp(12), dp(12), dp(12));
+        outer.setBackgroundColor(Color.parseColor("#12131A"));
+        outer.setPadding(dp(16), dp(16), dp(16), dp(16));
 
-        // การ์ดสีขาวจำลองหน้าจอแอป
         FrameLayout device = new FrameLayout(context);
-        GradientDrawable card = new GradientDrawable();
-        card.setColor(Color.WHITE);
-        card.setCornerRadius(dp(12));
-        device.setBackground(card);
-        device.setElevation(dp(4));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(Color.WHITE);
+        bg.setCornerRadius(dp(20));
+        bg.setStroke(dp(2), Color.parseColor("#3B4261"));
+        device.setBackground(bg);
+        device.setElevation(dp(8));
+        device.setClipToOutline(true);
+
+        int widthDp;
+        int heightDp;
+        if (deviceMode == DeviceMode.TABLET) {
+            widthDp = 480;
+            heightDp = 320;
+        } else {
+            widthDp = 320;
+            heightDp = 560;
+        }
 
         FrameLayout.LayoutParams deviceLp = new FrameLayout.LayoutParams(
+                dp(widthDp), dp(heightDp));
+        deviceLp.gravity = Gravity.CENTER;
+        device.setLayoutParams(deviceLp);
+
+        // Status bar จำลอง
+        View statusBar = new View(context);
+        statusBar.setBackgroundColor(Color.parseColor("#000000"));
+        FrameLayout.LayoutParams sbLp = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(24));
+        sbLp.gravity = Gravity.TOP;
+        device.addView(statusBar, sbLp);
+
+        // Frame สำหรับบรรจุ layout
+        FrameLayout contentHolder = new FrameLayout(context);
+        FrameLayout.LayoutParams chLp = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT);
-        device.setLayoutParams(deviceLp);
-        device.setPadding(dp(4), dp(4), dp(4), dp(4));
+        chLp.topMargin = dp(24);
+        contentHolder.setLayoutParams(chLp);
 
-        ScrollView scroll = new ScrollView(context);
-        scroll.setFillViewport(true);
-        scroll.setLayoutParams(new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT));
-
-        // บังคับ root ให้กว้างเต็ม
         ViewGroup.LayoutParams contentLp = content.getLayoutParams();
         if (contentLp == null) {
             contentLp = new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT);
+                    ViewGroup.LayoutParams.MATCH_PARENT);
         } else {
             contentLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            contentLp.height = ViewGroup.LayoutParams.MATCH_PARENT;
         }
         content.setLayoutParams(contentLp);
+        contentHolder.addView(content);
 
-        scroll.addView(content);
-        device.addView(scroll);
-        frame.addView(device);
-        return frame;
+        device.addView(contentHolder);
+        outer.addView(device);
+        return outer;
     }
 
     private View createErrorView(String message) {
@@ -198,7 +220,7 @@ public class XmlPreviewManager {
         box.setBackgroundColor(Color.parseColor("#1A1B26"));
 
         TextView title = new TextView(context);
-        title.setText("Preview");
+        title.setText("Preview Error");
         title.setTextColor(Color.parseColor("#BB9AF7"));
         title.setTextSize(16);
         title.setTypeface(null, Typeface.BOLD);
@@ -234,6 +256,13 @@ public class XmlPreviewManager {
                 return new RelativeLayout(context);
             case "ConstraintLayout":
                 return new ConstraintLayout(context);
+            case "DrawerLayout": {
+                FrameLayout drawer = new FrameLayout(context);
+                drawer.setBackgroundColor(Color.WHITE);
+                return drawer;
+            }
+            case "CoordinatorLayout":
+                return new FrameLayout(context);
             case "ScrollView": {
                 ScrollView sv = new ScrollView(context);
                 sv.setFillViewport(true);
@@ -255,6 +284,44 @@ public class XmlPreviewManager {
                 tb.setBackgroundColor(Color.parseColor("#6200EE"));
                 tb.setTitleTextColor(Color.WHITE);
                 return tb;
+            }
+            case "AppBarLayout":
+            case "CollapsingToolbarLayout": {
+                LinearLayout appBar = new LinearLayout(context);
+                appBar.setOrientation(LinearLayout.VERTICAL);
+                appBar.setBackgroundColor(Color.parseColor("#00897B"));
+                return appBar;
+            }
+            case "FloatingActionButton":
+            case "ExtendedFloatingActionButton": {
+                TextView fab = new TextView(context);
+                fab.setText("+");
+                fab.setTextSize(22);
+                fab.setTextColor(Color.WHITE);
+                fab.setGravity(Gravity.CENTER);
+                GradientDrawable fabBg = new GradientDrawable();
+                fabBg.setShape(GradientDrawable.OVAL);
+                fabBg.setColor(Color.parseColor("#FF9800"));
+                fab.setBackground(fabBg);
+                int size = dp(56);
+                fab.setLayoutParams(new ViewGroup.LayoutParams(size, size));
+                return fab;
+            }
+            case "NavigationView": {
+                LinearLayout nav = new LinearLayout(context);
+                nav.setOrientation(LinearLayout.VERTICAL);
+                nav.setBackgroundColor(Color.parseColor("#F5F5F5"));
+                nav.setPadding(dp(8), dp(16), dp(8), dp(8));
+                String[] items = {"Home", "Gallery", "Slideshow"};
+                for (String item : items) {
+                    TextView tv = new TextView(context);
+                    tv.setText("●  " + item);
+                    tv.setTextColor(Color.parseColor("#424242"));
+                    tv.setTextSize(14);
+                    tv.setPadding(dp(16), dp(12), dp(16), dp(12));
+                    nav.addView(tv);
+                }
+                return nav;
             }
             case "RecyclerView": {
                 RecyclerView rv = new RecyclerView(context);
@@ -318,7 +385,6 @@ public class XmlPreviewManager {
                 return placeholder;
             }
             default: {
-                // widget ไม่รู้จัก → กล่องแทน
                 TextView unknown = new TextView(context);
                 unknown.setText("[" + tagName + "]");
                 unknown.setTextColor(Color.parseColor("#888888"));
@@ -330,7 +396,6 @@ public class XmlPreviewManager {
         }
     }
 
-    // marker ว่าง — ไม่ได้ใช้จริง แค่กัน compile ถ้ามี reference เก่า
     private interface AdapterViewSafe {}
 
     private void applyAttributes(View view, XmlPullParser parser) {
@@ -351,9 +416,6 @@ public class XmlPreviewManager {
                     break;
                 case "layout_height":
                     params.height = parseLayoutSize(value);
-                    break;
-                case "layout_weight":
-                    // แปลงเป็น LinearLayout.LayoutParams ทีหลัง
                     break;
                 case "layout_margin":
                     int m = parseSizePx(value);
@@ -405,10 +467,6 @@ public class XmlPreviewManager {
                     break;
                 case "gravity":
                     setGravity(view, value);
-                    break;
-                case "layout_gravity":
-                    // เก็บใน tag ชั่วคราว — ใช้ตอนเป็น LinearLayout.LayoutParams
-                    view.setTag(R.id.tvFilePath, value); // reuse id ที่มีอยู่ หรือข้ามก็ได้
                     break;
                 case "text":
                     if (view instanceof TextView) {
@@ -490,7 +548,6 @@ public class XmlPreviewManager {
             }
         }
 
-        // ถ้า parent จะเป็น LinearLayout — ใช้ weight ได้
         String weightStr = null;
         for (int i = 0; i < count; i++) {
             if ("layout_weight".equals(getCleanAttributeName(parser.getAttributeName(i)))) {
@@ -504,7 +561,6 @@ public class XmlPreviewManager {
                 lp.weight = Float.parseFloat(weightStr);
             } catch (Exception ignored) {
             }
-            // width 0 เมื่อมี weight (แนวทาง Android ปกติ)
             if (lp.weight > 0 && lp.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
                 lp.width = 0;
             }
@@ -578,7 +634,7 @@ public class XmlPreviewManager {
     private String resolveString(String value) {
         if (value == null) return "";
         if (value.startsWith("@string/")) {
-            return value.substring(8); // แสดงชื่อ resource แทน
+            return value.substring(8);
         }
         return value;
     }
@@ -599,7 +655,6 @@ public class XmlPreviewManager {
                 }
             }
             if (value.startsWith("@color/") || value.startsWith("@android:color/")) {
-                // สีจาก resource โปรเจกต์ยัง resolve จาก IDE context ไม่ได้ — ใช้โทนกลาง
                 return Color.parseColor("#6200EE");
             }
         } catch (Exception ignored) {
