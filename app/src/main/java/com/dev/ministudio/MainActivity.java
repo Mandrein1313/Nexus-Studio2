@@ -2816,15 +2816,4 @@ private void appendConsoleLine(String text, int color) {
         }
     });
 }
-//
-private void appendConsoleLine(String text, int color) {
-    runOnUiThread(() -> {
-        if (tvConsole == null && consolePanel != null) {
-            tvConsole = consolePanel.findViewById(R.id.tvConsole);
-        }
-        if (tvConsole != null) {
-            appendColoredText(tvConsole, text, color);
-        }
-    });
-}
  }

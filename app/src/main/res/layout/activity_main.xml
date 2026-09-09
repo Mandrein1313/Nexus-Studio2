@@ -196,7 +196,6 @@
             android:layout_weight="1"
             android:background="#1A1B26">
 
-            <!-- ไม่มี Welcome แล้ว — ข้อความสั้นเมื่อยังไม่เปิดไฟล์ -->
             <FrameLayout
                 android:id="@+id/emptyStateView"
                 android:layout_width="match_parent"
@@ -491,5 +490,50 @@
                     android:lineSpacingExtra="2dp" />
             </ScrollView>
         </LinearLayout>
-    </LinearLayout>
+
+        <!-- Error panel -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvErrorPanel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#2A1F24"
+            android:visibility="gone" />
+
+    </LinearLayout>   <!-- ปิด LinearLayout หลัก -->
+
+    <!-- Drawer โครงสร้างโปรเจกต์ -->
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="280dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:background="#1F2335"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:id="@+id/drawer_content"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:padding="8dp"
+            android:clipToPadding="false">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="โครงสร้างโปรเจกต์"
+                android:textColor="#C0CAF5"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:padding="8dp" />
+
+            <ListView
+                android:id="@+id/treeView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="@null"
+                android:clipToPadding="false" />
+        </LinearLayout>
+    </com.google.android.material.navigation.NavigationView>
+
 </androidx.drawerlayout.widget.DrawerLayout>

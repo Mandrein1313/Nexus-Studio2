@@ -71,7 +71,7 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
             View btnClear = holder.itemView.findViewById(R.id.btnConsoleClear);
             TextView tvMeta = holder.itemView.findViewById(R.id.tvConsoleMeta);
 
-            // ของเก่า (ถ้า layout ไม่มี จะได้ null — ไม่พัง)
+            // เช็ค null ป้องกันกรณี layout เก่าไม่มี view เหล่านี้
             TabLayout filterTabs = holder.itemView.findViewById(R.id.consoleFilterTabs);
             ImageView btnScroll = holder.itemView.findViewById(R.id.btnConsoleScrollDown);
 
@@ -121,7 +121,7 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
                 tvMeta.setText(meta);
             }
 
-            // filter tabs (ถ้ามีใน layout)
+            // filter tabs (ตรวจสอบ null ก่อนใช้งาน)
             if (filterTabs != null && filterTabs.getTabCount() == 0) {
                 filterTabs.addTab(filterTabs.newTab().setText("All Logs"));
                 filterTabs.addTab(filterTabs.newTab().setText("Errors"));
@@ -138,7 +138,7 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
                 });
             }
 
-            // auto-scroll button (ถ้ามี)
+            // auto-scroll button (ตรวจสอบ null ก่อนใช้งาน)
             if (btnScroll != null) {
                 btnScroll.setColorFilter(isAutoScroll
                         ? android.graphics.Color.parseColor("#007ACC")
