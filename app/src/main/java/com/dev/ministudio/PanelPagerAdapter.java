@@ -12,7 +12,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.android.material.tabs.TabLayout;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -40,8 +39,8 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
     private ImageView btnStopAiVoice;
 
     private final List<LogLine> allLogLines = new ArrayList<>();
-    private int currentFilterType = 0;
-    private boolean isAutoScroll = true;
+    private final int currentFilterType = 0;
+    private final boolean isAutoScroll = true;
     private ScrollView consoleScrollView;
 
     public PanelPagerAdapter(Context context) {
@@ -70,10 +69,6 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
             View btnStop = holder.itemView.findViewById(R.id.btnConsoleStop);
             View btnClear = holder.itemView.findViewById(R.id.btnConsoleClear);
             TextView tvMeta = holder.itemView.findViewById(R.id.tvConsoleMeta);
-
-            // เช็ค null ป้องกันกรณี layout เก่าไม่มี view เหล่านี้
-            TabLayout filterTabs = holder.itemView.findViewById(R.id.consoleFilterTabs);
-            ImageView btnScroll = holder.itemView.findViewById(R.id.btnConsoleScrollDown);
 
             if (tvConsoleView != null) {
                 ((TextView) tvConsoleView).setMovementMethod(
@@ -119,40 +114,6 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
                     }
                 }
                 tvMeta.setText(meta);
-            }
-
-            // filter tabs (ตรวจสอบ null ก่อนใช้งาน)
-            if (filterTabs != null && filterTabs.getTabCount() == 0) {
-                filterTabs.addTab(filterTabs.newTab().setText("All Logs"));
-                filterTabs.addTab(filterTabs.newTab().setText("Errors"));
-                filterTabs.addTab(filterTabs.newTab().setText("Warnings"));
-
-                filterTabs.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
-                    @Override
-                    public void onTabSelected(TabLayout.Tab tab) {
-                        currentFilterType = tab.getPosition();
-                        renderFilteredLogs();
-                    }
-                    @Override public void onTabUnselected(TabLayout.Tab tab) {}
-                    @Override public void onTabReselected(TabLayout.Tab tab) {}
-                });
-            }
-
-            // auto-scroll button (ตรวจสอบ null ก่อนใช้งาน)
-            if (btnScroll != null) {
-                btnScroll.setColorFilter(isAutoScroll
-                        ? android.graphics.Color.parseColor("#007ACC")
-                        : android.graphics.Color.parseColor("#8C8C8C"));
-                btnScroll.setOnClickListener(v -> {
-                    isAutoScroll = !isAutoScroll;
-                    btnScroll.setColorFilter(isAutoScroll
-                            ? android.graphics.Color.parseColor("#007ACC")
-                            : android.graphics.Color.parseColor("#8C8C8C"));
-                    if (isAutoScroll && consoleScrollView != null) {
-                        consoleScrollView.post(() ->
-                                consoleScrollView.fullScroll(View.FOCUS_DOWN));
-                    }
-                });
             }
 
         } else {
@@ -285,7 +246,7 @@ public class PanelPagerAdapter extends RecyclerView.Adapter<PanelPagerAdapter.Vi
 
     @Override
     public int getItemCount() {
-        return 1; // เฉพาะ Console (ถ้ามี AI tab ด้วย ใช้ return 2;)
+        return 1;
     }
 
     @Override
