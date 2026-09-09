@@ -149,23 +149,6 @@ protected void onCreate(Bundle savedInstanceState) {
     setContentView(R.layout.activity_main);
     consolePanel = findViewById(R.id.consolePanel);
 
-    // ดันเนื้อหา drawer ไม่ให้ทับ status bar
-    View drawerContent = findViewById(R.id.drawer_content);
-    if (drawerContent != null) {
-        int statusBarHeight = 0;
-        int resId = getResources().getIdentifier("status_bar_height", "dimen", "android");
-        if (resId > 0) {
-            statusBarHeight = getResources().getDimensionPixelSize(resId);
-        }
-        int extra = (int) (8 * getResources().getDisplayMetrics().density);
-        drawerContent.setPadding(
-                drawerContent.getPaddingLeft(),
-                statusBarHeight + extra,
-                drawerContent.getPaddingRight(),
-                drawerContent.getPaddingBottom()
-        );
-    }
-
     buildEnvManager = new BuildEnvironmentManager(this);
 
     initViews();
@@ -185,14 +168,16 @@ protected void onCreate(Bundle savedInstanceState) {
                         editorSearchManager.hide();
                         return;
                     }
-                    if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
-                        fullPanelDialog.dismiss();
+                    // เช็คว่าถ้า consolePanel แสดงอยู่ ให้ปิดแทน dialog
+                    if (consolePanel != null && consolePanel.getVisibility() == View.VISIBLE) {
+                        hideConsolePanel();
                         return;
                     }
                     com.dev.ministudio.ui.ExitConfirmDialog.show(MainActivity.this);
                 }
             });
 }
+
 private void initViews() {
     codeEditor = findViewById(R.id.codeEditor);
     tvFilePath = findViewById(R.id.tvFilePath);
@@ -2725,16 +2710,12 @@ private void startActualPushService(String projectName) {
     }
 
     Toast.makeText(this, "📥 เริ่มอัปโหลดแล้ว! รูดหน้าจอลงมาดู % บน Status Bar ได้เลยครับ", Toast.LENGTH_LONG).show();
-}
-private void startLogcatMonitor(String packageName) {
+}private void startLogcatMonitor(String packageName) {
     if (logcatReader == null) logcatReader = new LogcatReader();
     logcatReader.stop();
 
-    if (fullPanelDialog == null || !fullPanelDialog.isShowing()) {
-        showFullPanelDialog(0);
-    } else if (dialogViewPager != null) {
-        dialogViewPager.setCurrentItem(0, true);
-    }
+    // เปิดแผง Console ด้านล่าง
+    showConsolePanel();
 
     appendConsoleLine("📡 Logcat โหมด Crash (เงียบถ้าไม่มี Error)\n",
             android.graphics.Color.parseColor("#7AA2F7"));
@@ -2771,18 +2752,75 @@ private void startLogcatMonitor(String packageName) {
         public void onStopped() {
             appendConsoleLine("⏹ หยุด Logcat\n",
                     android.graphics.Color.parseColor("#565F89"));
-            if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
-                TextView btn = fullPanelDialog.findViewById(R.id.btnLogcat);
-                updateLogcatButtonUi(btn);
+
+            // อัปเดตปุ่ม Logcat ถ้ามีใน layout (layout ใหม่ไม่มีก็ข้ามได้)
+            if (consolePanel != null) {
+                TextView btn = consolePanel.findViewById(R.id.btnLogcat);
+                if (btn != null) {
+                    updateLogcatButtonUi(btn);
+                }
             }
         }
     });
 }
+//
+private void showConsolePanel() {
+    if (consolePanel == null) {
+        consolePanel = findViewById(R.id.consolePanel);
+    }
+    if (consolePanel == null) return;
+
+    consolePanel.setVisibility(View.VISIBLE);
+
+    if (tvConsole == null) {
+        tvConsole = consolePanel.findViewById(R.id.tvConsole);
+    }
+    if (consoleScrollView == null) {
+        consoleScrollView = consolePanel.findViewById(R.id.consoleScrollView);
+    }
+
+    // ผูกปุ่ม (ทำซ้ำได้ ไม่เป็นไร)
+    TextView btnRun = consolePanel.findViewById(R.id.btnConsoleRun);
+    if (btnRun != null) {
+        btnRun.setOnClickListener(v -> startCloudBuildPipeline());
+    }
+
+    TextView btnStop = consolePanel.findViewById(R.id.btnConsoleStop);
+    if (btnStop != null) {
+        btnStop.setOnClickListener(v -> {
+            appendConsoleLine("\n⏹ Stopped by user\n",
+                    android.graphics.Color.parseColor("#565F89"));
+        });
+    }
+
+    TextView btnClear = consolePanel.findViewById(R.id.btnConsoleClear);
+    if (btnClear != null) {
+        btnClear.setOnClickListener(v -> {
+            if (tvConsole != null) tvConsole.setText("");
+        });
+    }
+
+    View btnClose = consolePanel.findViewById(R.id.btnCloseConsole);
+    if (btnClose != null) {
+        btnClose.setOnClickListener(v -> hideConsolePanel());
+    }
+}
 
 private void appendConsoleLine(String text, int color) {
     runOnUiThread(() -> {
-        if (tvConsole == null && dialogPanelAdapter != null) {
-            tvConsole = dialogPanelAdapter.getTvConsole();
+        if (tvConsole == null && consolePanel != null) {
+            tvConsole = consolePanel.findViewById(R.id.tvConsole);
+        }
+        if (tvConsole != null) {
+            appendColoredText(tvConsole, text, color);
+        }
+    });
+}
+//
+private void appendConsoleLine(String text, int color) {
+    runOnUiThread(() -> {
+        if (tvConsole == null && consolePanel != null) {
+            tvConsole = consolePanel.findViewById(R.id.tvConsole);
         }
         if (tvConsole != null) {
             appendColoredText(tvConsole, text, color);
