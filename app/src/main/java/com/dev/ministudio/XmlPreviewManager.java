@@ -42,9 +42,8 @@ import java.util.Stack;
 
 /**
  * XML Layout Preview สำหรับ Nexus Studio
- * - แก้ stack pop ให้ถูกต้อง
- * - รองรับ widget / attribute ที่ใช้บ่อย
- * - ห่อด้วย ScrollView + พื้นหลังพรีวิว
+ * - รองรับ Dynamic Layout Rendering Dynamic Params
+ * - แก้ไข bugs เกี่ยวกับ LayoutParams Crash และ Resource Referencing
  */
 public class XmlPreviewManager {
 
@@ -62,19 +61,18 @@ public class XmlPreviewManager {
         }
 
         try {
-            // ตัด declaration / comments ง่าย ๆ
+            // ทำความสะอาด comment และ declaration
             String cleaned = xmlContent
                     .replaceAll("(?s)<!--.*?-->", "")
                     .trim();
 
             XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-            factory.setNamespaceAware(true);
+            factory.setNamespaceAware(false); // ปิดเพื่อความรวดเร็วและยืดหยุ่นต่อ custom namespace
             XmlPullParser parser = factory.newPullParser();
             parser.setInput(new StringReader(cleaned));
 
             View rootView = null;
             Stack<ViewGroup> parentStack = new Stack<>();
-            // จำว่า start tag นี้เป็น ViewGroup หรือไม่ (ใช้ตอน END_TAG)
             Stack<Boolean> isGroupStack = new Stack<>();
 
             int eventType = parser.getEventType();
@@ -82,11 +80,11 @@ public class XmlPreviewManager {
                 if (eventType == XmlPullParser.START_TAG) {
                     String tagName = getCleanTagName(parser.getName());
 
-                    // ข้าม include / merge แบบง่าย
-                    if ("include".equals(tagName) || "merge".equals(tagName)
-                            || "resources".equals(tagName) || "color".equals(tagName)
-                            || "string".equals(tagName) || "dimen".equals(tagName)
-                            || "style".equals(tagName) || "item".equals(tagName)) {
+                    // ข้าม tag ที่ไม่ใช่ layout
+                    if ("include".equalsIgnoreCase(tagName) || "merge".equalsIgnoreCase(tagName)
+                            || "resources".equalsIgnoreCase(tagName) || "color".equalsIgnoreCase(tagName)
+                            || "string".equalsIgnoreCase(tagName) || "dimen".equalsIgnoreCase(tagName)
+                            || "style".equalsIgnoreCase(tagName) || "item".equalsIgnoreCase(tagName)) {
                         isGroupStack.push(false);
                         eventType = parser.next();
                         continue;
@@ -94,26 +92,24 @@ public class XmlPreviewManager {
 
                     View view = createViewFromTag(tagName);
                     if (view != null) {
-                        applyAttributes(view, parser);
+                        ViewGroup parent = parentStack.isEmpty() ? null : parentStack.peek();
+                        applyAttributes(view, parent, parser);
 
                         if (rootView == null) {
                             rootView = view;
-                        } else if (!parentStack.isEmpty()) {
+                        } else if (parent != null) {
                             try {
-                                parentStack.peek().addView(view);
+                                parent.addView(view);
                             } catch (Exception e) {
-                                // parent รับลูกไม่ได้ — ข้าม
+                                // ป้องกัน crash หาก parent ไม่รองรับการ add child
                             }
                         }
 
                         boolean isGroup = view instanceof ViewGroup
-                                && !(view instanceof AdapterViewSafe)
-                                && !(view instanceof Toolbar);
-                        // ListView/RecyclerView ไม่ควรเป็น parent ของ XML children แบบปกติ
-                        if (view instanceof ListView || view instanceof RecyclerView
-                                || view instanceof Spinner || view instanceof SeekBar) {
-                            isGroup = false;
-                        }
+                                && !(view instanceof Toolbar)
+                                && !(view instanceof ListView)
+                                && !(view instanceof RecyclerView)
+                                && !(view instanceof Spinner);
 
                         if (isGroup) {
                             parentStack.push((ViewGroup) view);
@@ -144,7 +140,6 @@ public class XmlPreviewManager {
         }
     }
 
-    /** ห่อด้วยพื้นหลัง + scroll กันล้นจอ */
     private View wrapPreview(View content) {
         FrameLayout frame = new FrameLayout(context);
         frame.setLayoutParams(new ViewGroup.LayoutParams(
@@ -153,7 +148,6 @@ public class XmlPreviewManager {
         frame.setBackgroundColor(Color.parseColor("#2A2B3D"));
         frame.setPadding(dp(12), dp(12), dp(12), dp(12));
 
-        // การ์ดสีขาวจำลองหน้าจอแอป
         FrameLayout device = new FrameLayout(context);
         GradientDrawable card = new GradientDrawable();
         card.setColor(Color.WHITE);
@@ -173,14 +167,11 @@ public class XmlPreviewManager {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // บังคับ root ให้กว้างเต็ม
         ViewGroup.LayoutParams contentLp = content.getLayoutParams();
         if (contentLp == null) {
             contentLp = new ViewGroup.LayoutParams(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
-        } else {
-            contentLp.width = ViewGroup.LayoutParams.MATCH_PARENT;
         }
         content.setLayoutParams(contentLp);
 
@@ -198,7 +189,7 @@ public class XmlPreviewManager {
         box.setBackgroundColor(Color.parseColor("#1A1B26"));
 
         TextView title = new TextView(context);
-        title.setText("Preview");
+        title.setText("Preview Error");
         title.setTextColor(Color.parseColor("#BB9AF7"));
         title.setTextSize(16);
         title.setTypeface(null, Typeface.BOLD);
@@ -318,7 +309,6 @@ public class XmlPreviewManager {
                 return placeholder;
             }
             default: {
-                // widget ไม่รู้จัก → กล่องแทน
                 TextView unknown = new TextView(context);
                 unknown.setText("[" + tagName + "]");
                 unknown.setTextColor(Color.parseColor("#888888"));
@@ -330,16 +320,19 @@ public class XmlPreviewManager {
         }
     }
 
-    // marker ว่าง — ไม่ได้ใช้จริง แค่กัน compile ถ้ามี reference เก่า
-    private interface AdapterViewSafe {}
+    private void applyAttributes(View view, ViewGroup parent, XmlPullParser parser) {
+        int width = ViewGroup.LayoutParams.WRAP_CONTENT;
+        int height = ViewGroup.LayoutParams.WRAP_CONTENT;
+        float weight = 0f;
+        int gravity = Gravity.NO_GRAVITY;
+        int layoutGravity = Gravity.NO_GRAVITY;
 
-    private void applyAttributes(View view, XmlPullParser parser) {
-        ViewGroup.MarginLayoutParams params = new ViewGroup.MarginLayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-        );
+        int marginAll = 0, marginLeft = 0, marginTop = 0, marginRight = 0, marginBottom = 0;
+        boolean hasMarginAll = false;
 
         int count = parser.getAttributeCount();
+
+        // Pass 1: อ่านค่า Layout Attributes พื้นฐาน
         for (int i = 0; i < count; i++) {
             String name = getCleanAttributeName(parser.getAttributeName(i));
             String value = parser.getAttributeValue(i);
@@ -347,32 +340,74 @@ public class XmlPreviewManager {
 
             switch (name) {
                 case "layout_width":
-                    params.width = parseLayoutSize(value);
+                    width = parseLayoutSize(value);
                     break;
                 case "layout_height":
-                    params.height = parseLayoutSize(value);
+                    height = parseLayoutSize(value);
                     break;
                 case "layout_weight":
-                    // แปลงเป็น LinearLayout.LayoutParams ทีหลัง
+                    try {
+                        weight = Float.parseFloat(value);
+                    } catch (Exception ignored) {}
+                    break;
+                case "layout_gravity":
+                    layoutGravity = parseGravityValue(value);
                     break;
                 case "layout_margin":
-                    int m = parseSizePx(value);
-                    params.setMargins(m, m, m, m);
+                    marginAll = parseSizePx(value);
+                    hasMarginAll = true;
                     break;
                 case "layout_marginLeft":
                 case "layout_marginStart":
-                    params.leftMargin = parseSizePx(value);
+                    marginLeft = parseSizePx(value);
                     break;
                 case "layout_marginRight":
                 case "layout_marginEnd":
-                    params.rightMargin = parseSizePx(value);
+                    marginRight = parseSizePx(value);
                     break;
                 case "layout_marginTop":
-                    params.topMargin = parseSizePx(value);
+                    marginTop = parseSizePx(value);
                     break;
                 case "layout_marginBottom":
-                    params.bottomMargin = parseSizePx(value);
+                    marginBottom = parseSizePx(value);
                     break;
+            }
+        }
+
+        // ปรับแต่ง LayoutParams ให้ตรงตามประเภทของ Parent View
+        ViewGroup.LayoutParams params;
+        if (parent instanceof LinearLayout) {
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(width, height, weight);
+            if (layoutGravity != Gravity.NO_GRAVITY) lp.gravity = layoutGravity;
+            params = lp;
+        } else if (parent instanceof FrameLayout) {
+            FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(width, height);
+            if (layoutGravity != Gravity.NO_GRAVITY) lp.gravity = layoutGravity;
+            params = lp;
+        } else if (parent instanceof RelativeLayout) {
+            params = new RelativeLayout.LayoutParams(width, height);
+        } else {
+            params = new ViewGroup.MarginLayoutParams(width, height);
+        }
+
+        // กำหนด Margin
+        if (params instanceof ViewGroup.MarginLayoutParams) {
+            ViewGroup.MarginLayoutParams mlp = (ViewGroup.MarginLayoutParams) params;
+            if (hasMarginAll) {
+                mlp.setMargins(marginAll, marginAll, marginAll, marginAll);
+            } else {
+                mlp.setMargins(marginLeft, marginTop, marginRight, marginBottom);
+            }
+        }
+        view.setLayoutParams(params);
+
+        // Pass 2: อ่านค่า View Specific Attributes
+        for (int i = 0; i < count; i++) {
+            String name = getCleanAttributeName(parser.getAttributeName(i));
+            String value = parser.getAttributeValue(i);
+            if (value == null) continue;
+
+            switch (name) {
                 case "padding":
                     int p = parseSizePx(value);
                     view.setPadding(p, p, p, p);
@@ -405,10 +440,6 @@ public class XmlPreviewManager {
                     break;
                 case "gravity":
                     setGravity(view, value);
-                    break;
-                case "layout_gravity":
-                    // เก็บใน tag ชั่วคราว — ใช้ตอนเป็น LinearLayout.LayoutParams
-                    view.setTag(R.id.tvFilePath, value); // reuse id ที่มีอยู่ หรือข้ามก็ได้
                     break;
                 case "text":
                     if (view instanceof TextView) {
@@ -448,8 +479,7 @@ public class XmlPreviewManager {
                 case "background":
                     try {
                         view.setBackgroundColor(resolveColor(value));
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                     break;
                 case "elevation":
                     view.setElevation(parseSizePx(value));
@@ -469,12 +499,6 @@ public class XmlPreviewManager {
                         ((CardView) view).setCardElevation(parseSizePx(value));
                     }
                     break;
-                case "src":
-                case "srcCompat":
-                    if (view instanceof ImageView) {
-                        ((ImageView) view).setImageResource(android.R.drawable.ic_menu_gallery);
-                    }
-                    break;
                 case "visibility":
                     view.setVisibility(parseVisibility(value));
                     break;
@@ -484,37 +508,22 @@ public class XmlPreviewManager {
                 case "alpha":
                     try {
                         view.setAlpha(Float.parseFloat(value));
-                    } catch (Exception ignored) {
-                    }
+                    } catch (Exception ignored) {}
                     break;
             }
-        }
-
-        // ถ้า parent จะเป็น LinearLayout — ใช้ weight ได้
-        String weightStr = null;
-        for (int i = 0; i < count; i++) {
-            if ("layout_weight".equals(getCleanAttributeName(parser.getAttributeName(i)))) {
-                weightStr = parser.getAttributeValue(i);
-                break;
-            }
-        }
-        if (weightStr != null) {
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(params);
-            try {
-                lp.weight = Float.parseFloat(weightStr);
-            } catch (Exception ignored) {
-            }
-            // width 0 เมื่อมี weight (แนวทาง Android ปกติ)
-            if (lp.weight > 0 && lp.width == ViewGroup.LayoutParams.WRAP_CONTENT) {
-                lp.width = 0;
-            }
-            view.setLayoutParams(lp);
-        } else {
-            view.setLayoutParams(params);
         }
     }
 
     private void setGravity(View view, String value) {
+        int g = parseGravityValue(value);
+        if (view instanceof LinearLayout) {
+            ((LinearLayout) view).setGravity(g);
+        } else if (view instanceof TextView) {
+            ((TextView) view).setGravity(g);
+        }
+    }
+
+    private int parseGravityValue(String value) {
         int g = Gravity.NO_GRAVITY;
         String v = value.toLowerCase();
         if (v.contains("center")) g |= Gravity.CENTER;
@@ -524,12 +533,7 @@ public class XmlPreviewManager {
         if (v.contains("right") || v.contains("end")) g |= Gravity.END;
         if (v.contains("top")) g |= Gravity.TOP;
         if (v.contains("bottom")) g |= Gravity.BOTTOM;
-
-        if (view instanceof LinearLayout) {
-            ((LinearLayout) view).setGravity(g);
-        } else if (view instanceof TextView) {
-            ((TextView) view).setGravity(g);
-        }
+        return g;
     }
 
     private int parseLayoutSize(String value) {
@@ -545,8 +549,8 @@ public class XmlPreviewManager {
     private int parseSizePx(String value) {
         try {
             value = value.trim();
-            if (value.endsWith("dp")) {
-                float dp = Float.parseFloat(value.replace("dp", "").trim());
+            if (value.endsWith("dp") || value.endsWith("dip")) {
+                float dp = Float.parseFloat(value.replaceAll("(dp|dip)", "").trim());
                 return Math.round(dp * density);
             }
             if (value.endsWith("sp")) {
@@ -578,7 +582,7 @@ public class XmlPreviewManager {
     private String resolveString(String value) {
         if (value == null) return "";
         if (value.startsWith("@string/")) {
-            return value.substring(8); // แสดงชื่อ resource แทน
+            return value.substring(8);
         }
         return value;
     }
@@ -587,23 +591,23 @@ public class XmlPreviewManager {
         try {
             if (value.startsWith("#")) {
                 String h = value.substring(1);
+                // แปลงสั้น เช่น #FFF เป็น #FFFFFF หรือ #8FFF เป็น #88FFFFFF
                 if (h.length() == 3) {
                     h = "" + h.charAt(0) + h.charAt(0)
-                            + h.charAt(1) + h.charAt(1)
-                            + h.charAt(2) + h.charAt(2);
-                    return Color.parseColor("#" + h);
+                           + h.charAt(1) + h.charAt(1)
+                           + h.charAt(2) + h.charAt(2);
+                } else if (h.length() == 4) {
+                    h = "" + h.charAt(0) + h.charAt(0)
+                           + h.charAt(1) + h.charAt(1)
+                           + h.charAt(2) + h.charAt(2)
+                           + h.charAt(3) + h.charAt(3);
                 }
-                if (h.length() == 6 || h.length() == 8) {
-                    return Color.parseColor(value.length() == 7 || value.length() == 9
-                            ? value : "#" + h);
-                }
+                return Color.parseColor("#" + h);
             }
             if (value.startsWith("@color/") || value.startsWith("@android:color/")) {
-                // สีจาก resource โปรเจกต์ยัง resolve จาก IDE context ไม่ได้ — ใช้โทนกลาง
                 return Color.parseColor("#6200EE");
             }
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) {}
         return Color.parseColor("#222222");
     }
 
