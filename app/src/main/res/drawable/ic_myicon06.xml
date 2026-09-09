@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 🌟 เลเยอร์ที่ 1: เงาตกกระทบด้านหลังแผ่นกระดาษเพิ่มมิติลอยตัว -->
+    <path
+        android:fillColor="#20000000"
+        android:pathData="m5,2.5c-1.1046,0 -2,0.9 -2,2v8,4 6c0,1.1 0.8954,2 2,2h14c1.105,0 2,-0.9 2,-2v-6,-4 -4l-6,-6h-10z"/>
+
+    <!-- 🌟 เลเยอร์ที่ 2: บอดี้หลักของกระดาษ ใช้สีไล่เฉดเทา-น้ำเงินหรูหรา (Modern Slate Gradient) -->
+    <path
+        android:pathData="m5,2c-1.1046,0 -2,0.9 -2,2v8,4 6c0,1.1 0.8954,2 2,2h14c1.105,0 2,-0.9 2,-2v-6,-4 -4l-6,-6h-10z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="3"
+                android:startY="2"
+                android:endX="21"
+                android:endY="22"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF455A64" /> <!-- เทาเข้มเหล็ก -->
+                <item android:offset="1.0" android:color="#FF37474F" /> <!-- เทาเข้มลึก -->
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 🌟 เลเยอร์ที่ 3: มุมพับของกระดาษ (Folded Corner) ไล่เฉดสีทองเหลืองประกายให้ดูพรีเมียม -->
+    <path
+        android:pathData="m21,8 -6,-6v4c0,1.1 0.895,2 2,2h4z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="15"
+                android:startY="2"
+                android:endX="21"
+                android:endY="8"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF78909C" />
+                <item android:offset="1.0" android:color="#FFB0BEC5" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 🌟 เลเยอร์ที่ 4: สัญลักษณ์โค้ด < / > ตรงกลาง ย้อมเป็นสีขาวสว่างใส คมกริบ สว่างตาชัดเจนเวลาอยู่ดาร์กโหมด -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="m9.3973,16.5 -0.3906,0.4h-0.1797,-0.1797l-3.6406,-3.7c-0.0521,0 -0.0781,-0.1 -0.0781,-0.2 0,0 0.026,-0.1 0.0781,-0.1l3.6406,-3.7c0.0521,0 0.112,-0.1 0.1797,-0.1s0.1276,0.1 0.1797,0.1l0.3906,0.4c0.0521,0.1 0.0781,0.1 0.0781,0.2 0,0 -0.026,0.1 -0.0781,0.2l-3.0703,3 3.0703,3.1c0.0521,0.1 0.0781,0.1 0.0781,0.2 0,0 -0.026,0.1 -0.0781,0.2m4.6177,-8.4 -2.915,10.1c-0.02,0.1 -0.062,0.1 -0.125,0.2h-0.179l-0.485,-0.2c-0.067,0 -0.119,0 -0.156,-0.1 -0.031,0 -0.036,-0.1 -0.015,-0.2l2.914,-10c0.02,-0.1 0.059,-0.2 0.117,-0.2h0.187l0.485,0.1c0.067,0 0.117,0.1 0.148,0.1 0.037,0.1 0.044,0.2 0.024,0.2m5.132,5.1 -3.64,3.7h-0.18,-0.18l-0.39,-0.4c-0.052,-0.1 -0.078,-0.2 -0.078,-0.2 0,-0.1 0.026,-0.1 0.078,-0.2l3.07,-3.1 -3.07,-3c-0.052,-0.1 -0.078,-0.2 -0.078,-0.2 0,-0.1 0.026,-0.1 0.078,-0.2l0.39,-0.4c0.052,0 0.112,-0.1 0.18,-0.1s0.128,0.1 0.18,0.1l3.64,3.7c0.052,0 0.078,0.1 0.078,0.1 0,0.1 -0.026,0.2 -0.078,0.2"/>
+</vector>
