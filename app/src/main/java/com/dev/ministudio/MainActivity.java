@@ -122,6 +122,9 @@ public class MainActivity extends AppCompatActivity {
     private EditorSearchManager editorSearchManager;
    // เพิ่มตัวแปรนี้ในส่วนขอบเขตของคลาส MainActivity
     private LogcatReader logcatReader;
+    private View consolePanel;
+    private TextView tvConsole;
+    private ScrollView consoleScrollView;
     
 
    
@@ -144,6 +147,7 @@ protected void onCreate(Bundle savedInstanceState) {
     }
 
     setContentView(R.layout.activity_main);
+    consolePanel = findViewById(R.id.consolePanel);
 
     // ดันเนื้อหา drawer ไม่ให้ทับ status bar
     View drawerContent = findViewById(R.id.drawer_content);
@@ -574,51 +578,59 @@ private int parseHexColor(String hex) {
     return 0;
 }
 private void showFullPanelDialog(int initialTabPosition) {
-    if (fullPanelDialog != null && fullPanelDialog.isShowing()) {
-        if (dialogViewPager != null) {
-            dialogViewPager.setCurrentItem(0, true);
-        }
+    // ใช้แผงด้านล่างแทน Dialog เต็มหน้าจอ
+    if (consolePanel == null) {
+        consolePanel = findViewById(R.id.consolePanel);
+    }
+    if (consolePanel == null) return;
+
+    // ถ้าเปิดอยู่แล้ว → ไม่ต้องทำอะไร (หรือจะเลื่อนไปแท็บ 0 ก็ได้)
+    if (consolePanel.getVisibility() == View.VISIBLE) {
         return;
     }
 
-    fullPanelDialog = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar);
-    fullPanelDialog.setContentView(R.layout.dialog_full_console_panel);
-    fullPanelDialog.setCancelable(true);
+    consolePanel.setVisibility(View.VISIBLE);
 
-    if (fullPanelDialog.getWindow() != null) {
-        android.view.Window window = fullPanelDialog.getWindow();
-        window.setLayout(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-        );
-        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(window, true);
-        window.setStatusBarColor(android.graphics.Color.parseColor("#1F2335"));
-        window.setNavigationBarColor(android.graphics.Color.parseColor("#1A1B26"));
+    // ผูก View ภายในแผง
+    if (tvConsole == null) {
+        tvConsole = consolePanel.findViewById(R.id.tvConsole);
+    }
+    if (consoleScrollView == null) {
+        consoleScrollView = consolePanel.findViewById(R.id.consoleScrollView);
     }
 
-    dialogTabLayout = fullPanelDialog.findViewById(R.id.tabLayout);
-    dialogViewPager = fullPanelDialog.findViewById(R.id.viewPager);
-
-    if (dialogTabLayout != null) {
-        dialogTabLayout.setVisibility(View.GONE);
+    // ===== ปุ่ม Run =====
+    TextView btnRun = consolePanel.findViewById(R.id.btnConsoleRun);
+    if (btnRun != null) {
+        btnRun.setOnClickListener(v -> startCloudBuildPipeline());
     }
 
-    fullPanelDialog.findViewById(R.id.btnCloseConsole)
-            .setOnClickListener(v -> fullPanelDialog.dismiss());
+    // ===== ปุ่ม Stop =====
+    TextView btnStop = consolePanel.findViewById(R.id.btnConsoleStop);
+    if (btnStop != null) {
+        btnStop.setOnClickListener(v -> {
+            appendConsoleLine("\n⏹ Stopped by user\n",
+                    android.graphics.Color.parseColor("#565F89"));
+            // ถ้ามี logic หยุด build จริง ให้เรียกตรงนี้
+        });
+    }
 
-    View btnToggleExpand = fullPanelDialog.findViewById(R.id.btnToggleExpand);
-    if (btnToggleExpand != null) btnToggleExpand.setVisibility(View.GONE);
+    // ===== ปุ่ม Clear =====
+    TextView btnClear = consolePanel.findViewById(R.id.btnConsoleClear);
+    if (btnClear != null) {
+        btnClear.setOnClickListener(v -> {
+            if (tvConsole != null) tvConsole.setText("");
+        });
+    }
 
-    fullPanelDialog.findViewById(R.id.btnClearConsole).setOnClickListener(v -> {
-        if (dialogPanelAdapter != null) {
-            TextView consoleView = dialogPanelAdapter.getTvConsole();
-            if (consoleView != null) consoleView.setText("");
-        }
-        if (tvConsole != null) tvConsole.setText("");
-    });
+    // ===== ปุ่มปิดแผง =====
+    View btnClose = consolePanel.findViewById(R.id.btnCloseConsole);
+    if (btnClose != null) {
+        btnClose.setOnClickListener(v -> hideConsolePanel());
+    }
 
-    // ===== ปุ่ม Logcat =====
-    TextView btnLogcat = fullPanelDialog.findViewById(R.id.btnLogcat);
+    // ===== ปุ่ม Logcat (ถ้ามีใน layout) =====
+    TextView btnLogcat = consolePanel.findViewById(R.id.btnLogcat);
     if (btnLogcat != null) {
         updateLogcatButtonUi(btnLogcat);
         btnLogcat.setOnClickListener(v -> {
@@ -628,52 +640,39 @@ private void showFullPanelDialog(int initialTabPosition) {
                         android.graphics.Color.parseColor("#565F89"));
                 updateLogcatButtonUi(btnLogcat);
             } else {
-                String pkg = null;
-                startLogcatMonitor(pkg);
+                startLogcatMonitor(null);
                 btnLogcat.postDelayed(() -> updateLogcatButtonUi(btnLogcat), 300);
             }
         });
     }
 
-    // ===== ปุ่ม AI วิเคราะห์ (กดเอง → เปิดแชทพร้อม error) =====
-    View btnAiFixer = fullPanelDialog.findViewById(R.id.btnAiFixer);
+    // ===== ปุ่ม AI Fixer (ถ้ามี) =====
+    View btnAiFixer = consolePanel.findViewById(R.id.btnAiFixer);
     if (btnAiFixer != null) {
         btnAiFixer.setOnClickListener(v -> {
-            if (dialogPanelAdapter != null) {
-                tvConsole = dialogPanelAdapter.getTvConsole();
-            }
-
             String selected = getConsoleSelection();
             String log = getConsoleText();
-
-            String payload;
-            if (selected != null && !selected.trim().isEmpty()) {
-                payload = selected.trim();
-            } else {
-                payload = extractLastError(log);
-            }
+            String payload = (selected != null && !selected.trim().isEmpty())
+                    ? selected.trim()
+                    : extractLastError(log);
             openAiChatWithError(payload);
         });
     }
 
-    dialogPanelAdapter = new PanelPagerAdapter(this);
-    dialogViewPager.setAdapter(dialogPanelAdapter);
-    dialogViewPager.setUserInputEnabled(false);
+    // เลื่อนลงล่างสุดอัตโนมัติ
+    if (consoleScrollView != null) {
+        consoleScrollView.post(() -> consoleScrollView.fullScroll(View.FOCUS_DOWN));
+    }
+}
 
-    dialogViewPager.post(() -> {
-        if (dialogPanelAdapter != null) {
-            tvConsole = dialogPanelAdapter.getTvConsole();
-            dialogViewPager.setCurrentItem(0, false);
-        }
-    });
-
-    fullPanelDialog.setOnDismissListener(dialog -> {
-        if (aiLayoutAnalyzer != null) {
-            aiLayoutAnalyzer.stopSpeaking();
-        }
-    });
-
-    fullPanelDialog.show();
+/** ปิดแผง Console ด้านล่าง */
+private void hideConsolePanel() {
+    if (consolePanel != null) {
+        consolePanel.setVisibility(View.GONE);
+    }
+    if (aiLayoutAnalyzer != null) {
+        aiLayoutAnalyzer.stopSpeaking();
+    }
 }
 private void updateLogcatButtonUi(TextView btnLogcat) {
     if (btnLogcat == null) return;

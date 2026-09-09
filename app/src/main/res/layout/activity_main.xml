@@ -382,130 +382,114 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- consolePanel ใหม่ -->
         <LinearLayout
             android:id="@+id/consolePanel"
             android:layout_width="match_parent"
-            android:layout_height="220dp"
+            android:layout_height="240dp"
             android:orientation="vertical"
             android:background="#1A1B26"
             android:visibility="gone">
 
+            <!-- แถบปุ่ม Run / Stop / Clear -->
             <LinearLayout
+                android:id="@+id/consoleToolbar"
                 android:layout_width="match_parent"
-                android:layout_height="35dp"
+                android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:background="#24283B"
                 android:gravity="center_vertical"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp">
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:background="#16161E">
 
-                <com.google.android.material.tabs.TabLayout
-                    android:id="@+id/consoleFilterTabs"
-                    android:layout_width="160dp"
-                    android:layout_height="match_parent"
-                    android:background="#24283B"
-                    app:tabTextColor="#565F89"
-                    app:tabSelectedTextColor="#C0CAF5"
-                    app:tabIndicatorColor="#BB9AF7"
-                    app:tabIndicatorHeight="2dp"
-                    app:tabMode="fixed" />
+                <TextView
+                    android:id="@+id/btnConsoleRun"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:gravity="center"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:text="▶  Run"
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_btn_console_run" />
 
-                <View
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1" />
+                <TextView
+                    android:id="@+id/btnConsoleStop"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="■  Stop"
+                    android:textColor="#C0CAF5"
+                    android:textSize="13sp"
+                    android:background="@drawable/bg_btn_console_secondary" />
 
-                <ImageButton
-                    android:id="@+id/btnConsoleScrollDown"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/arrow_down_float"
-                    app:tint="#C0CAF5" />
-
-                <ImageButton
+                <TextView
                     android:id="@+id/btnConsoleClear"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_close_clear_cancel"
-                    app:tint="#C0CAF5" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="🗑  Clear"
+                    android:textColor="#C0CAF5"
+                    android:textSize="13sp"
+                    android:background="@drawable/bg_btn_console_secondary" />
 
-                <ImageButton
-                    android:id="@+id/btnToggleExpand"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
-                    android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_compass"
-                    app:tint="#E0AF68" />
+                <TextView
+                    android:id="@+id/tvConsoleMeta"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end|center_vertical"
+                    android:paddingStart="8dp"
+                    android:text="minSdk 24 · java"
+                    android:textColor="#565F89"
+                    android:textSize="11sp" />
 
+                <!-- ปุ่มปิดแผง -->
                 <ImageButton
                     android:id="@+id/btnCloseConsole"
-                    android:layout_width="32dp"
-                    android:layout_height="32dp"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="4dp"
                     android:background="?attr/selectableItemBackgroundBorderless"
-                    android:src="@android:drawable/ic_menu_delete"
+                    android:src="@android:drawable/ic_menu_close_clear_cancel"
+                    android:contentDescription="ปิด"
                     app:tint="#F7768E" />
             </LinearLayout>
 
-            <androidx.viewpager2.widget.ViewPager2
-                android:id="@+id/viewPager"
+            <View
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
+                android:layout_height="1dp"
+                android:background="#292E42" />
 
             <ScrollView
                 android:id="@+id/consoleScrollView"
-                android:layout_width="0dp"
+                android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:visibility="gone">
-                <View
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content" />
+                android:layout_weight="1"
+                android:fillViewport="true"
+                android:background="#1A1B26">
+
+                <TextView
+                    android:id="@+id/tvConsole"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:textColor="#A9B1D6"
+                    android:textSize="12sp"
+                    android:typeface="monospace"
+                    android:textIsSelectable="true"
+                    android:lineSpacingExtra="2dp" />
             </ScrollView>
         </LinearLayout>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvErrorPanel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="#2A1F24"
-            android:visibility="gone" />
-
     </LinearLayout>
-
-    <com.google.android.material.navigation.NavigationView
-        android:id="@+id/nav_view"
-        android:layout_width="280dp"
-        android:layout_height="match_parent"
-        android:layout_gravity="start"
-        android:background="#1F2335"
-        android:fitsSystemWindows="true">
-
-        <LinearLayout
-            android:id="@+id/drawer_content"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="8dp"
-            android:clipToPadding="false">
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="โครงสร้างโปรเจกต์"
-                android:textColor="#C0CAF5"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:padding="8dp" />
-
-            <ListView
-                android:id="@+id/treeView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:divider="@null"
-                android:clipToPadding="false" />
-        </LinearLayout>
-    </com.google.android.material.navigation.NavigationView>
-
 </androidx.drawerlayout.widget.DrawerLayout>
