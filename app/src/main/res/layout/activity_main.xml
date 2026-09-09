@@ -499,6 +499,72 @@
             android:background="#2A1F24"
             android:visibility="gone" />
 
+        <!-- ===== แถบล่าง Files / Code / Preview / Build / AI ===== -->
+        <LinearLayout
+            android:id="@+id/bottomNavBar"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:orientation="horizontal"
+            android:background="#16161E"
+            android:gravity="center"
+            android:elevation="6dp">
+
+            <TextView
+                android:id="@+id/navFiles"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Files"
+                android:textSize="11sp"
+                android:textColor="#565F89"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/navCode"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Code"
+                android:textSize="11sp"
+                android:textColor="#7DCFFF"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/navPreview"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Preview"
+                android:textSize="11sp"
+                android:textColor="#565F89"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/navBuild"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="Build"
+                android:textSize="11sp"
+                android:textColor="#565F89"
+                android:background="?attr/selectableItemBackground" />
+
+            <TextView
+                android:id="@+id/navAi"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="AI"
+                android:textSize="11sp"
+                android:textColor="#565F89"
+                android:background="?attr/selectableItemBackground" />
+        </LinearLayout>
+
     </LinearLayout>   <!-- ปิด LinearLayout หลัก -->
 
     <!-- Drawer โครงสร้างโปรเจกต์ -->

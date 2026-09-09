@@ -305,12 +305,74 @@ private void initViews() {
         rvErrorPanel.setLayoutManager(new LinearLayoutManager(this));
     }
 
-    
     previewContainer = findViewById(R.id.previewContainer);
 
-   
-}
+    // ===== Bottom Nav: Files / Code / Preview / Build / AI =====
+    TextView navFiles = findViewById(R.id.navFiles);
+    TextView navCode = findViewById(R.id.navCode);
+    TextView navPreview = findViewById(R.id.navPreview);
+    TextView navBuild = findViewById(R.id.navBuild);
+    TextView navAi = findViewById(R.id.navAi);
 
+    if (navFiles != null) {
+        navFiles.setOnClickListener(v -> {
+            if (drawerLayout != null) {
+                drawerLayout.openDrawer(androidx.core.view.GravityCompat.START);
+            }
+            highlightBottomNav(navFiles);
+        });
+    }
+
+    if (navCode != null) {
+        navCode.setOnClickListener(v -> {
+            // กลับโหมดแก้ไขโค้ด
+            View consolePanel = findViewById(R.id.consolePanel);
+            if (consolePanel != null) consolePanel.setVisibility(View.GONE);
+            if (previewContainer != null) previewContainer.setVisibility(View.GONE);
+            if (codeEditor != null) codeEditor.setVisibility(View.VISIBLE);
+            isPreviewMode = false;
+            highlightBottomNav(navCode);
+        });
+    }
+
+    if (navPreview != null) {
+        navPreview.setOnClickListener(v -> {
+            toggleXmlPreview();
+            highlightBottomNav(navPreview);
+        });
+    }
+
+    if (navBuild != null) {
+        navBuild.setOnClickListener(v -> {
+            // เปิดคอนโซล + รัน build (เหมือนปุ่ม ▶ บน)
+            startCloudBuildPipeline();
+            highlightBottomNav(navBuild);
+        });
+    }
+
+    if (navAi != null) {
+        navAi.setOnClickListener(v -> {
+            openAiChat();
+            highlightBottomNav(navAi);
+        });
+    }
+}
+private void highlightBottomNav(TextView selected) {
+    int dim = android.graphics.Color.parseColor("#565F89");
+    int on = android.graphics.Color.parseColor("#7DCFFF");
+    TextView[] all = {
+            findViewById(R.id.navFiles),
+            findViewById(R.id.navCode),
+            findViewById(R.id.navPreview),
+            findViewById(R.id.navBuild),
+            findViewById(R.id.navAi)
+    };
+    for (TextView t : all) {
+        if (t != null) {
+            t.setTextColor(t == selected ? on : dim);
+        }
+    }
+}
 private void setupLogic() {
     aiLayoutAnalyzer = new com.dev.ministudio.AiLayoutAnalyzer(this);
     dialogManager = new ProjectDialogManager(this, parentNode -> {
